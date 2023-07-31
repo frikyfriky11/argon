@@ -1,0 +1,141 @@
+name: master - Test, Build and Deploy
+
+on:
+  push:
+    tags:
+      - "v**"
+
+jobs:
+  tests:
+    name: Run .NET backend tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-dotnet-
+          
+      - name: Run tests
+        run: dotnet test
+        
+  build-webapi:
+    name: Build WebApi image and push to Docker registry
+    runs-on: ubuntu-latest
+    needs: tests
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Prepare Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            name=${{ secrets.DOCKER_REGISTRY_URL }}/argon/webapi
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.ref_name }}
+            type=sha
+
+      - name: Login to Docker registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY_URL }}
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Build Docker image and push to registry
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: src/Argon.WebApi/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          
+  build-webgui:
+    name: Build WebGui image and push to Docker registry
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Prepare Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            name=${{ secrets.DOCKER_REGISTRY_URL }}/argon/webgui
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.ref_name }}
+            type=sha
+
+      - name: Login to Docker registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY_URL }}
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Build Docker image and push to registry
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: src/Argon.WebGui/Dockerfile
+          push: true
+          build-args: |
+            BACKEND_API_URI=https://${{ secrets.PUBLIC_HOST_PROD }}/api
+            RUNNING_ENVIRONMENT=prod
+            BUILD_ID=${{ github.run_id }}
+            COMMIT_HASH=${{ github.ref_name }}-${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy the app to the PROD env
+    runs-on: ubuntu-latest
+    needs: [ build-webapi, build-webgui ]
+    env:
+      PUBLIC_HOST_PROD: ${{ secrets.PUBLIC_HOST_PROD }}
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+      
+    - name: Substitute environment variables from docker-compose.prod.yml and rename it
+      run: envsubst < compose/docker-compose.prod.yml > compose/docker-compose.yml
+      
+    - name: Copy docker-compose.yml to remote server via SSH
+      uses: appleboy/scp-action@v0.1.3
+      with:
+        host: ${{ secrets.REMOTE_SSH_HOST }}
+        username: ${{ secrets.REMOTE_SSH_USERNAME }}
+        password: ${{ secrets.REMOTE_SSH_PASSWORD }}
+        source: "compose/docker-compose.yml"
+        target: "${{ secrets.REMOTE_SSH_FOLDER_PROD }}"
+        strip_components: 1 # removes the deploy folder when copying over to destination
+
+    - name: Up the Docker compose project on the remote server via SSH
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.REMOTE_SSH_HOST }}
+        username: ${{ secrets.REMOTE_SSH_USERNAME }}
+        password: ${{ secrets.REMOTE_SSH_PASSWORD }}
+        script: cd ${{ secrets.REMOTE_SSH_FOLDER_PROD }} && docker compose up -d --pull always

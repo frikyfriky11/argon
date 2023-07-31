@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>Argon.WebApi</RootNamespace>
+        <AssemblyName>Argon.WebApi</AssemblyName>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Authors>frikyfriky11</Authors>
+        <Description>The web API layer containing the controllers that enable applications to use the application layer and the infrastructure layer for the Argon App</Description>
+        <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <Version>1.0.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Argon.Application\Argon.Application.csproj" />
+        <ProjectReference Include="..\Argon.Infrastructure\Argon.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="EntityFrameworkCore.Exceptions.Common" Version="6.0.3"/>
+        <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0-preview.2.23153.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0-preview.2.23128.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.0-preview.2.23153.2" />
+        <PackageReference Include="NSwag.AspNetCore" Version="13.19.0" />
+        <PackageReference Include="NSwag.MSBuild" Version="13.19.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Serilog" Version="2.12.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
+        <PackageReference Include="Serilog.Expressions" Version="3.4.1" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="3.4.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    </PropertyGroup>
+
+    <Target Name="NSwag" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)' == 'Debug' And '$(CI)' != 'True' ">
+        <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;RUNNING_NSWAG=True" Command="$(NSwagExe_Net60) run nswag.json /variables:Configuration=$(Configuration) /variables:RunningNSwag=true"/>
+    </Target>
+
+</Project>

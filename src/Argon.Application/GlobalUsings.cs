@@ -1,0 +1,17 @@
+﻿global using Argon.Application.Common.Behaviours;
+global using Argon.Application.Common.Exceptions;
+global using Argon.Application.Common.Interfaces;
+global using Argon.Domain.Entities;
+global using AutoMapper.QueryableExtensions;
+global using AutoMapper;
+global using FluentValidation.Results;
+global using FluentValidation;
+global using JetBrains.Annotations;
+global using MediatR;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.DependencyInjection;
+global using NSwag.Annotations;
+global using Serilog;
+global using System.Diagnostics;
+global using System.Reflection;
+global using System.Text.Json.Serialization;

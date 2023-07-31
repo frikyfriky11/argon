@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>Argon.Domain</RootNamespace>
+        <AssemblyName>Argon.Domain</AssemblyName>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>frikyfriky11</Authors>
+        <Description>The domain layer containing the domain entities for the Argon App</Description>
+        <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
+        <Version>1.0.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NodaTime" Version="3.1.9" />
+    </ItemGroup>
+
+</Project>

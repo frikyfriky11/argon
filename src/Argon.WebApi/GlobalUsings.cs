@@ -1,0 +1,14 @@
+﻿global using Argon.Application.Common.Exceptions;
+global using Argon.Application.Extensions;
+global using Argon.Infrastructure.Extensions;
+global using Argon.Infrastructure.Persistence;
+global using Argon.WebApi.Extensions;
+global using Argon.WebApi.Filters;
+global using EntityFramework.Exceptions.Common;
+global using FluentValidation.AspNetCore;
+global using JetBrains.Annotations;
+global using MediatR;
+global using Microsoft.AspNetCore.Mvc.Filters;
+global using Microsoft.AspNetCore.Mvc;
+global using Serilog.Events;
+global using Serilog;

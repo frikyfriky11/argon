@@ -1,0 +1,62 @@
+﻿services:
+  db:
+    image: "postgres:15.3-alpine"
+    environment:
+      POSTGRES_PASSWORD: "Passw0rd!"
+      POSTGRES_DB: "ArgonDb"
+    volumes:
+      - "dbdata:/var/lib/postgresql/data"
+    networks:
+      - "data"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  webapi:
+    image: "${DOCKER_REGISTRY_URL}/argon/webapi:latest-develop"
+    environment:
+      Cors__Origins__0: "https://${PUBLIC_HOST_TEST}"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=ArgonDb;User Id=postgres;Password=Passw0rd!;"
+    restart: unless-stopped
+    networks:
+      - "traefik"
+      - "data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.argon-test-webapi.rule: "Host(`${PUBLIC_HOST_TEST}`) && PathPrefix(`/api/`)"
+      traefik.http.routers.argon-test-webapi.tls.certresolver: "sslresolver"
+      traefik.http.routers.argon-test-webapi.middlewares: "basic-auth@file, argon-test-webapi-stripprefix"
+      traefik.http.middlewares.argon-test-webapi-stripprefix.stripprefix.prefixes: "/api/"
+      traefik.http.services.argon-test-webapi.loadbalancer.server.port: "80"
+      traefik.docker.network: "traefik_proxy"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  webgui:
+    image: "${DOCKER_REGISTRY_URL}/argon/webgui:latest-develop"
+    restart: unless-stopped
+    networks:
+      - "traefik"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.argon-test-webgui.rule: "Host(`${PUBLIC_HOST_TEST}`)"
+      traefik.http.routers.argon-test-webgui.tls.certresolver: "sslresolver"
+      traefik.http.routers.argon-test-webgui.middlewares: "basic-auth@file"
+      traefik.http.services.argon-test-webgui.loadbalancer.server.port: "80"
+      traefik.docker.network: "traefik_proxy"
+    depends_on:
+      webapi:
+        condition: service_healthy
+
+volumes:
+  dbdata:
+
+networks:
+  traefik:
+    name: "traefik_proxy"
+    external: true
+
+  data:
