@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import React from "react";
 
 import AccountsFilter from "./AccountsFilter";
@@ -12,8 +13,9 @@ export default function Filters({
   accountIds,
 }: FiltersProps) {
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
       <AccountsFilter onChange={onAccountIdsChange} values={accountIds} />
-    </>
+      <DescriptionFilter onChange={onDescriptionChange} value={description} />
+    </Box>
   );
 }
