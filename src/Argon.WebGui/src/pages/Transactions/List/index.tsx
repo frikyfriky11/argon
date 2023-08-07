@@ -3,16 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
+import Filters from "./Filters";
 import Results from "./Results";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [accountIds, setAccountIds] = useState<string[]>([]);
 
   const transactions = useQuery({
-    queryKey: ["transactions", page, rowsPerPage],
-    queryFn: () => new TransactionsClient().getList([], page + 1, rowsPerPage),
+    queryKey: ["transactions", accountIds, page, rowsPerPage],
+    queryFn: () =>
+      new TransactionsClient().getList(accountIds, page + 1, rowsPerPage),
     keepPreviousData: true,
   });
 
@@ -27,6 +30,7 @@ export default function Index() {
   return (
     <Stack spacing={4}>
       <Toolbar />
+      <Filters accountIds={accountIds} onAccountIdsChange={setAccountIds} />
       <Results
         onPageChange={setPage}
         onPageSizeChange={setRowsPerPage}
