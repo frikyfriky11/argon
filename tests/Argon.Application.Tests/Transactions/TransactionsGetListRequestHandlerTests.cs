@@ -20,7 +20,7 @@ public class TransactionsGetListRequestHandlerTests
   private IMapper _mapper = null!;
 
   [Test]
-  public async Task Handle_ShouldCompleteCorrectly_WithValidRequest()
+  public async Task Handle_ShouldRetrieveAllTransactions_WithoutFilters()
   {
     // arrange
     List<Transaction> sampleEntities = new()
@@ -33,7 +33,7 @@ public class TransactionsGetListRequestHandlerTests
     await _dbContext.Transactions.AddRangeAsync(sampleEntities);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, 1, 2);
+    TransactionsGetListRequest request = new(null, null, 1, 2);
 
     List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
       .OrderBy(x => x.Date)
@@ -53,12 +53,13 @@ public class TransactionsGetListRequestHandlerTests
   }
 
   [Test]
-  public async Task Handle_ShouldCompleteCorrectly_WithAccountIdsFilter()
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedIds_WithAccountIdsFilter()
   {
     // arrange
     Account bankAccount = new() { Name = "Bank" };
     Account groceriesAccount = new() { Name = "Groceries" };
     Account carAccount = new() { Name = "Car" };
+    Account rentAccount = new() { Name = "Rent" };
 
     List<Transaction> sampleEntities = new()
     {
@@ -73,11 +74,20 @@ public class TransactionsGetListRequestHandlerTests
       },
       new Transaction
       {
-        Description = "test transaction 2",
+        Description = "gas filling",
         TransactionRows = new List<TransactionRow>
         {
           new() { Account = carAccount, Debit = 100 },
           new() { Account = bankAccount, Credit = 100 },
+        },
+      },
+      new Transaction
+      {
+        Description = "rent paying",
+        TransactionRows = new List<TransactionRow>
+        {
+          new() { Account = rentAccount, Debit = 600 },
+          new() { Account = bankAccount, Credit = 600 },
         },
       },
     };
@@ -85,11 +95,11 @@ public class TransactionsGetListRequestHandlerTests
     await _dbContext.Transactions.AddRangeAsync(sampleEntities);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(new List<Guid> { groceriesAccount.Id }, 1, 25);
+    TransactionsGetListRequest request = new(new List<Guid> { groceriesAccount.Id, rentAccount.Id }, null);
 
     List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
       .OrderBy(x => x.Date)
-      .Take(1)
+      .Where(x => x.TransactionRows.Any(row => request.AccountIds!.Contains(row.AccountId)))
       .ToList());
 
     // act
@@ -99,7 +109,41 @@ public class TransactionsGetListRequestHandlerTests
     result.Items.Should().BeEquivalentTo(expected);
     result.PageNumber.Should().Be(1);
     result.TotalPages.Should().Be(1);
-    result.TotalCount.Should().Be(1);
+    result.TotalCount.Should().Be(2);
+    result.HasNextPage.Should().Be(false);
+    result.HasPreviousPage.Should().Be(false);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDescription_WithDescriptionFilter()
+  {
+    // arrange
+    List<Transaction> sampleEntities = new()
+    {
+      new Transaction { Description = "grocery shopping 1" },
+      new Transaction { Description = "grocery shopping 2" },
+      new Transaction { Description = "gas filling" },
+      new Transaction { Description = "rent paying" },
+    };
+
+    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, "shopping");
+
+    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
+      .OrderBy(x => x.Date)
+      .Where(x => x.Description.Contains(request.Description!))
+      .ToList());
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().BeEquivalentTo(expected);
+    result.PageNumber.Should().Be(1);
+    result.TotalPages.Should().Be(1);
+    result.TotalCount.Should().Be(2);
     result.HasNextPage.Should().Be(false);
     result.HasPreviousPage.Should().Be(false);
   }

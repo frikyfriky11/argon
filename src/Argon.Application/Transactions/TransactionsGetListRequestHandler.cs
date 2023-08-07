@@ -7,10 +7,11 @@ namespace Argon.Application.Transactions;
 ///   The request to get a list of Transaction entities
 /// </summary>
 /// <param name="AccountIds">The account ids used in the transaction rows</param>
+/// <param name="Description">The description used in the transaction</param>
 /// <param name="PageNumber">The page number (defaults to 1)</param>
 /// <param name="PageSize">The page size (defaults to 25)</param>
 [PublicAPI]
-public record TransactionsGetListRequest(List<Guid>? AccountIds, int PageNumber = 1, int PageSize = 25)
+public record TransactionsGetListRequest(List<Guid>? AccountIds, string? Description, int PageNumber = 1, int PageSize = 25)
   : PaginatedListRequest(PageNumber, PageSize),
     IRequest<PaginatedList<TransactionsGetListResponse>>; 
 
@@ -57,6 +58,7 @@ public class TransactionsGetListRequestHandler : IRequestHandler<TransactionsGet
       .Transactions
       .AsNoTracking()
       .Where(transaction => request.AccountIds == null || request.AccountIds.Count == 0 || transaction.TransactionRows.Any(row => request.AccountIds.Contains(row.AccountId)))
+      .Where(transaction => string.IsNullOrWhiteSpace(request.Description) ||  transaction.Description.Contains(request.Description))
       .OrderByDescending(transaction => transaction.Date)
       .ProjectTo<TransactionsGetListResponse>(_mapper.ConfigurationProvider)
       .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);

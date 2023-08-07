@@ -11,11 +11,17 @@ export default function Index() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [accountIds, setAccountIds] = useState<string[]>([]);
+  const [description, setDescription] = useState<string | null>(null);
 
   const transactions = useQuery({
-    queryKey: ["transactions", accountIds, page, rowsPerPage],
+    queryKey: ["transactions", accountIds, description, page, rowsPerPage],
     queryFn: () =>
-      new TransactionsClient().getList(accountIds, page + 1, rowsPerPage),
+      new TransactionsClient().getList(
+        accountIds,
+        description,
+        page + 1,
+        rowsPerPage,
+      ),
     keepPreviousData: true,
   });
 
@@ -30,7 +36,12 @@ export default function Index() {
   return (
     <Stack spacing={4}>
       <Toolbar />
-      <Filters accountIds={accountIds} onAccountIdsChange={setAccountIds} />
+      <Filters
+        accountIds={accountIds}
+        description={description}
+        onAccountIdsChange={setAccountIds}
+        onDescriptionChange={setDescription}
+      />
       <Results
         onPageChange={setPage}
         onPageSizeChange={setRowsPerPage}
