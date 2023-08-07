@@ -379,17 +379,22 @@ export class TransactionsClient extends ServiceBase {
     /**
      * Gets a list of Transactions
      * @param accountIds (optional) The account ids used in the transaction rows
-     * @param description (optional) 
      * @param description (optional) The description used in the transaction
+     * @param dateFrom (optional) The start date to use in the search of the transaction
+     * @param dateTo (optional) The end date to use in the search of the transaction
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, description: string | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken | undefined): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, description: string | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken | undefined): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
         if (description !== undefined && description !== null)
             url_ += "Description=" + encodeURIComponent("" + description) + "&";
+        if (dateFrom !== undefined && dateFrom !== null)
+            url_ += "DateFrom=" + encodeURIComponent(dateFrom ? "" + dateFrom.toString() : "") + "&";
+        if (dateTo !== undefined && dateTo !== null)
+            url_ += "DateTo=" + encodeURIComponent(dateTo ? "" + dateTo.toString() : "") + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)

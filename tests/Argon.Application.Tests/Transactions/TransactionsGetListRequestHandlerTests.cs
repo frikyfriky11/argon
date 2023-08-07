@@ -33,7 +33,7 @@ public class TransactionsGetListRequestHandlerTests
     await _dbContext.Transactions.AddRangeAsync(sampleEntities);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, null, 1, 2);
+    TransactionsGetListRequest request = new(null, null, null, null, 1, 2);
 
     List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
       .OrderBy(x => x.Date)
@@ -95,7 +95,7 @@ public class TransactionsGetListRequestHandlerTests
     await _dbContext.Transactions.AddRangeAsync(sampleEntities);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(new List<Guid> { groceriesAccount.Id, rentAccount.Id }, null);
+    TransactionsGetListRequest request = new(new List<Guid> { groceriesAccount.Id, rentAccount.Id }, null, null, null);
 
     List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
       .OrderBy(x => x.Date)
@@ -129,11 +129,77 @@ public class TransactionsGetListRequestHandlerTests
     await _dbContext.Transactions.AddRangeAsync(sampleEntities);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, "shopping");
+    TransactionsGetListRequest request = new(null, "shopping", null, null);
 
     List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
       .OrderBy(x => x.Date)
       .Where(x => x.Description.Contains(request.Description!))
+      .ToList());
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().BeEquivalentTo(expected);
+    result.PageNumber.Should().Be(1);
+    result.TotalPages.Should().Be(1);
+    result.TotalCount.Should().Be(2);
+    result.HasNextPage.Should().Be(false);
+    result.HasPreviousPage.Should().Be(false);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDateFrom_WithDateFromFilter()
+  {
+    // arrange
+    List<Transaction> sampleEntities = new()
+    {
+      new Transaction { Date = new DateOnly(2023, 8, 7), Description = "grocery shopping" },
+      new Transaction { Date = new DateOnly(2023, 8, 6), Description = "gas filling" },
+      new Transaction { Date = new DateOnly(2023, 8, 5), Description = "rent paying" },
+    };
+
+    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, new DateTimeOffset(new DateTime(2023, 8, 6)), null);
+
+    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
+      .OrderBy(x => x.Date)
+      .Where(x => x.Date >= DateOnly.FromDateTime(request.DateFrom!.Value.Date))
+      .ToList());
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().BeEquivalentTo(expected);
+    result.PageNumber.Should().Be(1);
+    result.TotalPages.Should().Be(1);
+    result.TotalCount.Should().Be(2);
+    result.HasNextPage.Should().Be(false);
+    result.HasPreviousPage.Should().Be(false);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDateTo_WithDateToFilter()
+  {
+    // arrange
+    List<Transaction> sampleEntities = new()
+    {
+      new Transaction { Date = new DateOnly(2023, 8, 7), Description = "grocery shopping" },
+      new Transaction { Date = new DateOnly(2023, 8, 6), Description = "gas filling" },
+      new Transaction { Date = new DateOnly(2023, 8, 5), Description = "rent paying" },
+    };
+
+    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, new DateTimeOffset(new DateTime(2023, 8, 6)));
+
+    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
+      .OrderBy(x => x.Date)
+      .Where(x => x.Date <= DateOnly.FromDateTime(request.DateTo!.Value.Date))
       .ToList());
 
     // act
