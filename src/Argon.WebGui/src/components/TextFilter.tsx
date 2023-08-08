@@ -1,15 +1,18 @@
-﻿import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { Button, Popover } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
-import { DateTime } from "luxon";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { Button, Popover, TextField } from "@mui/material";
 import React, { useState } from "react";
 
-export type DateToFilterProps = {
-  onChange: (value: DateTime | null) => void;
-  value: DateTime | null;
+export type TextFilterProps = {
+  onChange: (value: string | null) => void;
+  value: string | null;
+  label: string;
 };
 
-export default function DateToFilter({ onChange, value }: DateToFilterProps) {
+export default function TextFilter({
+  onChange,
+  value,
+  label,
+}: TextFilterProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -29,7 +32,7 @@ export default function DateToFilter({ onChange, value }: DateToFilterProps) {
         onClick={handleClick}
         variant="text"
       >
-        A data {value ? `(!)` : null}
+        {label} {value?.length ? `(!)` : null}
       </Button>
       <Popover
         anchorEl={anchorEl}
@@ -40,7 +43,12 @@ export default function DateToFilter({ onChange, value }: DateToFilterProps) {
         onClose={handleClose}
         open={open}
       >
-        <DatePicker onChange={onChange} value={value} />
+        <TextField
+          onChange={(e) => {
+            onChange(e.target.value !== "" ? e.target.value : null);
+          }}
+          value={value ?? ""}
+        />
       </Popover>
     </div>
   );

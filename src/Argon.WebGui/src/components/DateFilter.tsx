@@ -1,18 +1,20 @@
-﻿import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { Button, Popover } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 
-export type DateFromFilterProps = {
+export type DateFilterProps = {
   onChange: (value: DateTime | null) => void;
   value: DateTime | null;
+  label: string;
 };
 
-export default function DateFromFilter({
+export default function DateFilter({
   onChange,
   value,
-}: DateFromFilterProps) {
+  label,
+}: DateFilterProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -32,7 +34,7 @@ export default function DateFromFilter({
         onClick={handleClick}
         variant="text"
       >
-        Da data {value ? `(!)` : null}
+        {label} {value ? `(!)` : null}
       </Button>
       <Popover
         anchorEl={anchorEl}

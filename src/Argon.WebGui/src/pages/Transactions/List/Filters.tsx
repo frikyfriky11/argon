@@ -2,10 +2,9 @@ import { Box } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 
+import DateFilter from "../../../components/DateFilter";
+import TextFilter from "../../../components/TextFilter";
 import AccountsFilter from "./AccountsFilter";
-import DateFromFilter from "./DateFromFilter";
-import DateToFilter from "./DateToFilter";
-import DescriptionFilter from "./DescriptionFilter";
 
 export type FiltersProps = {
   onAccountIdsChange: (value: string[]) => void;
@@ -31,9 +30,17 @@ export default function Filters({
   return (
     <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
       <AccountsFilter onChange={onAccountIdsChange} values={accountIds} />
-      <DescriptionFilter onChange={onDescriptionChange} value={description} />
-      <DateFromFilter onChange={onDateFromChange} value={dateFrom} />
-      <DateToFilter onChange={onDateToChange} value={dateTo} />
+      <TextFilter
+        label="Descrizione"
+        onChange={onDescriptionChange}
+        value={description}
+      />
+      <DateFilter
+        label="Da data"
+        onChange={onDateFromChange}
+        value={dateFrom}
+      />
+      <DateFilter label="A data" onChange={onDateToChange} value={dateTo} />
     </Box>
   );
 }
