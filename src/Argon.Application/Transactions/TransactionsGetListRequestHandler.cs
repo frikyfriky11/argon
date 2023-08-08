@@ -62,7 +62,7 @@ public class TransactionsGetListRequestHandler : IRequestHandler<TransactionsGet
       .Transactions
       .AsNoTracking()
       .Where(transaction => request.AccountIds == null || request.AccountIds.Count == 0 || transaction.TransactionRows.Any(row => request.AccountIds.Contains(row.AccountId)))
-      .Where(transaction => string.IsNullOrWhiteSpace(request.Description) || transaction.Description.Contains(request.Description))
+      .Where(transaction => string.IsNullOrWhiteSpace(request.Description) || transaction.Description.ToLower().Contains(request.Description.ToLower()))
       .Where(transaction => request.DateFrom == null || transaction.Date >= DateOnly.FromDateTime(request.DateFrom.Value.Date))
       .Where(transaction => request.DateTo == null || transaction.Date <= DateOnly.FromDateTime(request.DateTo.Value.Date))
       .OrderByDescending(transaction => transaction.Date)
