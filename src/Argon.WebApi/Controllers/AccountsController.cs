@@ -97,4 +97,26 @@ public class AccountsController : ControllerBase
 
     return NoContent();
   }
+
+  /// <summary>
+  ///   Toggles the favourite status on an account
+  /// </summary>
+  /// <param name="id">The id of the Account</param>
+  /// <param name="request">The Account entity to update</param>
+  /// <returns>Nothing</returns>
+  /// <response code="204">The Account was correctly updated</response>
+  /// <response code="400">The supplied Account object did not pass validation checks</response>
+  /// <response code="404">A Account with the specified id could not be found</response>
+  [HttpPut("{id:guid}/Favourite")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult> Favourite([FromRoute] Guid id, [FromBody] AccountsFavouriteRequest request)
+  {
+    request.Id = id;
+
+    await _mediator.Send(request);
+
+    return NoContent();
+  }
 }
