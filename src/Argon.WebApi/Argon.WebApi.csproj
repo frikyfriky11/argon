@@ -12,7 +12,7 @@
         <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
         <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <Version>1.0.0</Version>
+        <Version>1.1.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
