@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   FormProvider,
   SubmitHandler,
@@ -49,6 +49,8 @@ export default function Form({
     queryKey: ["accounts"],
     queryFn: () => new AccountsClient().getList(undefined),
   });
+
+  const dateInputRef = useRef<HTMLDivElement | null>(null);
 
   const form = useForm<ITransactionsCreateRequest>({
     defaultValues: {
@@ -167,6 +169,11 @@ export default function Form({
             initialFields.forEach((row) => {
               append(row);
             });
+
+            // focus the date input to be ready to insert new data immediately
+            if (dateInputRef.current) {
+              dateInputRef.current.focus();
+            }
           })(e);
         }}
       >
@@ -176,6 +183,7 @@ export default function Form({
               <InputDate
                 field={"date"}
                 fullWidth
+                inputRef={dateInputRef}
                 label="Data"
                 options={{ required: "La data è obbligatoria" }}
               />
