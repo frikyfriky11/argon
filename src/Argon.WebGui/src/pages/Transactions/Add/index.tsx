@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { enqueueSnackbar } from "notistack";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import {
@@ -21,6 +22,7 @@ import Form from "./Form";
 export default function Add() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [stayAfterSave, setStayAfterSave] = useState(false);
 
   const mutation = useMutation({
     mutationFn: async (data: ITransactionsCreateRequest) =>
@@ -32,7 +34,9 @@ export default function Add() {
         variant: "success",
       });
 
-      navigate("/transactions", { replace: true });
+      if (!stayAfterSave) {
+        navigate("/transactions", { replace: true });
+      }
     },
   });
 
@@ -56,6 +60,8 @@ export default function Add() {
               onSubmit={(data) => {
                 mutation.mutate(data);
               }}
+              setStayAfterSave={setStayAfterSave}
+              stayAfterSave={stayAfterSave}
             />
           </CardContent>
         </Card>
