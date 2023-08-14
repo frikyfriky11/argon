@@ -197,7 +197,7 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
                     new TransactionRowsGetResponse({
                       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                       id: null!,
-                      rowCounter: 3,
+                      rowCounter: formValues.transactionRows.length + 1,
                       credit: null,
                       debit: null,
                       description: "test 3",

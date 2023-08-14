@@ -243,6 +243,7 @@ export default function Form({ onSubmit, isSaving }: FormProps) {
           <Button component={Link} to="/transactions" variant="text">
             Annulla
           </Button>
+                        rowCounter: formValues.transactionRows.length + 1,
         </Stack>
       </form>
     </FormProvider>
