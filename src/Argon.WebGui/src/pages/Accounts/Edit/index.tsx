@@ -17,6 +17,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   AccountsClient,
+  AccountsFavouriteRequest,
   AccountsUpdateRequest,
   IAccountsGetResponse,
 } from "../../../services/backend/BackendClient";
@@ -83,6 +84,30 @@ export default function Edit() {
     },
   });
 
+  const favouriteMutation = useMutation({
+    mutationFn: async () =>
+      new AccountsClient().favourite(
+        id,
+        new AccountsFavouriteRequest({
+          isFavourite: !account.data?.isFavourite,
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["accounts"],
+      });
+
+      enqueueSnackbar(
+        `Conto ${account.data?.name} ${
+          account.data?.isFavourite ? "rimosso dai" : "aggiunto ai"
+        } preferiti`,
+        {
+          variant: "success",
+        },
+      );
+    },
+  });
+
   if (account.isLoading) {
     return <p>Loading account...</p>;
   }
@@ -119,7 +144,11 @@ export default function Edit() {
           </Stack>
         </Stack>
         <Stack direction="row" spacing={2}>
-          <ActionMenu onDelete={deleteMutation.mutate} />
+          <ActionMenu
+            isFavourite={account.data.isFavourite}
+            onDelete={deleteMutation.mutate}
+            onFavourite={favouriteMutation.mutate}
+          />
         </Stack>
       </Stack>
       <Box width="100%">

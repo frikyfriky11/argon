@@ -22,6 +22,11 @@ public class Account : BaseAuditableEntity
   public AccountType Type { get; set; }
 
   /// <summary>
+  ///   Whether the account is marked as favourite
+  /// </summary>
+  public bool IsFavourite { get; set; }
+
+  /// <summary>
   ///   All the transaction rows of this account
   /// </summary>
   public ICollection<TransactionRow> TransactionRows { get; set; } = default!;

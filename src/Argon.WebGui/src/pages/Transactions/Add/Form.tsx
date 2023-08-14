@@ -2,10 +2,18 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import SaveIcon from "@mui/icons-material/Save";
-import { Box, Button, Grid, IconButton, Stack } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Stack,
+  Switch,
+} from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   FormProvider,
   SubmitHandler,
@@ -27,13 +35,22 @@ import {
 export type FormProps = {
   onSubmit: SubmitHandler<ITransactionsCreateRequest>;
   isSaving: boolean;
+  stayAfterSave: boolean;
+  setStayAfterSave: (value: boolean) => void;
 };
 
-export default function Form({ onSubmit, isSaving }: FormProps) {
+export default function Form({
+  onSubmit,
+  isSaving,
+  stayAfterSave,
+  setStayAfterSave,
+}: FormProps) {
   const accounts = useQuery({
     queryKey: ["accounts"],
     queryFn: () => new AccountsClient().getList(undefined),
   });
+
+  const dateInputRef = useRef<HTMLDivElement | null>(null);
 
   const form = useForm<ITransactionsCreateRequest>({
     defaultValues: {
@@ -122,127 +139,178 @@ export default function Form({ onSubmit, isSaving }: FormProps) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          void form.handleSubmit(onSubmit)(e);
+          void form.handleSubmit((data) => {
+            onSubmit(data);
+            form.reset({
+              date: formValues.date,
+              description: "",
+            });
+            // Clear the field array
+            remove();
+            // Add initial fields here
+            const initialFields = [
+              new TransactionRowsCreateRequest({
+                rowCounter: 1,
+                credit: null,
+                debit: null,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                accountId: null!,
+                description: "",
+              }),
+              new TransactionRowsCreateRequest({
+                rowCounter: 2,
+                credit: null,
+                debit: null,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                accountId: null!,
+                description: "",
+              }),
+            ];
+            initialFields.forEach((row) => {
+              append(row);
+            });
+
+            // focus the date input to be ready to insert new data immediately
+            if (dateInputRef.current) {
+              dateInputRef.current.focus();
+            }
+          })(e);
         }}
       >
-        <Grid container spacing={2}>
-          <Grid item sm={3} xs={12}>
-            <InputDate
-              field={"date"}
-              fullWidth
-              label="Data"
-              options={{ required: "La data è obbligatoria" }}
-            />
-          </Grid>
-          <Grid item sm={9} xs={12}>
-            <InputText
-              field={"description"}
-              fullWidth
-              label="Descrizione"
-              options={{
-                required: "La descrizione della transazione è obbligatoria",
-                maxLength: {
-                  value: 100,
-                  message:
-                    "La descrizione della transazione non può superare i 50 caratteri",
-                },
-              }}
-            />
-          </Grid>
-          {fields.map((field, index) => (
-            <Grid item key={field.id} xs={12}>
-              <Stack alignItems="center" direction="row" gap={1}>
-                <Box>
-                  <IconButton>
-                    <DragIndicatorIcon />
-                  </IconButton>
-                </Box>
-                <Grid container item spacing={2}>
-                  <Grid item sm={5} xs={12}>
-                    <InputCombobox
-                      field={`transactionRows.${index}.accountId`}
-                      fullWidth
-                      itemLabel={(item) => item.name}
-                      itemValue={(item) => item.id}
-                      items={accounts.data}
-                      label={"Conto"}
-                      options={{ required: "Il conto è obbligatorio" }}
-                    />
-                  </Grid>
-                  <Grid item sm={3} xs={12}>
-                    <InputText
-                      field={`transactionRows.${index}.description`}
-                      fullWidth
-                      label="Descrizione"
-                      options={{
-                        maxLength: {
-                          value: 100,
-                          message:
-                            "La descrizione della riga non può superare i 100 caratteri",
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item sm={2} xs={2}>
-                    <InputCurrency
-                      field={`transactionRows.${index}.debit`}
-                      fullWidth
-                      label={"Dare"}
-                    />
-                  </Grid>
-                  <Grid item sm={2} xs={2}>
-                    <InputCurrency
-                      field={`transactionRows.${index}.credit`}
-                      fullWidth
-                      label={"Avere"}
-                    />
-                  </Grid>
-                </Grid>
-                <Box>
-                  <IconButton
-                    onClick={() => {
-                      remove(index);
-                    }}
-                  >
-                    <RemoveCircleIcon />
-                  </IconButton>
-                </Box>
-              </Stack>
+        <Stack gap={4}>
+          <Grid container spacing={2}>
+            <Grid item sm={3} xs={12}>
+              <InputDate
+                field={"date"}
+                fullWidth
+                inputRef={dateInputRef}
+                label="Data"
+                options={{ required: "La data è obbligatoria" }}
+              />
             </Grid>
-          ))}
-          <Grid item xs={12}>
-            <Box>
-              <IconButton
-                onClick={() => {
-                  append(
-                    new TransactionRowsCreateRequest({
-                      rowCounter: 3,
-                      credit: null,
-                      debit: null,
-                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      accountId: null!,
-                      description: "test 3",
-                    }),
-                  );
+            <Grid item sm={9} xs={12}>
+              <InputText
+                field={"description"}
+                fullWidth
+                label="Descrizione"
+                options={{
+                  required: "La descrizione della transazione è obbligatoria",
+                  maxLength: {
+                    value: 100,
+                    message:
+                      "La descrizione della transazione non può superare i 50 caratteri",
+                  },
                 }}
-              >
-                <AddCircleIcon />
-              </IconButton>
-            </Box>
+              />
+            </Grid>
+            {fields.map((field, index) => (
+              <Grid item key={field.id} xs={12}>
+                <Stack alignItems="center" direction="row" gap={1}>
+                  <Box>
+                    <IconButton>
+                      <DragIndicatorIcon />
+                    </IconButton>
+                  </Box>
+                  <Grid container item spacing={2}>
+                    <Grid item sm={5} xs={12}>
+                      <InputCombobox
+                        field={`transactionRows.${index}.accountId`}
+                        fullWidth
+                        itemLabel={(item) => item.name}
+                        itemValue={(item) => item.id}
+                        items={accounts.data}
+                        label={"Conto"}
+                        options={{ required: "Il conto è obbligatorio" }}
+                      />
+                    </Grid>
+                    <Grid item sm={3} xs={12}>
+                      <InputText
+                        field={`transactionRows.${index}.description`}
+                        fullWidth
+                        label="Descrizione"
+                        options={{
+                          maxLength: {
+                            value: 100,
+                            message:
+                              "La descrizione della riga non può superare i 100 caratteri",
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item sm={2} xs={2}>
+                      <InputCurrency
+                        field={`transactionRows.${index}.debit`}
+                        fullWidth
+                        label={"Dare"}
+                      />
+                    </Grid>
+                    <Grid item sm={2} xs={2}>
+                      <InputCurrency
+                        field={`transactionRows.${index}.credit`}
+                        fullWidth
+                        label={"Avere"}
+                      />
+                    </Grid>
+                  </Grid>
+                  <Box>
+                    <IconButton
+                      onClick={() => {
+                        remove(index);
+                      }}
+                    >
+                      <RemoveCircleIcon />
+                    </IconButton>
+                  </Box>
+                </Stack>
+              </Grid>
+            ))}
+            <Grid item xs={12}>
+              <Box>
+                <IconButton
+                  onClick={() => {
+                    append(
+                      new TransactionRowsCreateRequest({
+                        rowCounter: formValues.transactionRows.length + 1,
+                        credit: null,
+                        debit: null,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        accountId: null!,
+                        description: "test 3",
+                      }),
+                    );
+                  }}
+                >
+                  <AddCircleIcon />
+                </IconButton>
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
-        <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-          <Button
-            disabled={isSaving}
-            startIcon={<SaveIcon />}
-            type="submit"
-            variant="contained"
-          >
-            Salva
-          </Button>
-          <Button component={Link} to="/transactions" variant="text">
-            Annulla
-          </Button>
+
+          <FormControlLabel
+            control={
+              <Switch
+                onChange={(e) => {
+                  setStayAfterSave(e.target.checked);
+                }}
+                value={stayAfterSave}
+              />
+            }
+            label="Rimani su questa pagina dopo aver salvato"
+          />
+
+          <Stack direction="row" spacing={2}>
+            <Button
+              disabled={isSaving}
+              startIcon={<SaveIcon />}
+              type="submit"
+              variant="contained"
+            >
+              Salva
+            </Button>
+            <Button component={Link} to="/transactions" variant="text">
+              Annulla
+            </Button>
+          </Stack>
         </Stack>
       </form>
     </FormProvider>

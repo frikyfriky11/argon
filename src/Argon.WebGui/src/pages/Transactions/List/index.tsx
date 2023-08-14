@@ -1,18 +1,40 @@
 import { Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { DateTime } from "luxon";
 import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
+import Filters from "./Filters";
 import Results from "./Results";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [accountIds, setAccountIds] = useState<string[]>([]);
+  const [description, setDescription] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<DateTime | null>(null);
+  const [dateTo, setDateTo] = useState<DateTime | null>(null);
 
   const transactions = useQuery({
-    queryKey: ["transactions", page, rowsPerPage],
-    queryFn: () => new TransactionsClient().getList([], page + 1, rowsPerPage),
+    queryKey: [
+      "transactions",
+      accountIds,
+      description,
+      dateFrom,
+      dateTo,
+      page,
+      rowsPerPage,
+    ],
+    queryFn: () =>
+      new TransactionsClient().getList(
+        accountIds,
+        description,
+        dateFrom,
+        dateTo,
+        page + 1,
+        rowsPerPage,
+      ),
     keepPreviousData: true,
   });
 
@@ -27,6 +49,16 @@ export default function Index() {
   return (
     <Stack spacing={4}>
       <Toolbar />
+      <Filters
+        accountIds={accountIds}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        description={description}
+        onAccountIdsChange={setAccountIds}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
+        onDescriptionChange={setDescription}
+      />
       <Results
         onPageChange={setPage}
         onPageSizeChange={setRowsPerPage}

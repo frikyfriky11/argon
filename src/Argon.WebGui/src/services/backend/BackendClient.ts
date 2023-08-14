@@ -359,6 +359,79 @@ export class AccountsClient extends ServiceBase {
         }
         return Promise.resolve<FileResponse>(null as any);
     }
+
+    /**
+     * Toggles the favourite status on an account
+     * @param id The id of the Account
+     * @param request The Account entity to update
+     * @return The Account was correctly updated
+     */
+    favourite(id: string, request: AccountsFavouriteRequest, cancelToken?: CancelToken | undefined): Promise<void> {
+        let url_ = this.baseUrl + "/Accounts/{id}/Favourite";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PUT",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processFavourite(_response));
+        });
+    }
+
+    protected processFavourite(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (let k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied Account object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Account with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
 }
 
 export class TransactionsClient extends ServiceBase {
@@ -379,13 +452,22 @@ export class TransactionsClient extends ServiceBase {
     /**
      * Gets a list of Transactions
      * @param accountIds (optional) The account ids used in the transaction rows
+     * @param description (optional) The description used in the transaction
+     * @param dateFrom (optional) The start date to use in the search of the transaction
+     * @param dateTo (optional) The end date to use in the search of the transaction
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken | undefined): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, description: string | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken | undefined): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
+        if (description !== undefined && description !== null)
+            url_ += "Description=" + encodeURIComponent("" + description) + "&";
+        if (dateFrom !== undefined && dateFrom !== null)
+            url_ += "DateFrom=" + encodeURIComponent(dateFrom ? "" + dateFrom.toString() : "") + "&";
+        if (dateTo !== undefined && dateTo !== null)
+            url_ += "DateTo=" + encodeURIComponent(dateTo ? "" + dateTo.toString() : "") + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)
@@ -718,6 +800,8 @@ export class AccountsGetListResponse implements IAccountsGetListResponse {
     name!: string;
     /** The type of the account */
     type!: AccountType;
+    /** Whether the account is marked as favourite */
+    isFavourite!: boolean;
     /** The total amount that the account has registered */
     totalAmount!: number;
 
@@ -735,6 +819,7 @@ export class AccountsGetListResponse implements IAccountsGetListResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.isFavourite = _data["isFavourite"] !== undefined ? _data["isFavourite"] : <any>null;
             this.totalAmount = _data["totalAmount"] !== undefined ? _data["totalAmount"] : <any>null;
         }
     }
@@ -751,6 +836,7 @@ export class AccountsGetListResponse implements IAccountsGetListResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["isFavourite"] = this.isFavourite !== undefined ? this.isFavourite : <any>null;
         data["totalAmount"] = this.totalAmount !== undefined ? this.totalAmount : <any>null;
         return data;
     }
@@ -764,6 +850,8 @@ export interface IAccountsGetListResponse {
     name: string;
     /** The type of the account */
     type: AccountType;
+    /** Whether the account is marked as favourite */
+    isFavourite: boolean;
     /** The total amount that the account has registered */
     totalAmount: number;
 }
@@ -817,6 +905,8 @@ export class AccountsGetResponse implements IAccountsGetResponse {
     name!: string;
     /** The type of the account */
     type!: AccountType;
+    /** Whether the account is marked as favourite */
+    isFavourite!: boolean;
     /** The total amount that the account has registered */
     totalAmount!: number;
 
@@ -834,6 +924,7 @@ export class AccountsGetResponse implements IAccountsGetResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.isFavourite = _data["isFavourite"] !== undefined ? _data["isFavourite"] : <any>null;
             this.totalAmount = _data["totalAmount"] !== undefined ? _data["totalAmount"] : <any>null;
         }
     }
@@ -850,6 +941,7 @@ export class AccountsGetResponse implements IAccountsGetResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["isFavourite"] = this.isFavourite !== undefined ? this.isFavourite : <any>null;
         data["totalAmount"] = this.totalAmount !== undefined ? this.totalAmount : <any>null;
         return data;
     }
@@ -863,6 +955,8 @@ export interface IAccountsGetResponse {
     name: string;
     /** The type of the account */
     type: AccountType;
+    /** Whether the account is marked as favourite */
+    isFavourite: boolean;
     /** The total amount that the account has registered */
     totalAmount: number;
 }
@@ -1061,6 +1155,44 @@ export interface IAccountsUpdateRequest {
     name: string;
     /** The type of the account */
     type: AccountType;
+}
+
+/** The request to update the favourite status on an account Whether the account is marked as favourite */
+export class AccountsFavouriteRequest implements IAccountsFavouriteRequest {
+    isFavourite!: boolean;
+
+    constructor(data?: IAccountsFavouriteRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.isFavourite = _data["isFavourite"] !== undefined ? _data["isFavourite"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): AccountsFavouriteRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new AccountsFavouriteRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["isFavourite"] = this.isFavourite !== undefined ? this.isFavourite : <any>null;
+        return data;
+    }
+}
+
+/** The request to update the favourite status on an account Whether the account is marked as favourite */
+export interface IAccountsFavouriteRequest {
+    isFavourite: boolean;
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */

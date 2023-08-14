@@ -21,7 +21,7 @@ import {
   TransactionsClient,
   TransactionsUpdateRequest,
 } from "../../../services/backend/BackendClient";
-import ActionMenu from "../../Accounts/Edit/ActionMenu";
+import ActionMenu from "./ActionMenu";
 import Form from "./Form";
 
 export default function Edit() {

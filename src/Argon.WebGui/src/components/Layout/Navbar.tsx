@@ -1,5 +1,7 @@
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, AppBarProps, IconButton, Toolbar } from "@mui/material";
+import { AppBar, AppBarProps, Box, IconButton, Toolbar } from "@mui/material";
+
+import LanguageSelector from "./LanguageSelector";
 
 export type DashboardNavbarProps = {
   onSidebarOpen: () => void;
@@ -30,19 +32,26 @@ export default function Navbar({
             minHeight: 64,
             left: 0,
             px: 2,
+            justifyContent: "space-between",
           }}
         >
-          <IconButton
-            onClick={onSidebarOpen}
-            sx={{
-              display: {
-                xs: "inline-flex",
-                lg: "none",
-              },
-            }}
-          >
-            <MenuIcon fontSize="small" />
-          </IconButton>
+          <Box>
+            <IconButton
+              onClick={onSidebarOpen}
+              sx={{
+                display: {
+                  xs: "inline-flex",
+                  lg: "none",
+                },
+              }}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Box>
+
+          <Box>
+            <LanguageSelector />
+          </Box>
         </Toolbar>
       </AppBar>
     </>
