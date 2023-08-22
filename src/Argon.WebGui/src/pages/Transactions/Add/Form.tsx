@@ -273,9 +273,9 @@ export default function Form({
                         rowCounter: formValues.transactionRows.length + 1,
                         credit: null,
                         debit: null,
+                        description: "",
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         accountId: null!,
-                        description: "test 3",
                       }),
                     );
                   }}
