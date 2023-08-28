@@ -207,7 +207,7 @@ export default function Form({
               <Grid item key={field.id} xs={12}>
                 <Stack alignItems="center" direction="row" gap={1}>
                   <Box>
-                    <IconButton>
+                    <IconButton tabIndex={-1}>
                       <DragIndicatorIcon />
                     </IconButton>
                   </Box>
@@ -257,6 +257,7 @@ export default function Form({
                       onClick={() => {
                         remove(index);
                       }}
+                      tabIndex={-1}
                     >
                       <RemoveCircleIcon />
                     </IconButton>
@@ -279,6 +280,7 @@ export default function Form({
                       }),
                     );
                   }}
+                  tabIndex={-1}
                 >
                   <AddCircleIcon />
                 </IconButton>

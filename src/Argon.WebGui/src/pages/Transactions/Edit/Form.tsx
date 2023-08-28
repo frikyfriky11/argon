@@ -132,7 +132,7 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
             <Grid item key={field.id} xs={12}>
               <Stack alignItems="center" direction="row" gap={1}>
                 <Box>
-                  <IconButton>
+                  <IconButton tabIndex={-1}>
                     <DragIndicatorIcon />
                   </IconButton>
                 </Box>
@@ -182,6 +182,7 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
                     onClick={() => {
                       remove(index);
                     }}
+                    tabIndex={-1}
                   >
                     <RemoveCircleIcon />
                   </IconButton>
@@ -206,6 +207,7 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
                     }),
                   );
                 }}
+                tabIndex={-1}
               >
                 <AddCircleIcon />
               </IconButton>
