@@ -33,7 +33,11 @@ export default function Edit() {
 
   const transaction = useQuery({
     queryKey: ["transactions", id],
-    queryFn: () => new TransactionsClient().get(id),
+    queryFn: () =>
+      new TransactionsClient().get(id).then((data) => {
+        data.transactionRows.sort((a, b) => a.rowCounter - b.rowCounter);
+        return data;
+      }),
   });
 
   const updateMutation = useMutation({
