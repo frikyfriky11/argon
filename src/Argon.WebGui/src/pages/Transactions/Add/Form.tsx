@@ -12,6 +12,7 @@ import {
   Switch,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import Decimal from "decimal.js";
 import { DateTime } from "luxon";
 import { useEffect, useRef } from "react";
 import {
@@ -88,37 +89,37 @@ export default function Form({
     const transactionRows = formValues.transactionRows;
 
     const debitSum = transactionRows.reduce(
-      (acc, row) => acc + (row.debit ?? 0),
-      0,
+      (acc, row) => acc.plus(new Decimal(row.debit ?? 0)),
+      new Decimal(0),
     );
     const creditSum = transactionRows.reduce(
-      (acc, row) => acc + (row.credit ?? 0),
-      0,
+      (acc, row) => acc.plus(new Decimal(row.credit ?? 0)),
+      new Decimal(0),
     );
 
-    const missing = debitSum - creditSum;
+    const missing = debitSum.minus(creditSum);
 
-    if (missing) {
+    if (!missing.isZero()) {
       const firstEmptyRowIndex = transactionRows.findIndex(
         (row) => row.debit === null && row.credit === null,
       );
 
       if (firstEmptyRowIndex != -1) {
-        if (missing < 0) {
+        if (missing.isNegative()) {
           update(
             firstEmptyRowIndex,
             new TransactionRowsCreateRequest({
               ...transactionRows[firstEmptyRowIndex],
-              debit: Math.abs(missing),
+              debit: Math.abs(missing.toNumber()),
             }),
           );
         }
-        if (missing > 0) {
+        if (missing.isPositive()) {
           update(
             firstEmptyRowIndex,
             new TransactionRowsCreateRequest({
               ...transactionRows[firstEmptyRowIndex],
-              credit: Math.abs(missing),
+              credit: Math.abs(missing.toNumber()),
             }),
           );
         }
