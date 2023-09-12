@@ -21,6 +21,11 @@ public interface IApplicationDbContext
   DbSet<TransactionRow> TransactionRows { get; }
 
   /// <summary>
+  ///   This table contains all the BudgetItem entities
+  /// </summary>
+  DbSet<BudgetItem> BudgetItems { get; }
+
+  /// <summary>
   ///   Saves the changes asynchronously
   /// </summary>
   /// <param name="cancellationToken">The cancellation token to use</param>

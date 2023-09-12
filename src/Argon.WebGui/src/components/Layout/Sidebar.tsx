@@ -1,3 +1,4 @@
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FolderIcon from "@mui/icons-material/Folder";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
@@ -31,6 +32,11 @@ const items = [
     href: "/transactions",
     icon: <ReceiptLongIcon fontSize="small" />,
     title: "Transazioni",
+  },
+  {
+    href: "/budget",
+    icon: <AccountBalanceWalletIcon fontSize="small" />,
+    title: "Budget per conto",
   },
 ];
 

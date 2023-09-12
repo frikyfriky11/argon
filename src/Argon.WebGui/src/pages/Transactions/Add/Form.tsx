@@ -48,7 +48,7 @@ export default function Form({
 }: FormProps) {
   const accounts = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => new AccountsClient().getList(undefined),
+    queryFn: () => new AccountsClient().getList(null, null),
   });
 
   const dateInputRef = useRef<HTMLDivElement | null>(null);

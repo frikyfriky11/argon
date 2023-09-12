@@ -24,6 +24,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
   /// <inheritdoc />
   public DbSet<TransactionRow> TransactionRows => Set<TransactionRow>();
 
+  /// <inheritdoc />
+  public DbSet<BudgetItem> BudgetItems => Set<BudgetItem>();
+
   protected override void OnModelCreating(ModelBuilder builder)
   {
     // apply all the configurations for every entity that implements IEntityTypeConfiguration<T>

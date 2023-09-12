@@ -10,6 +10,7 @@ const Dashboard = lazy(() => import("../pages/Dashboard"));
 const AccountsList = lazy(() => import("../pages/Accounts/List"));
 const AccountsAdd = lazy(() => import("../pages/Accounts/Add"));
 const AccountsEdit = lazy(() => import("../pages/Accounts/Edit"));
+const BudgetList = lazy(() => import("../pages/Budget/List"));
 const TransactionsList = lazy(() => import("../pages/Transactions/List"));
 const TransactionsAdd = lazy(() => import("../pages/Transactions/Add"));
 const TransactionsEdit = lazy(() => import("../pages/Transactions/Edit"));
@@ -35,6 +36,7 @@ export default function MainRouter() {
             <Route element={<AccountsList />} path="/accounts" />
             <Route element={<AccountsAdd />} path="/accounts/add" />
             <Route element={<AccountsEdit />} path="/accounts/:id" />
+            <Route element={<BudgetList />} path="/budget" />
             <Route element={<TransactionsList />} path="/transactions" />
             <Route element={<TransactionsAdd />} path="/transactions/add" />
             <Route element={<TransactionsEdit />} path="/transactions/:id" />

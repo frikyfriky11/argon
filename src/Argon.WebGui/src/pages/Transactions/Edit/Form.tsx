@@ -33,7 +33,7 @@ export type FormProps = {
 export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
   const accounts = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => new AccountsClient().getList(undefined),
+    queryFn: () => new AccountsClient().getList(null, null),
   });
 
   const form = useForm<ITransactionsGetResponse>({
