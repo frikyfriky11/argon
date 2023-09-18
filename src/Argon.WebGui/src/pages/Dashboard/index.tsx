@@ -8,7 +8,7 @@ import FavouriteAccounts from "./FavouriteAccounts";
 export default function Dashboard() {
   const accounts = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => new AccountsClient().getList(undefined),
+    queryFn: () => new AccountsClient().getList(null, null),
   });
 
   if (accounts.isLoading) {

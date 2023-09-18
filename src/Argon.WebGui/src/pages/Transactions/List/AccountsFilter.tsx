@@ -26,7 +26,7 @@ export default function AccountsFilter({
 }: AccountsFilterProps) {
   const accounts = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => new AccountsClient().getList(undefined),
+    queryFn: () => new AccountsClient().getList(null, null),
   });
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);

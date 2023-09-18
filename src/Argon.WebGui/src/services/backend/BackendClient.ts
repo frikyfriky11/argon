@@ -30,14 +30,15 @@ export class AccountsClient extends ServiceBase {
 
     /**
      * Gets a list of Accounts
-     * @param request (optional) 
+     * @param totalAmountsFrom (optional) 
+     * @param totalAmountsTo (optional) 
      */
-    getList(request: AccountsGetListRequest | undefined, cancelToken?: CancelToken | undefined): Promise<AccountsGetListResponse[]> {
+    getList(totalAmountsFrom: DateTime | null | undefined, totalAmountsTo: DateTime | null | undefined, cancelToken?: CancelToken | undefined): Promise<AccountsGetListResponse[]> {
         let url_ = this.baseUrl + "/Accounts?";
-        if (request === null)
-            throw new Error("The parameter 'request' cannot be null.");
-        else if (request !== undefined)
-            url_ += "request=" + encodeURIComponent("" + request) + "&";
+        if (totalAmountsFrom !== undefined && totalAmountsFrom !== null)
+            url_ += "TotalAmountsFrom=" + encodeURIComponent(totalAmountsFrom ? "" + totalAmountsFrom.toString() : "") + "&";
+        if (totalAmountsTo !== undefined && totalAmountsTo !== null)
+            url_ += "TotalAmountsTo=" + encodeURIComponent(totalAmountsTo ? "" + totalAmountsTo.toString() : "") + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
@@ -431,6 +432,158 @@ export class AccountsClient extends ServiceBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
         return Promise.resolve<void>(null as any);
+    }
+}
+
+export class BudgetItemsClient extends ServiceBase {
+    private instance: AxiosInstance;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        super();
+
+        this.instance = instance ? instance : axios.create();
+
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : this.getBaseUrl("");
+
+    }
+
+    /**
+     * Gets a list of Budget Items
+     * @param year (optional) 
+     * @param month (optional) 
+     */
+    getList(year: number | undefined, month: number | undefined, cancelToken?: CancelToken | undefined): Promise<BudgetItemsGetListResponse[]> {
+        let url_ = this.baseUrl + "/BudgetItems?";
+        if (year === null)
+            throw new Error("The parameter 'year' cannot be null.");
+        else if (year !== undefined)
+            url_ += "Year=" + encodeURIComponent("" + year) + "&";
+        if (month === null)
+            throw new Error("The parameter 'month' cannot be null.");
+        else if (month !== undefined)
+            url_ += "Month=" + encodeURIComponent("" + month) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGetList(_response));
+        });
+    }
+
+    protected processGetList(response: AxiosResponse): Promise<BudgetItemsGetListResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (let k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(BudgetItemsGetListResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<BudgetItemsGetListResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<BudgetItemsGetListResponse[]>(null as any);
+    }
+
+    /**
+     * Creates, updates or deletes a Budget Item
+     * @param request The Budget Item entity to create, update or delete
+     * @return The id of the newly created or updated Budget Item, or null if it was deleted
+     */
+    upsert(request: BudgetItemsUpsertRequest, cancelToken?: CancelToken | undefined): Promise<BudgetItemsUpsertResponse> {
+        let url_ = this.baseUrl + "/BudgetItems";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PUT",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processUpsert(_response));
+        });
+    }
+
+    protected processUpsert(response: AxiosResponse): Promise<BudgetItemsUpsertResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (let k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = BudgetItemsUpsertResponse.fromJS(resultData200);
+            return Promise.resolve<BudgetItemsUpsertResponse>(result200);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied Budget Item object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<BudgetItemsUpsertResponse>(null as any);
     }
 }
 
@@ -865,38 +1018,6 @@ export enum AccountType {
     Credit = 5,
 }
 
-/** The request to get a list of Account entities */
-export class AccountsGetListRequest implements IAccountsGetListRequest {
-
-    constructor(data?: IAccountsGetListRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-    }
-
-    static fromJS(data: any): AccountsGetListRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new AccountsGetListRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        return data;
-    }
-}
-
-/** The request to get a list of Account entities */
-export interface IAccountsGetListRequest {
-}
-
 /** The result of the get request of a Account entity */
 export class AccountsGetResponse implements IAccountsGetResponse {
     /** The id of the account */
@@ -1193,6 +1314,154 @@ export class AccountsFavouriteRequest implements IAccountsFavouriteRequest {
 /** The request to update the favourite status on an account Whether the account is marked as favourite */
 export interface IAccountsFavouriteRequest {
     isFavourite: boolean;
+}
+
+/** The result of the Budget Item entities get list */
+export class BudgetItemsGetListResponse implements IBudgetItemsGetListResponse {
+    id!: string;
+    accountId!: string;
+    accountType!: AccountType;
+    year!: number;
+    month!: number;
+    amount!: number;
+
+    constructor(data?: IBudgetItemsGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
+            this.year = _data["year"] !== undefined ? _data["year"] : <any>null;
+            this.month = _data["month"] !== undefined ? _data["month"] : <any>null;
+            this.amount = _data["amount"] !== undefined ? _data["amount"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BudgetItemsGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new BudgetItemsGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
+        data["year"] = this.year !== undefined ? this.year : <any>null;
+        data["month"] = this.month !== undefined ? this.month : <any>null;
+        data["amount"] = this.amount !== undefined ? this.amount : <any>null;
+        return data;
+    }
+}
+
+/** The result of the Budget Item entities get list */
+export interface IBudgetItemsGetListResponse {
+    id: string;
+    accountId: string;
+    accountType: AccountType;
+    year: number;
+    month: number;
+    amount: number;
+}
+
+/** The result of the creation or update of a new Budget Item entity */
+export class BudgetItemsUpsertResponse implements IBudgetItemsUpsertResponse {
+    /** The id of the newly created or updated Budget Item */
+    id!: string | null;
+
+    constructor(data?: IBudgetItemsUpsertResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BudgetItemsUpsertResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new BudgetItemsUpsertResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        return data;
+    }
+}
+
+/** The result of the creation or update of a new Budget Item entity */
+export interface IBudgetItemsUpsertResponse {
+    /** The id of the newly created or updated Budget Item */
+    id: string | null;
+}
+
+/** The request to insert or update a budget item */
+export class BudgetItemsUpsertRequest implements IBudgetItemsUpsertRequest {
+    accountId!: string;
+    year!: number;
+    month!: number;
+    amount!: number | null;
+
+    constructor(data?: IBudgetItemsUpsertRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.year = _data["year"] !== undefined ? _data["year"] : <any>null;
+            this.month = _data["month"] !== undefined ? _data["month"] : <any>null;
+            this.amount = _data["amount"] !== undefined ? _data["amount"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BudgetItemsUpsertRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new BudgetItemsUpsertRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["year"] = this.year !== undefined ? this.year : <any>null;
+        data["month"] = this.month !== undefined ? this.month : <any>null;
+        data["amount"] = this.amount !== undefined ? this.amount : <any>null;
+        return data;
+    }
+}
+
+/** The request to insert or update a budget item */
+export interface IBudgetItemsUpsertRequest {
+    accountId: string;
+    year: number;
+    month: number;
+    amount: number | null;
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */

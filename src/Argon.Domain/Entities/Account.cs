@@ -30,4 +30,9 @@ public class Account : BaseAuditableEntity
   ///   All the transaction rows of this account
   /// </summary>
   public ICollection<TransactionRow> TransactionRows { get; set; } = default!;
+
+  /// <summary>
+  ///   All the budget items of this account
+  /// </summary>
+  public ICollection<BudgetItem> BudgetItems { get; set; } = default!;
 }
