@@ -25,9 +25,9 @@ public class TransactionsGetListRequestHandlerTests
     // arrange
     List<Transaction> sampleEntities = new()
     {
-      new Transaction { Description = "test transaction 1" },
-      new Transaction { Description = "test transaction 2" },
-      new Transaction { Description = "test transaction 3" },
+      new Transaction { Date = new DateOnly(2023, 9, 18), Description = "test transaction 1" },
+      new Transaction { Date = new DateOnly(2023, 9, 19), Description = "test transaction 2" },
+      new Transaction { Date = new DateOnly(2023, 9, 20), Description = "test transaction 3" },
     };
 
     await _dbContext.Transactions.AddRangeAsync(sampleEntities);
@@ -36,7 +36,9 @@ public class TransactionsGetListRequestHandlerTests
     TransactionsGetListRequest request = new(null, null, null, null, 1, 2);
 
     List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
-      .OrderBy(x => x.Date)
+      .OrderByDescending(transaction => transaction.Date)
+      .ThenByDescending(transaction => transaction.Created)
+      .ThenByDescending(transaction => transaction.Id)
       .Take(2)
       .ToList());
 
