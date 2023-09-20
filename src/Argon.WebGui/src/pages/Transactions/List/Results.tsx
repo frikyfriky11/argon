@@ -51,7 +51,7 @@ export default function Results({
       .map((row) => row.accountName);
 
     if (fromAccounts.length > 0 && toAccounts.length > 0) {
-      return `${toAccounts.join(" and ")} -> ${fromAccounts.join(" and ")}`;
+      return `${toAccounts.join(" e ")} -> ${fromAccounts.join(" e ")}`;
     } else {
       return null;
     }
