@@ -129,68 +129,70 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
               }}
             />
           </Grid>
-          {fields.map((field, index) => (
-            <Grid item key={field.id} xs={12}>
-              <Stack alignItems="center" direction="row" gap={1}>
-                <Box>
-                  <IconButton tabIndex={-1}>
-                    <DragIndicatorIcon />
-                  </IconButton>
-                </Box>
-                <Grid container item spacing={2}>
-                  <Grid item sm={5} xs={12}>
-                    <InputCombobox
-                      field={`transactionRows.${index}.accountId`}
-                      fullWidth
-                      itemLabel={(item) => item.name}
-                      itemValue={(item) => item.id}
-                      items={accounts.data}
-                      label={"Conto"}
-                      options={{ required: "Il conto è obbligatorio" }}
-                    />
+          <Grid container item spacing={4}>
+            {fields.map((field, index) => (
+              <Grid gap={2} item key={field.id} xs={12}>
+                <Stack alignItems="center" direction="row" gap={1}>
+                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <IconButton tabIndex={-1}>
+                      <DragIndicatorIcon />
+                    </IconButton>
+                  </Box>
+                  <Grid container item spacing={2}>
+                    <Grid item sm={5} xs={12}>
+                      <InputCombobox
+                        field={`transactionRows.${index}.accountId`}
+                        fullWidth
+                        itemLabel={(item) => item.name}
+                        itemValue={(item) => item.id}
+                        items={accounts.data}
+                        label={"Conto"}
+                        options={{ required: "Il conto è obbligatorio" }}
+                      />
+                    </Grid>
+                    <Grid item sm={3} xs={12}>
+                      <InputText
+                        field={`transactionRows.${index}.description`}
+                        fullWidth
+                        label="Descrizione"
+                        options={{
+                          maxLength: {
+                            value: 100,
+                            message:
+                              "La descrizione della riga non può superare i 100 caratteri",
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item sm={2} xs={6}>
+                      <InputCurrency
+                        field={`transactionRows.${index}.debit`}
+                        fullWidth
+                        label={"Dare"}
+                      />
+                    </Grid>
+                    <Grid item sm={2} xs={6}>
+                      <InputCurrency
+                        field={`transactionRows.${index}.credit`}
+                        fullWidth
+                        label={"Avere"}
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid item sm={3} xs={12}>
-                    <InputText
-                      field={`transactionRows.${index}.description`}
-                      fullWidth
-                      label="Descrizione"
-                      options={{
-                        maxLength: {
-                          value: 100,
-                          message:
-                            "La descrizione della riga non può superare i 100 caratteri",
-                        },
+                  <Box>
+                    <IconButton
+                      onClick={() => {
+                        remove(index);
                       }}
-                    />
-                  </Grid>
-                  <Grid item sm={2} xs={2}>
-                    <InputCurrency
-                      field={`transactionRows.${index}.debit`}
-                      fullWidth
-                      label={"Dare"}
-                    />
-                  </Grid>
-                  <Grid item sm={2} xs={2}>
-                    <InputCurrency
-                      field={`transactionRows.${index}.credit`}
-                      fullWidth
-                      label={"Avere"}
-                    />
-                  </Grid>
-                </Grid>
-                <Box>
-                  <IconButton
-                    onClick={() => {
-                      remove(index);
-                    }}
-                    tabIndex={-1}
-                  >
-                    <RemoveCircleIcon />
-                  </IconButton>
-                </Box>
-              </Stack>
-            </Grid>
-          ))}
+                      tabIndex={-1}
+                    >
+                      <RemoveCircleIcon />
+                    </IconButton>
+                  </Box>
+                </Stack>
+              </Grid>
+            ))}
+          </Grid>
           <Grid item xs={12}>
             <Box>
               <IconButton
