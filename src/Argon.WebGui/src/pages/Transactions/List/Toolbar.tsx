@@ -1,8 +1,28 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Box, BoxProps, Button, Typography } from "@mui/material";
+import SegmentIcon from "@mui/icons-material/Segment";
+import TableRowsIcon from "@mui/icons-material/TableRows";
+import {
+  Box,
+  BoxProps,
+  Button,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { Link } from "react-router-dom";
 
-export default function Toolbar(props: BoxProps) {
+export type ToolbarProps = {
+  selectedView: "table" | "journal";
+  onSelectedViewChange: (value: "table" | "journal") => void;
+};
+
+export default function Toolbar({
+  selectedView,
+  onSelectedViewChange,
+  ...props
+}: ToolbarProps & BoxProps) {
   return (
     <Box {...props}>
       <Box
@@ -14,7 +34,29 @@ export default function Toolbar(props: BoxProps) {
         }}
       >
         <Typography variant="h4">Transazioni</Typography>
-        <Box>
+        <Stack direction="row" gap={2}>
+          <ToggleButtonGroup
+            color="primary"
+            exclusive
+            onChange={(_, value) => {
+              onSelectedViewChange(
+                (value as "table" | "journal" | null) ?? "table",
+              );
+            }}
+            size="small"
+            value={selectedView}
+          >
+            <ToggleButton value={"table"}>
+              <Tooltip title="Tabella">
+                <TableRowsIcon />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value={"journal"}>
+              <Tooltip title="Giornale">
+                <SegmentIcon />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
           <Button
             color="primary"
             component={Link}
@@ -24,7 +66,7 @@ export default function Toolbar(props: BoxProps) {
           >
             Nuova transazione
           </Button>
-        </Box>
+        </Stack>
       </Box>
     </Box>
   );

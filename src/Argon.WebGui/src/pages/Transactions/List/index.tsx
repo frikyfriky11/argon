@@ -5,7 +5,8 @@ import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
 import Filters from "./Filters";
-import Results from "./Results";
+import ResultsAsJournal from "./ResultsAsJournal";
+import ResultsAsTable from "./ResultsAsTable";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
@@ -15,6 +16,9 @@ export default function Index() {
   const [description, setDescription] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<DateTime | null>(null);
   const [dateTo, setDateTo] = useState<DateTime | null>(null);
+  const [selectedView, setSelectedView] = useState<"table" | "journal">(
+    "table",
+  );
 
   const transactions = useQuery({
     queryKey: [
@@ -48,7 +52,10 @@ export default function Index() {
 
   return (
     <Stack spacing={4}>
-      <Toolbar />
+      <Toolbar
+        onSelectedViewChange={setSelectedView}
+        selectedView={selectedView}
+      />
       <Filters
         accountIds={accountIds}
         dateFrom={dateFrom}
@@ -59,14 +66,26 @@ export default function Index() {
         onDateToChange={setDateTo}
         onDescriptionChange={setDescription}
       />
-      <Results
-        onPageChange={setPage}
-        onPageSizeChange={setRowsPerPage}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        totalRows={transactions.data.totalCount}
-        transactions={transactions.data.items}
-      />
+      {selectedView === "table" && (
+        <ResultsAsTable
+          onPageChange={setPage}
+          onPageSizeChange={setRowsPerPage}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalRows={transactions.data.totalCount}
+          transactions={transactions.data.items}
+        />
+      )}
+      {selectedView === "journal" && (
+        <ResultsAsJournal
+          onPageChange={setPage}
+          onPageSizeChange={setRowsPerPage}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalRows={transactions.data.totalCount}
+          transactions={transactions.data.items}
+        />
+      )}
     </Stack>
   );
 }
