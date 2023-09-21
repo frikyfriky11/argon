@@ -26,6 +26,7 @@ export default function Toolbar({
   return (
     <Box {...props}>
       <Box
+        gap={2}
         justifyContent="space-between"
         sx={{
           alignItems: "center",
@@ -33,8 +34,8 @@ export default function Toolbar({
           flexWrap: "wrap",
         }}
       >
-        <Typography variant="h4">Transazioni</Typography>
         <Stack direction="row" gap={2}>
+          <Typography variant="h4">Transazioni</Typography>
           <ToggleButtonGroup
             color="primary"
             exclusive
@@ -57,6 +58,8 @@ export default function Toolbar({
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
+        </Stack>
+        <Stack direction="row" gap={2}>
           <Button
             color="primary"
             component={Link}
