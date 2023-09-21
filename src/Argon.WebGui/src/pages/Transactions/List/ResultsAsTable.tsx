@@ -20,7 +20,7 @@ import {
   ITransactionsGetListResponse,
 } from "../../../services/backend/BackendClient";
 
-export type ResultsProps = {
+export type ResultsAsTableProps = {
   transactions: ITransactionsGetListResponse[];
   page: number;
   rowsPerPage: number;
@@ -29,7 +29,7 @@ export type ResultsProps = {
   onPageSizeChange: (pageSize: number) => void;
 };
 
-export default function Results({
+export default function ResultsAsTable({
   transactions,
   page,
   rowsPerPage,
@@ -37,7 +37,7 @@ export default function Results({
   onPageChange,
   onPageSizeChange,
   ...other
-}: ResultsProps & TableContainerProps) {
+}: ResultsAsTableProps & TableContainerProps) {
   const { i18n } = useTranslation();
 
   const stringifyTransactionRows = (
