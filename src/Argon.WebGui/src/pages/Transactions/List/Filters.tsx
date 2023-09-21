@@ -28,7 +28,7 @@ export default function Filters({
   dateTo,
 }: FiltersProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
       <AccountsFilter onChange={onAccountIdsChange} values={accountIds} />
       <TextFilter
         label="Descrizione"
