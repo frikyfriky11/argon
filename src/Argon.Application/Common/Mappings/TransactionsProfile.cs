@@ -7,9 +7,13 @@ public class TransactionsProfile : Profile
 {
   public TransactionsProfile()
   {
-    CreateMap<Transaction, TransactionsGetListResponse>();
+    CreateMap<Transaction, TransactionsGetListResponse>()
+      .ForCtorParam(nameof(TransactionsGetListResponse.TransactionRows), 
+        options => options.MapFrom(entity => entity.TransactionRows.OrderBy(row => row.RowCounter).ThenBy(row => row.Id)));
     CreateMap<TransactionRow, TransactionRowsGetListResponse>();
-    CreateMap<Transaction, TransactionsGetResponse>();
+    CreateMap<Transaction, TransactionsGetResponse>()
+      .ForCtorParam(nameof(TransactionsGetResponse.TransactionRows),
+        options => options.MapFrom(entity => entity.TransactionRows.OrderBy(row => row.RowCounter).ThenBy(row => row.Id)));
     CreateMap<TransactionRow, TransactionRowsGetResponse>();
     CreateMap<TransactionsCreateRequest, Transaction>();
     CreateMap<TransactionRowsCreateRequest, TransactionRow>();
