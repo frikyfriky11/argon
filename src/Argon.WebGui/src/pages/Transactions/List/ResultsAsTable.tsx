@@ -12,6 +12,7 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
+import { DateTime } from "luxon";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -20,7 +21,7 @@ import {
   ITransactionsGetListResponse,
 } from "../../../services/backend/BackendClient";
 
-export type ResultsProps = {
+export type ResultsAsTableProps = {
   transactions: ITransactionsGetListResponse[];
   page: number;
   rowsPerPage: number;
@@ -29,7 +30,7 @@ export type ResultsProps = {
   onPageSizeChange: (pageSize: number) => void;
 };
 
-export default function Results({
+export default function ResultsAsTable({
   transactions,
   page,
   rowsPerPage,
@@ -37,7 +38,7 @@ export default function Results({
   onPageChange,
   onPageSizeChange,
   ...other
-}: ResultsProps & TableContainerProps) {
+}: ResultsAsTableProps & TableContainerProps) {
   const { i18n } = useTranslation();
 
   const stringifyTransactionRows = (
@@ -51,7 +52,7 @@ export default function Results({
       .map((row) => row.accountName);
 
     if (fromAccounts.length > 0 && toAccounts.length > 0) {
-      return `${toAccounts.join(" and ")} -> ${fromAccounts.join(" and ")}`;
+      return `${toAccounts.join(" e ")} -> ${fromAccounts.join(" e ")}`;
     } else {
       return null;
     }
@@ -73,7 +74,9 @@ export default function Results({
           {transactions.map((transaction) => (
             <TableRow hover key={transaction.id}>
               <TableCell sx={{ whiteSpace: "nowrap" }}>
-                {transaction.date.toISODate()}
+                {transaction.date
+                  .setLocale(i18n.language)
+                  .toLocaleString(DateTime.DATE_MED)}
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>

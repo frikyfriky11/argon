@@ -3,7 +3,7 @@ import { Button, Popover, TextField } from "@mui/material";
 import React, { useState } from "react";
 
 export type TextFilterProps = {
-  onChange: (value: string | null) => void;
+  onChange: (value: string) => void;
   value: string | null;
   label: string;
 };
@@ -45,8 +45,9 @@ export default function TextFilter({
       >
         <TextField
           onChange={(e) => {
-            onChange(e.target.value !== "" ? e.target.value : null);
+            onChange(e.target.value !== "" ? e.target.value : "");
           }}
+          placeholder="Ricerca..."
           value={value ?? ""}
         />
       </Popover>

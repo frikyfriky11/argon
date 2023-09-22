@@ -2,9 +2,10 @@ import { Box } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 
+import ComboboxFilter from "../../../components/ComboboxFilter";
 import DateFilter from "../../../components/DateFilter";
 import TextFilter from "../../../components/TextFilter";
-import AccountsFilter from "./AccountsFilter";
+import { AccountsClient } from "../../../services/backend/BackendClient";
 
 export type FiltersProps = {
   onAccountIdsChange: (value: string[]) => void;
@@ -28,8 +29,16 @@ export default function Filters({
   dateTo,
 }: FiltersProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
-      <AccountsFilter onChange={onAccountIdsChange} values={accountIds} />
+    <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+      <ComboboxFilter
+        label={"Conti"}
+        labelSelector={(item) => item.name}
+        onChange={onAccountIdsChange}
+        queryFn={() => new AccountsClient().getList(null, null)}
+        queryKey={["accounts"]}
+        valueSelector={(item) => item.id}
+        values={accountIds}
+      />
       <TextFilter
         label="Descrizione"
         onChange={onDescriptionChange}

@@ -11,7 +11,7 @@ export type FiltersProps = {
 
 export default function Filters({ onDateChange, date }: FiltersProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
       <DateFilter
         label="Periodo"
         onChange={onDateChange}
