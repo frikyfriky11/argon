@@ -10,7 +10,7 @@ import { AccountsClient } from "../../../services/backend/BackendClient";
 export type FiltersProps = {
   onAccountIdsChange: (value: string[]) => void;
   accountIds: string[];
-  onDescriptionChange: (value: string | null) => void;
+  onDescriptionChange: (value: string) => void;
   description: string | null;
   onDateFromChange: (value: DateTime | null) => void;
   dateFrom: DateTime | null;
