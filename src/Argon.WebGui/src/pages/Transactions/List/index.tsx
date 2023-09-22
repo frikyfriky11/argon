@@ -1,5 +1,6 @@
 import { Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { useDebounce } from "@uidotdev/usehooks";
 import { DateTime } from "luxon";
 import { useState } from "react";
 
@@ -14,6 +15,7 @@ export default function Index() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [accountIds, setAccountIds] = useState<string[]>([]);
   const [description, setDescription] = useState<string | null>(null);
+  const debouncedDescription = useDebounce(description, 1000);
   const [dateFrom, setDateFrom] = useState<DateTime | null>(null);
   const [dateTo, setDateTo] = useState<DateTime | null>(null);
   const [selectedView, setSelectedView] = useState<"table" | "journal">(
@@ -24,7 +26,7 @@ export default function Index() {
     queryKey: [
       "transactions",
       accountIds,
-      description,
+      debouncedDescription,
       dateFrom,
       dateTo,
       page,
@@ -33,7 +35,7 @@ export default function Index() {
     queryFn: () =>
       new TransactionsClient().getList(
         accountIds,
-        description,
+        debouncedDescription,
         dateFrom,
         dateTo,
         page + 1,
