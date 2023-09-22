@@ -5,22 +5,32 @@ import { DateTime } from "luxon";
 import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
+import useSearchParamsState from "../../../utils/UrlUtils";
 import Filters from "./Filters";
 import ResultsAsJournal from "./ResultsAsJournal";
 import ResultsAsTable from "./ResultsAsTable";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [accountIds, setAccountIds] = useState<string[]>([]);
-  const [description, setDescription] = useState<string | null>(null);
+  const [page, setPage] = useSearchParamsState<number>("page", 0);
+  const [rowsPerPage, setRowsPerPage] = useSearchParamsState<number>(
+    "pageSize",
+    10,
+  );
+  const [accountIds, setAccountIds] = useSearchParamsState<string[]>(
+    "accountIds",
+    [],
+  );
+  const [description, setDescription] = useSearchParamsState<string>(
+    "description",
+    "",
+  );
   const debouncedDescription = useDebounce(description, 1000);
   const [dateFrom, setDateFrom] = useState<DateTime | null>(null);
   const [dateTo, setDateTo] = useState<DateTime | null>(null);
-  const [selectedView, setSelectedView] = useState<"table" | "journal">(
-    "table",
-  );
+  const [selectedView, setSelectedView] = useSearchParamsState<
+    "table" | "journal"
+  >("view", "table");
 
   const transactions = useQuery({
     queryKey: [
