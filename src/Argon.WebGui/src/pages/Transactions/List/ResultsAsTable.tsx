@@ -12,6 +12,7 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
+import { DateTime } from "luxon";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -73,7 +74,9 @@ export default function ResultsAsTable({
           {transactions.map((transaction) => (
             <TableRow hover key={transaction.id}>
               <TableCell sx={{ whiteSpace: "nowrap" }}>
-                {transaction.date.toISODate()}
+                {transaction.date
+                  .setLocale(i18n.language)
+                  .toLocaleString(DateTime.DATE_MED)}
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>
