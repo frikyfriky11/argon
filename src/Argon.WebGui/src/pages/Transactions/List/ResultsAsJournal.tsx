@@ -45,6 +45,7 @@ export default function ResultsAsJournal({
           <TableRow>
             <TableCell>Data</TableCell>
             <TableCell>Conto</TableCell>
+            <TableCell>Transazione</TableCell>
             <TableCell>Descrizione</TableCell>
             <TableCell align="right">Dare</TableCell>
             <TableCell align="right">Avere</TableCell>
@@ -54,30 +55,6 @@ export default function ResultsAsJournal({
         <TableBody>
           {transactions.map((transaction) => (
             <Fragment key={transaction.id}>
-              <TableRow>
-                <TableCell
-                  rowSpan={transaction.transactionRows.length + 2}
-                  sx={{ whiteSpace: "nowrap" }}
-                >
-                  {transaction.date.toISODate()}
-                </TableCell>
-                <TableCell colSpan={4}>{transaction.description}</TableCell>
-                <TableCell
-                  align="right"
-                  rowSpan={transaction.transactionRows.length + 2}
-                >
-                  <Button
-                    color="primary"
-                    component={Link}
-                    endIcon={<ArrowForwardIcon />}
-                    size="small"
-                    to={`/transactions/${transaction.id}`}
-                    variant="text"
-                  >
-                    Vedi
-                  </Button>
-                </TableCell>
-              </TableRow>
               {transaction.transactionRows.map((row, index) => (
                 <TableRow
                   hover
@@ -89,8 +66,16 @@ export default function ResultsAsJournal({
                         : (theme) => theme.palette.grey.A200,
                   }}
                 >
+                  <TableCell
+                    padding="none"
+                    sx={{ whiteSpace: "nowrap", paddingX: 2 }}
+                  >
+                  </TableCell>
                   <TableCell padding="none" sx={{ paddingX: 2 }}>
                     {row.accountName}
+                  </TableCell>
+                  <TableCell padding="none" sx={{ paddingX: 2 }}>
+                    {transaction.description}
                   </TableCell>
                   <TableCell padding="none" sx={{ paddingX: 2 }}>
                     {row.description}
@@ -123,13 +108,25 @@ export default function ResultsAsJournal({
                       currency: "EUR",
                     })}
                   </TableCell>
+                  <TableCell align="right" padding="none" sx={{ paddingX: 2 }}>
+                    <Button
+                      color="primary"
+                      component={Link}
+                      endIcon={<ArrowForwardIcon />}
+                      size="small"
+                      to={`/transactions/${transaction.id}`}
+                      variant="text"
+                    >
+                      Vedi
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
               <TableRow>
                 <TableCell
                   colSpan={6}
                   padding="none"
-                  sx={{ paddingY: 1 }}
+                  sx={{ paddingY: 0.5 }}
                 ></TableCell>
               </TableRow>
             </Fragment>
