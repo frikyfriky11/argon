@@ -11,14 +11,11 @@ public class TransactionsGetHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
-    _mapper = new MapperConfiguration(config => config.AddProfile<TransactionsProfile>()).CreateMapper();
-
-    _sut = new TransactionsGetHandler(_dbContext, _mapper);
+    _sut = new TransactionsGetHandler(_dbContext);
   }
 
   private TransactionsGetHandler _sut = null!;
   private IApplicationDbContext _dbContext = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldCompleteCorrectly_WithExistingId()
@@ -27,28 +24,30 @@ public class TransactionsGetHandlerTests
     EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
 
+    TransactionRow row1 = new()
+    {
+      RowCounter = 1,
+      Account = accountGroceries.Entity,
+      Debit = 100.00m,
+      Credit = null,
+      Description = "test row 1 description",
+    };
+    TransactionRow row2 = new()
+    {
+      RowCounter = 2,
+      Account = accountBank.Entity,
+      Debit = null,
+      Credit = 100.00m,
+      Description = "test row 2 description",
+    };
     Transaction sampleEntity = new()
     {
       Date = new DateOnly(2023, 04, 05),
       Description = "test description",
       TransactionRows = new List<TransactionRow>
       {
-        new()
-        {
-          RowCounter = 1,
-          Account = accountGroceries.Entity,
-          Debit = 100.00m,
-          Credit = null,
-          Description = "test row 1 description",
-        },
-        new()
-        {
-          RowCounter = 2,
-          Account = accountBank.Entity,
-          Debit = null,
-          Credit = 100.00m,
-          Description = "test row 2 description",
-        },
+        row1,
+        row2,
       },
     };
 
@@ -57,7 +56,16 @@ public class TransactionsGetHandlerTests
 
     TransactionsGetRequest request = new(sampleEntity.Id);
 
-    TransactionsGetResponse expected = _mapper.Map<TransactionsGetResponse>(sampleEntity);
+    TransactionsGetResponse expected = new(
+      sampleEntity.Id,
+      sampleEntity.Date,
+      sampleEntity.Description,
+      new List<TransactionRowsGetResponse>()
+      {
+        new(row1.Id, row1.RowCounter, row1.AccountId, row1.Debit, row1.Credit, row1.Description),
+        new(row2.Id, row2.RowCounter, row2.AccountId, row2.Debit, row2.Credit, row2.Description),
+      }
+    );
 
     // act
     TransactionsGetResponse result = await _sut.Handle(request, CancellationToken.None);

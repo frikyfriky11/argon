@@ -176,14 +176,11 @@ public class TransactionsCreateHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
-    _mapper = new MapperConfiguration(config => config.AddProfile<TransactionsProfile>()).CreateMapper();
-
-    _sut = new TransactionsCreateHandler(_dbContext, _mapper);
+    _sut = new TransactionsCreateHandler(_dbContext);
   }
 
   private TransactionsCreateHandler _sut = null!;
   private IApplicationDbContext _dbContext = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldCompleteCorrectly_WithValidRequest()
@@ -193,13 +190,38 @@ public class TransactionsCreateHandlerTests
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
+    TransactionRowsCreateRequest row1 = new(1, accountGroceries.Entity.Id, 100.00m, null, "test row 1 description");
+    TransactionRowsCreateRequest row2 = new(2, accountBank.Entity.Id, null, 100.00m, "test row 2 description");
     TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), "test description", new List<TransactionRowsCreateRequest>
     {
-      new(1, accountGroceries.Entity.Id, 100.00m, null, "test row 1 description"),
-      new(2, accountBank.Entity.Id, null, 100.00m, "test row 2 description"),
+      row1,
+      row2,
     });
 
-    Transaction? expected = _mapper.Map<Transaction>(request);
+    Transaction expected = new()
+    {
+      Description = request.Description,
+      Date = request.Date,
+      TransactionRows = new List<TransactionRow>
+      {
+        new()
+        {
+          RowCounter = row1.RowCounter,
+          AccountId = row1.AccountId,
+          Debit = row1.Debit,
+          Credit = row1.Credit,
+          Description = row1.Description,
+        },
+        new()
+        {
+          RowCounter = row2.RowCounter,
+          AccountId = row2.AccountId,
+          Debit = row2.Debit,
+          Credit = row2.Credit,
+          Description = row2.Description,
+        },
+      },
+    };
 
     // act
     TransactionsCreateResponse result = await _sut.Handle(request, CancellationToken.None);

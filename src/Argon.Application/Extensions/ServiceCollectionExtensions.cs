@@ -8,9 +8,6 @@ public static class ServiceCollectionExtensions
   /// <param name="services">The service collection container</param>
   public static void AddApplicationServices(this IServiceCollection services)
   {
-    // add all AutoMapper mappings
-    services.AddAutoMapper(Assembly.GetExecutingAssembly());
-
     // add all the FluentValidation validators
     services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 

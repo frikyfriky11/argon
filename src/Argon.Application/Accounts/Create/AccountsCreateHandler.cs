@@ -4,17 +4,19 @@
 public class AccountsCreateHandler : IRequestHandler<AccountsCreateRequest, AccountsCreateResponse>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public AccountsCreateHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public AccountsCreateHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task<AccountsCreateResponse> Handle(AccountsCreateRequest request, CancellationToken cancellationToken)
   {
-    Account entity = _mapper.Map<Account>(request);
+    Account entity = new()
+    {
+      Name = request.Name,
+      Type = request.Type,
+    };
 
     await _dbContext.Accounts.AddAsync(entity, cancellationToken);
 

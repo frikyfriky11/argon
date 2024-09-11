@@ -4,12 +4,10 @@
 public class BudgetItemsUpsertHandler : IRequestHandler<BudgetItemsUpsertRequest, BudgetItemsUpsertResponse>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public BudgetItemsUpsertHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public BudgetItemsUpsertHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task<BudgetItemsUpsertResponse> Handle(BudgetItemsUpsertRequest request, CancellationToken cancellationToken)
@@ -35,13 +33,22 @@ public class BudgetItemsUpsertHandler : IRequestHandler<BudgetItemsUpsertRequest
 
     if (entity is null)
     {
-      entity = _mapper.Map<BudgetItem>(request);
+      entity = new BudgetItem
+      {
+        AccountId = request.AccountId,
+        Amount = request.Amount.Value,
+        Year = request.Year,
+        Month = request.Month,
+      };
 
       await _dbContext.BudgetItems.AddAsync(entity, cancellationToken);
     }
     else
     {
-      _mapper.Map(request, entity);
+      entity.AccountId = request.AccountId;
+      entity.Amount = request.Amount.Value;
+      entity.Month = request.Month;
+      entity.Year = request.Year;
     }
 
     await _dbContext.SaveChangesAsync(cancellationToken);

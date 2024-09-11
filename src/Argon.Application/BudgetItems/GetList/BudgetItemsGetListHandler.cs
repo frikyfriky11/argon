@@ -4,12 +4,10 @@
 public class BudgetItemsGetListHandler : IRequestHandler<BudgetItemsGetListRequest, List<BudgetItemsGetListResponse>>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public BudgetItemsGetListHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public BudgetItemsGetListHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task<List<BudgetItemsGetListResponse>> Handle(BudgetItemsGetListRequest request, CancellationToken cancellationToken)
@@ -19,7 +17,14 @@ public class BudgetItemsGetListHandler : IRequestHandler<BudgetItemsGetListReque
       .AsNoTracking()
       .Where(budgetItem => budgetItem.Year == request.Year)
       .Where(budgetItem => budgetItem.Month == request.Month)
-      .ProjectTo<BudgetItemsGetListResponse>(_mapper.ConfigurationProvider)
+      .Select(budgetItem => new BudgetItemsGetListResponse(
+        budgetItem.Id,
+        budgetItem.AccountId,
+        budgetItem.Account.Type,
+        budgetItem.Year,
+        budgetItem.Month,
+        budgetItem.Amount
+      ))
       .ToListAsync(cancellationToken);
   }
 }

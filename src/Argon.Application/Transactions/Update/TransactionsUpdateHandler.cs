@@ -4,12 +4,10 @@
 public class TransactionsUpdateHandler : IRequestHandler<TransactionsUpdateRequest>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public TransactionsUpdateHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public TransactionsUpdateHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task Handle(TransactionsUpdateRequest request, CancellationToken cancellationToken)
@@ -25,7 +23,8 @@ public class TransactionsUpdateHandler : IRequestHandler<TransactionsUpdateReque
       throw new NotFoundException(nameof(Transaction), request.Id);
     }
 
-    _mapper.Map(request, entity);
+    entity.Description = request.Description;
+    entity.Date = request.Date;
 
     List<TransactionRowsUpdateRequest> tempRequestRows = request.TransactionRows;
 
@@ -35,7 +34,12 @@ public class TransactionsUpdateHandler : IRequestHandler<TransactionsUpdateReque
 
       if (requestRow is not null)
       {
-        _mapper.Map(requestRow, entityRow);
+        entityRow.AccountId = requestRow.AccountId;
+        entityRow.RowCounter = requestRow.RowCounter;
+        entityRow.Description = requestRow.Description;
+        entityRow.Debit = requestRow.Debit;
+        entityRow.Credit = requestRow.Credit;
+        
         tempRequestRows.Remove(requestRow);
       }
       else
@@ -46,7 +50,14 @@ public class TransactionsUpdateHandler : IRequestHandler<TransactionsUpdateReque
 
     foreach (TransactionRowsUpdateRequest requestRow in tempRequestRows)
     {
-      entity.TransactionRows.Add(_mapper.Map<TransactionRow>(requestRow));
+      entity.TransactionRows.Add(new TransactionRow
+      {
+        AccountId = requestRow.AccountId,
+        RowCounter = requestRow.RowCounter,
+        Description = requestRow.Description,
+        Debit = requestRow.Debit,
+        Credit = requestRow.Credit,
+      });
     }
 
     await _dbContext.SaveChangesAsync(cancellationToken);

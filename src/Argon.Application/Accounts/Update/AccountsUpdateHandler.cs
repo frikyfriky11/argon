@@ -4,12 +4,10 @@
 public class AccountsUpdateHandler : IRequestHandler<AccountsUpdateRequest>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public AccountsUpdateHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public AccountsUpdateHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task Handle(AccountsUpdateRequest request, CancellationToken cancellationToken)
@@ -24,7 +22,8 @@ public class AccountsUpdateHandler : IRequestHandler<AccountsUpdateRequest>
       throw new NotFoundException(nameof(Account), request.Id);
     }
 
-    _mapper.Map(request, entity);
+    entity.Name = request.Name;
+    entity.Type = request.Type;
 
     await _dbContext.SaveChangesAsync(cancellationToken);
   }

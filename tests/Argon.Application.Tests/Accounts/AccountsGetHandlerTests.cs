@@ -10,14 +10,11 @@ public class AccountsGetHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
-    _mapper = new MapperConfiguration(config => config.AddProfile<AccountsProfile>()).CreateMapper();
-
-    _sut = new AccountsGetHandler(_dbContext, _mapper);
+    _sut = new AccountsGetHandler(_dbContext);
   }
 
   private AccountsGetHandler _sut = null!;
   private IApplicationDbContext _dbContext = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldCompleteCorrectly_WithExistingId()
@@ -30,7 +27,13 @@ public class AccountsGetHandlerTests
 
     AccountsGetRequest request = new(account.Id);
 
-    AccountsGetResponse expected = _mapper.Map<AccountsGetResponse>(account);
+    AccountsGetResponse expected = new(
+      account.Id,
+      account.Name,
+      account.Type,
+      account.IsFavourite,
+      0
+    );
 
     // act
     AccountsGetResponse result = await _sut.Handle(request, CancellationToken.None);

@@ -11,14 +11,11 @@ public class TransactionsGetListHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
-    _mapper = new MapperConfiguration(config => config.AddProfile<TransactionsProfile>()).CreateMapper();
-
-    _sut = new TransactionsGetListHandler(_dbContext, _mapper);
+    _sut = new TransactionsGetListHandler(_dbContext);
   }
 
   private IApplicationDbContext _dbContext = null!;
   private TransactionsGetListHandler _sut = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldRetrieveAllTransactions_WithoutFilters()
@@ -36,12 +33,28 @@ public class TransactionsGetListHandlerTests
 
     TransactionsGetListRequest request = new(null, null, null, null, 1, 2);
 
-    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
+    List<TransactionsGetListResponse> expected = sampleEntities
       .OrderByDescending(transaction => transaction.Date)
       .ThenByDescending(transaction => transaction.Created)
       .ThenByDescending(transaction => transaction.Id)
+      .Select(transaction => new TransactionsGetListResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .Select(row => new TransactionRowsGetListResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Account.Name,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
       .Take(2)
-      .ToList());
+      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
@@ -100,10 +113,28 @@ public class TransactionsGetListHandlerTests
 
     TransactionsGetListRequest request = new(new List<Guid> { groceriesAccount.Id, rentAccount.Id }, null, null, null);
 
-    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
-      .OrderBy(x => x.Date)
+    List<TransactionsGetListResponse> expected = sampleEntities
       .Where(x => x.TransactionRows.Any(row => request.AccountIds!.Contains(row.AccountId)))
-      .ToList());
+      .OrderByDescending(transaction => transaction.Date)
+      .ThenByDescending(transaction => transaction.Created)
+      .ThenByDescending(transaction => transaction.Id)
+      .Select(transaction => new TransactionsGetListResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .Select(row => new TransactionRowsGetListResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Account.Name,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
+      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
@@ -134,10 +165,28 @@ public class TransactionsGetListHandlerTests
 
     TransactionsGetListRequest request = new(null, "shopping", null, null);
 
-    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
-      .OrderBy(x => x.Date)
+    List<TransactionsGetListResponse> expected = sampleEntities
       .Where(x => x.Description.Contains(request.Description!))
-      .ToList());
+      .OrderByDescending(transaction => transaction.Date)
+      .ThenByDescending(transaction => transaction.Created)
+      .ThenByDescending(transaction => transaction.Id)
+      .Select(transaction => new TransactionsGetListResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .Select(row => new TransactionRowsGetListResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Account.Name,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
+      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
@@ -167,10 +216,28 @@ public class TransactionsGetListHandlerTests
 
     TransactionsGetListRequest request = new(null, null, new DateTimeOffset(new DateTime(2023, 8, 6)), null);
 
-    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
-      .OrderBy(x => x.Date)
+    List<TransactionsGetListResponse> expected = sampleEntities
       .Where(x => x.Date >= DateOnly.FromDateTime(request.DateFrom!.Value.Date))
-      .ToList());
+      .OrderByDescending(transaction => transaction.Date)
+      .ThenByDescending(transaction => transaction.Created)
+      .ThenByDescending(transaction => transaction.Id)
+      .Select(transaction => new TransactionsGetListResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .Select(row => new TransactionRowsGetListResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Account.Name,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
+      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
@@ -200,10 +267,28 @@ public class TransactionsGetListHandlerTests
 
     TransactionsGetListRequest request = new(null, null, null, new DateTimeOffset(new DateTime(2023, 8, 6)));
 
-    List<TransactionsGetListResponse>? expected = _mapper.Map<List<TransactionsGetListResponse>>(sampleEntities
-      .OrderBy(x => x.Date)
+    List<TransactionsGetListResponse> expected = sampleEntities
       .Where(x => x.Date <= DateOnly.FromDateTime(request.DateTo!.Value.Date))
-      .ToList());
+      .OrderByDescending(transaction => transaction.Date)
+      .ThenByDescending(transaction => transaction.Created)
+      .ThenByDescending(transaction => transaction.Id)
+      .Select(transaction => new TransactionsGetListResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .Select(row => new TransactionRowsGetListResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Account.Name,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
+      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);

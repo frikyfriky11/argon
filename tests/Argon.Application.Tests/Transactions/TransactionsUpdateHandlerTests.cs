@@ -174,15 +174,12 @@ public class TransactionsUpdateHandlerTests
   public void SetUp()
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
-
-    _mapper = new MapperConfiguration(config => config.AddProfile<TransactionsProfile>()).CreateMapper();
-
-    _sut = new TransactionsUpdateHandler(_dbContext, _mapper);
+    
+    _sut = new TransactionsUpdateHandler(_dbContext);
   }
 
   private TransactionsUpdateHandler _sut = null!;
   private IApplicationDbContext _dbContext = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldCompleteCorrectly_WithExistingId()
@@ -232,8 +229,21 @@ public class TransactionsUpdateHandlerTests
 
     TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), "new test description", rowList) { Id = existingEntity.Entity.Id };
 
-    Transaction? expected = _mapper.Map<Transaction>(request);
-    expected.TransactionRows = _mapper.Map<List<TransactionRow>>(request.TransactionRows);
+    Transaction expected = new()
+    {
+      Date = request.Date,
+      Description = request.Description,
+      TransactionRows = rowList
+        .Select(row => new TransactionRow
+        {
+          RowCounter = row.RowCounter,
+          AccountId = row.AccountId,
+          Description = row.Description,
+          Debit = row.Debit,
+          Credit = row.Credit,
+        })
+        .ToList(),
+    };
 
     // act
     await _sut.Handle(request, CancellationToken.None);

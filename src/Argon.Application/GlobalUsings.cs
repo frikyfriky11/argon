@@ -2,8 +2,6 @@
 global using Argon.Application.Common.Exceptions;
 global using Argon.Application.Common.Interfaces;
 global using Argon.Domain.Entities;
-global using AutoMapper.QueryableExtensions;
-global using AutoMapper;
 global using FluentValidation.Results;
 global using FluentValidation;
 global using JetBrains.Annotations;

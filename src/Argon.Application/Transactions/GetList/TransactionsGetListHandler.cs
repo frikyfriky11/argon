@@ -7,12 +7,10 @@ namespace Argon.Application.Transactions.GetList;
 public class TransactionsGetListHandler : IRequestHandler<TransactionsGetListRequest, PaginatedList<TransactionsGetListResponse>>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public TransactionsGetListHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public TransactionsGetListHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task<PaginatedList<TransactionsGetListResponse>> Handle(TransactionsGetListRequest request, CancellationToken cancellationToken)
@@ -27,7 +25,24 @@ public class TransactionsGetListHandler : IRequestHandler<TransactionsGetListReq
       .OrderByDescending(transaction => transaction.Date)
       .ThenByDescending(transaction => transaction.Created)
       .ThenByDescending(transaction => transaction.Id)
-      .ProjectTo<TransactionsGetListResponse>(_mapper.ConfigurationProvider)
+      .Select(transaction => new TransactionsGetListResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .OrderBy(row => row.RowCounter)
+          .ThenBy(row => row.Id)
+          .Select(row => new TransactionRowsGetListResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Account.Name,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
       .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
     
     // order of the records must be deterministic and avoid random sorting

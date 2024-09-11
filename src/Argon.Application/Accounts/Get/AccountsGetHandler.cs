@@ -4,12 +4,10 @@
 public class AccountsGetHandler : IRequestHandler<AccountsGetRequest, AccountsGetResponse>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public AccountsGetHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public AccountsGetHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task<AccountsGetResponse> Handle(AccountsGetRequest request, CancellationToken cancellationToken)
@@ -18,7 +16,13 @@ public class AccountsGetHandler : IRequestHandler<AccountsGetRequest, AccountsGe
       .Accounts
       .AsNoTracking()
       .Where(account => account.Id == request.Id)
-      .ProjectTo<AccountsGetResponse>(_mapper.ConfigurationProvider)
+      .Select(account => new AccountsGetResponse(
+        account.Id,
+        account.Name,
+        account.Type,
+        account.IsFavourite,
+        account.TransactionRows.Sum(x => (x.Debit ?? 0) - (x.Credit ?? 0))
+      ))
       .FirstOrDefaultAsync(cancellationToken);
 
     if (result is null)

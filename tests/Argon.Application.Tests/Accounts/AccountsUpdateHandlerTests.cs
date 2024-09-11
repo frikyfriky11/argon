@@ -63,14 +63,11 @@ public class AccountsUpdateHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
-    _mapper = new MapperConfiguration(config => config.AddProfile<AccountsProfile>()).CreateMapper();
-
-    _sut = new AccountsUpdateHandler(_dbContext, _mapper);
+    _sut = new AccountsUpdateHandler(_dbContext);
   }
 
   private AccountsUpdateHandler _sut = null!;
   private IApplicationDbContext _dbContext = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldCompleteCorrectly_WithExistingId()
@@ -81,7 +78,11 @@ public class AccountsUpdateHandlerTests
 
     AccountsUpdateRequest request = new("new test account", AccountType.Revenue) { Id = existingAccount.Entity.Id };
 
-    Account? expected = _mapper.Map<Account>(request);
+    Account expected = new()
+    {
+      Name = request.Name,
+      Type = request.Type,
+    };
 
     // act
     await _sut.Handle(request, CancellationToken.None);

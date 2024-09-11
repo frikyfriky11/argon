@@ -4,12 +4,10 @@
 public class TransactionsGetHandler : IRequestHandler<TransactionsGetRequest, TransactionsGetResponse>
 {
   private readonly IApplicationDbContext _dbContext;
-  private readonly IMapper _mapper;
 
-  public TransactionsGetHandler(IApplicationDbContext dbContext, IMapper mapper)
+  public TransactionsGetHandler(IApplicationDbContext dbContext)
   {
     _dbContext = dbContext;
-    _mapper = mapper;
   }
 
   public async Task<TransactionsGetResponse> Handle(TransactionsGetRequest request, CancellationToken cancellationToken)
@@ -18,7 +16,23 @@ public class TransactionsGetHandler : IRequestHandler<TransactionsGetRequest, Tr
       .Transactions
       .AsNoTracking()
       .Where(transaction => transaction.Id == request.Id)
-      .ProjectTo<TransactionsGetResponse>(_mapper.ConfigurationProvider)
+      .Select(transaction => new TransactionsGetResponse(
+        transaction.Id,
+        transaction.Date,
+        transaction.Description,
+        transaction.TransactionRows
+          .OrderBy(row => row.RowCounter)
+          .ThenBy(row => row.Id)
+          .Select(row => new TransactionRowsGetResponse(
+            row.Id,
+            row.RowCounter,
+            row.AccountId,
+            row.Debit,
+            row.Credit,
+            row.Description
+          ))
+          .ToList()
+      ))
       .FirstOrDefaultAsync(cancellationToken);
 
     if (result is null)

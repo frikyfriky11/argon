@@ -63,14 +63,11 @@ public class AccountsCreateHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
-    _mapper = new MapperConfiguration(config => config.AddProfile<AccountsProfile>()).CreateMapper();
-
-    _sut = new AccountsCreateHandler(_dbContext, _mapper);
+    _sut = new AccountsCreateHandler(_dbContext);
   }
 
   private AccountsCreateHandler _sut = null!;
   private IApplicationDbContext _dbContext = null!;
-  private IMapper _mapper = null!;
 
   [Test]
   public async Task Handle_ShouldCompleteCorrectly_WithValidRequest()
@@ -78,7 +75,11 @@ public class AccountsCreateHandlerTests
     // arrange
     AccountsCreateRequest request = new("test account", AccountType.Cash);
 
-    Account? expected = _mapper.Map<Account>(request);
+    Account expected = new()
+    {
+      Name = request.Name,
+      Type = request.Type,
+    };
 
     // act
     AccountsCreateResponse result = await _sut.Handle(request, CancellationToken.None);
