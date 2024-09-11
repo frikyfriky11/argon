@@ -1,5 +1,9 @@
 ﻿using Argon.Application.Common.Models;
-using Argon.Application.Transactions;
+using Argon.Application.Transactions.Create;
+using Argon.Application.Transactions.Delete;
+using Argon.Application.Transactions.Get;
+using Argon.Application.Transactions.GetList;
+using Argon.Application.Transactions.Update;
 
 namespace Argon.WebApi.Controllers;
 

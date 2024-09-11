@@ -1,4 +1,7 @@
-using Argon.Application.Transactions;
+using Argon.Application.Transactions.Create;
+using Argon.Application.Transactions.Get;
+using Argon.Application.Transactions.GetList;
+using Argon.Application.Transactions.Update;
 
 namespace Argon.Application.Common.Mappings;
 

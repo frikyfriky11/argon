@@ -1,5 +1,9 @@
-﻿using Argon.Application.Accounts;
-using Argon.Application.Common.Models;
+﻿using Argon.Application.Accounts.Create;
+using Argon.Application.Accounts.Delete;
+using Argon.Application.Accounts.Favourite;
+using Argon.Application.Accounts.Get;
+using Argon.Application.Accounts.GetList;
+using Argon.Application.Accounts.Update;
 
 namespace Argon.WebApi.Controllers;
 
