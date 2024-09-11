@@ -1,36 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <RootNamespace>Argon.Application</RootNamespace>
-        <AssemblyName>Argon.Application</AssemblyName>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <Authors>frikyfriky11</Authors>
-        <Description>The application layer containing the business logic for the Argon App</Description>
-        <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
-        <Version>1.5.0</Version>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Argon.Application</RootNamespace>
+    <AssemblyName>Argon.Application</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>frikyfriky11</Authors>
+    <Description>The application layer containing the business logic for the Argon App</Description>
+    <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
+    <Version>1.5.0</Version>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.5.1" />
-        <PackageReference Include="JetBrains.Annotations" Version="2023.2.0-eap1" />
-        <PackageReference Include="MediatR" Version="12.0.1" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0-preview.2.23128.3" />
-        <PackageReference Include="NSwag.Annotations" Version="13.19.0" />
-        <PackageReference Include="Serilog" Version="2.12.0" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0"/>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.5.1"/>
+    <PackageReference Include="JetBrains.Annotations" Version="2023.2.0-eap1"/>
+    <PackageReference Include="MediatR" Version="12.0.1"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0-preview.2.23128.3"/>
+    <PackageReference Include="NSwag.Annotations" Version="13.19.0"/>
+    <PackageReference Include="Serilog" Version="2.12.0"/>
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Argon.Domain\Argon.Domain.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Argon.Domain\Argon.Domain.csproj"/>
+  </ItemGroup>
 
 
-    <PropertyGroup>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>$(NoWarn);1591</NoWarn>
-    </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
 
 </Project>
