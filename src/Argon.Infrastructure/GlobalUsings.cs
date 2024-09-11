@@ -1,4 +1,5 @@
-﻿global using Argon.Application.Common.Interfaces;
+﻿global using System.Diagnostics.CodeAnalysis;
+global using Argon.Application.Common.Interfaces;
 global using Argon.Domain.Common;
 global using Argon.Domain.Entities;
 global using Argon.Infrastructure.Persistence.Extensions;

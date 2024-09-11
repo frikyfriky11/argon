@@ -1,5 +1,6 @@
 ﻿namespace Argon.Infrastructure.Persistence.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class EntityEntryExtensions
 {
   /// <summary>

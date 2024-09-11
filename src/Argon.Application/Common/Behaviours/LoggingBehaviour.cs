@@ -9,6 +9,7 @@
 /// </summary>
 /// <typeparam name="TRequest">The generic request object</typeparam>
 /// <typeparam name="TResponse">The generic response object</typeparam>
+[ExcludeFromCodeCoverage]
 public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
 {
   private readonly ILogger _logger;

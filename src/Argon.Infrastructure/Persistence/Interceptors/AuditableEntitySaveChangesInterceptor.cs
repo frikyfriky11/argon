@@ -4,6 +4,7 @@
 ///   This interceptor intercepts all the SaveChanges calls to the DbContext and updates the
 ///   <see cref="BaseAuditableEntity" /> properties.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
 {
   private readonly IClock _clock;

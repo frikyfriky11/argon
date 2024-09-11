@@ -1,4 +1,5 @@
-﻿global using Argon.Application.Common.Exceptions;
+﻿global using System.Diagnostics.CodeAnalysis;
+global using Argon.Application.Common.Exceptions;
 global using Argon.Application.Extensions;
 global using Argon.Infrastructure.Extensions;
 global using Argon.Infrastructure.Persistence;

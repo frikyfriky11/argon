@@ -1,5 +1,6 @@
 ﻿namespace Argon.WebApi.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
   /// <summary>

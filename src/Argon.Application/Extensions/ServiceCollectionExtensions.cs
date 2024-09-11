@@ -1,5 +1,6 @@
 ﻿namespace Argon.Application.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
   /// <summary>
