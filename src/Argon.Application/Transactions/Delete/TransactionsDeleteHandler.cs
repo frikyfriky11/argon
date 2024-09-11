@@ -1,18 +1,13 @@
 ﻿namespace Argon.Application.Transactions.Delete;
 
 [UsedImplicitly]
-public class TransactionsDeleteHandler : IRequestHandler<TransactionsDeleteRequest>
+public class TransactionsDeleteHandler(
+  IApplicationDbContext dbContext
+) : IRequestHandler<TransactionsDeleteRequest>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public TransactionsDeleteHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task Handle(TransactionsDeleteRequest request, CancellationToken cancellationToken)
   {
-    Transaction? entity = await _dbContext
+    Transaction? entity = await dbContext
       .Transactions
       .Where(transaction => transaction.Id == request.Id)
       .FirstOrDefaultAsync(cancellationToken);
@@ -22,8 +17,8 @@ public class TransactionsDeleteHandler : IRequestHandler<TransactionsDeleteReque
       throw new NotFoundException(nameof(Transaction), request.Id);
     }
 
-    _dbContext.Transactions.Remove(entity);
+    dbContext.Transactions.Remove(entity);
 
-    await _dbContext.SaveChangesAsync(cancellationToken);
+    await dbContext.SaveChangesAsync(cancellationToken);
   }
 }

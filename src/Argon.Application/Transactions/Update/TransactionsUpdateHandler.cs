@@ -1,18 +1,13 @@
 ﻿namespace Argon.Application.Transactions.Update;
 
 [UsedImplicitly]
-public class TransactionsUpdateHandler : IRequestHandler<TransactionsUpdateRequest>
+public class TransactionsUpdateHandler(
+  IApplicationDbContext dbContext
+) : IRequestHandler<TransactionsUpdateRequest>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public TransactionsUpdateHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task Handle(TransactionsUpdateRequest request, CancellationToken cancellationToken)
   {
-    Transaction? entity = await _dbContext
+    Transaction? entity = await dbContext
       .Transactions
       .Include(transaction => transaction.TransactionRows)
       .Where(transaction => transaction.Id == request.Id)
@@ -60,6 +55,6 @@ public class TransactionsUpdateHandler : IRequestHandler<TransactionsUpdateReque
       });
     }
 
-    await _dbContext.SaveChangesAsync(cancellationToken);
+    await dbContext.SaveChangesAsync(cancellationToken);
   }
 }

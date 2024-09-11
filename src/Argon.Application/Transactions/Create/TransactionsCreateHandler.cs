@@ -1,15 +1,10 @@
 ﻿namespace Argon.Application.Transactions.Create;
 
 [UsedImplicitly]
-public class TransactionsCreateHandler : IRequestHandler<TransactionsCreateRequest, TransactionsCreateResponse>
+public class TransactionsCreateHandler(
+  IApplicationDbContext dbContext
+): IRequestHandler<TransactionsCreateRequest, TransactionsCreateResponse>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public TransactionsCreateHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task<TransactionsCreateResponse> Handle(TransactionsCreateRequest request, CancellationToken cancellationToken)
   {
     Transaction entity = new()
@@ -29,9 +24,9 @@ public class TransactionsCreateHandler : IRequestHandler<TransactionsCreateReque
         .ToList(),
     };
 
-    await _dbContext.Transactions.AddAsync(entity, cancellationToken);
+    await dbContext.Transactions.AddAsync(entity, cancellationToken);
 
-    await _dbContext.SaveChangesAsync(cancellationToken);
+    await dbContext.SaveChangesAsync(cancellationToken);
 
     return new TransactionsCreateResponse(entity.Id);
   }

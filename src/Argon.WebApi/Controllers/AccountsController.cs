@@ -12,15 +12,10 @@ namespace Argon.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("[controller]")]
-public class AccountsController : ControllerBase
+public class AccountsController(
+  ISender mediator
+) : ControllerBase
 {
-  private readonly ISender _mediator;
-
-  public AccountsController(ISender mediator)
-  {
-    _mediator = mediator;
-  }
-
   /// <summary>
   ///   Gets a list of Accounts
   /// </summary>
@@ -28,7 +23,7 @@ public class AccountsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<ActionResult<List<AccountsGetListResponse>>> GetList([FromQuery] AccountsGetListRequest request)
   {
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -45,7 +40,7 @@ public class AccountsController : ControllerBase
   {
     AccountsGetRequest request = new(id);
 
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -60,7 +55,7 @@ public class AccountsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<ActionResult<AccountsCreateResponse>> Create([FromBody] AccountsCreateRequest request)
   {
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -80,7 +75,7 @@ public class AccountsController : ControllerBase
   {
     request.Id = id;
 
-    await _mediator.Send(request);
+    await mediator.Send(request);
 
     return NoContent();
   }
@@ -97,7 +92,7 @@ public class AccountsController : ControllerBase
   {
     AccountsDeleteRequest request = new(id);
 
-    await _mediator.Send(request);
+    await mediator.Send(request);
 
     return NoContent();
   }
@@ -119,7 +114,7 @@ public class AccountsController : ControllerBase
   {
     request.Id = id;
 
-    await _mediator.Send(request);
+    await mediator.Send(request);
 
     return NoContent();
   }

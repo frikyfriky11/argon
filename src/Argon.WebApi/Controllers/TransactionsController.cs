@@ -12,15 +12,10 @@ namespace Argon.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("[controller]")]
-public class TransactionsController : ControllerBase
+public class TransactionsController(
+  ISender mediator
+) : ControllerBase
 {
-  private readonly ISender _mediator;
-
-  public TransactionsController(ISender mediator)
-  {
-    _mediator = mediator;
-  }
-
   /// <summary>
   ///   Gets a list of Transactions
   /// </summary>
@@ -28,7 +23,7 @@ public class TransactionsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<ActionResult<PaginatedList<TransactionsGetListResponse>>> GetList([FromQuery] TransactionsGetListRequest request)
   {
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -45,7 +40,7 @@ public class TransactionsController : ControllerBase
   {
     TransactionsGetRequest request = new(id);
 
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -60,7 +55,7 @@ public class TransactionsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<ActionResult<TransactionsCreateResponse>> Create([FromBody] TransactionsCreateRequest request)
   {
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -80,7 +75,7 @@ public class TransactionsController : ControllerBase
   {
     request.Id = id;
 
-    await _mediator.Send(request);
+    await mediator.Send(request);
 
     return NoContent();
   }
@@ -97,7 +92,7 @@ public class TransactionsController : ControllerBase
   {
     TransactionsDeleteRequest request = new(id);
 
-    await _mediator.Send(request);
+    await mediator.Send(request);
 
     return NoContent();
   }

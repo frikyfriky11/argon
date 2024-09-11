@@ -1,18 +1,13 @@
 ﻿namespace Argon.Application.Accounts.GetList;
 
 [UsedImplicitly]
-public class AccountsGetListHandler : IRequestHandler<AccountsGetListRequest, List<AccountsGetListResponse>>
+public class AccountsGetListHandler(
+  IApplicationDbContext dbContext
+): IRequestHandler<AccountsGetListRequest, List<AccountsGetListResponse>>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public AccountsGetListHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task<List<AccountsGetListResponse>> Handle(AccountsGetListRequest request, CancellationToken cancellationToken)
   {
-    return await _dbContext
+    return await dbContext
       .Accounts
       .AsNoTracking()
       .OrderBy(account => account.Name)

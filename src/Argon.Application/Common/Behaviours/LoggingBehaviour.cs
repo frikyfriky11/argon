@@ -10,16 +10,15 @@
 /// <typeparam name="TRequest">The generic request object</typeparam>
 /// <typeparam name="TResponse">The generic response object</typeparam>
 [ExcludeFromCodeCoverage]
-public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+public class LoggingBehaviour<TRequest, TResponse>(
+  ILogger logger
+) : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : notnull
 {
-  private readonly ILogger _logger;
+  private readonly ILogger _logger = logger.ForContext<TRequest>();
 
   // ReSharper disable once ContextualLoggerProblem
   // ReSharper disable once SuggestBaseTypeForParameterInConstructor
-  public LoggingBehaviour(ILogger logger)
-  {
-    _logger = logger.ForContext<TRequest>();
-  }
 
   public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
   {

@@ -1,18 +1,13 @@
 ﻿namespace Argon.Application.Accounts.Update;
 
 [UsedImplicitly]
-public class AccountsUpdateHandler : IRequestHandler<AccountsUpdateRequest>
+public class AccountsUpdateHandler(
+  IApplicationDbContext dbContext
+) : IRequestHandler<AccountsUpdateRequest>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public AccountsUpdateHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task Handle(AccountsUpdateRequest request, CancellationToken cancellationToken)
   {
-    Account? entity = await _dbContext
+    Account? entity = await dbContext
       .Accounts
       .Where(account => account.Id == request.Id)
       .FirstOrDefaultAsync(cancellationToken);
@@ -25,6 +20,6 @@ public class AccountsUpdateHandler : IRequestHandler<AccountsUpdateRequest>
     entity.Name = request.Name;
     entity.Type = request.Type;
 
-    await _dbContext.SaveChangesAsync(cancellationToken);
+    await dbContext.SaveChangesAsync(cancellationToken);
   }
 }

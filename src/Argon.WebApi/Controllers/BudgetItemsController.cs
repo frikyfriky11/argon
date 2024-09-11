@@ -8,15 +8,10 @@ namespace Argon.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("[controller]")]
-public class BudgetItemsController : ControllerBase
+public class BudgetItemsController(
+  ISender mediator
+) : ControllerBase
 {
-  private readonly ISender _mediator;
-
-  public BudgetItemsController(ISender mediator)
-  {
-    _mediator = mediator;
-  }
-
   /// <summary>
   ///   Gets a list of Budget Items
   /// </summary>
@@ -24,7 +19,7 @@ public class BudgetItemsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<ActionResult<List<BudgetItemsGetListResponse>>> GetList([FromQuery] BudgetItemsGetListRequest request)
   {
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 
   /// <summary>
@@ -39,6 +34,6 @@ public class BudgetItemsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<ActionResult<BudgetItemsUpsertResponse>> Upsert([FromBody] BudgetItemsUpsertRequest request)
   {
-    return await _mediator.Send(request);
+    return await mediator.Send(request);
   }
 }

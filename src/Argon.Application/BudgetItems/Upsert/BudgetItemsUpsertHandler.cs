@@ -1,18 +1,13 @@
 ﻿namespace Argon.Application.BudgetItems.Upsert;
 
 [UsedImplicitly]
-public class BudgetItemsUpsertHandler : IRequestHandler<BudgetItemsUpsertRequest, BudgetItemsUpsertResponse>
+public class BudgetItemsUpsertHandler(
+  IApplicationDbContext dbContext
+): IRequestHandler<BudgetItemsUpsertRequest, BudgetItemsUpsertResponse>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public BudgetItemsUpsertHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task<BudgetItemsUpsertResponse> Handle(BudgetItemsUpsertRequest request, CancellationToken cancellationToken)
   {
-    BudgetItem? entity = await _dbContext
+    BudgetItem? entity = await dbContext
       .BudgetItems
       .Where(budgetItem => budgetItem.AccountId == request.AccountId)
       .Where(budgetItem => budgetItem.Year == request.Year)
@@ -23,9 +18,9 @@ public class BudgetItemsUpsertHandler : IRequestHandler<BudgetItemsUpsertRequest
     {
       if (entity is not null)
       {
-        _dbContext.BudgetItems.Remove(entity);
+        dbContext.BudgetItems.Remove(entity);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
       }
 
       return new BudgetItemsUpsertResponse(null);
@@ -41,7 +36,7 @@ public class BudgetItemsUpsertHandler : IRequestHandler<BudgetItemsUpsertRequest
         Month = request.Month,
       };
 
-      await _dbContext.BudgetItems.AddAsync(entity, cancellationToken);
+      await dbContext.BudgetItems.AddAsync(entity, cancellationToken);
     }
     else
     {
@@ -51,7 +46,7 @@ public class BudgetItemsUpsertHandler : IRequestHandler<BudgetItemsUpsertRequest
       entity.Year = request.Year;
     }
 
-    await _dbContext.SaveChangesAsync(cancellationToken);
+    await dbContext.SaveChangesAsync(cancellationToken);
 
     return new BudgetItemsUpsertResponse(entity.Id);
   }

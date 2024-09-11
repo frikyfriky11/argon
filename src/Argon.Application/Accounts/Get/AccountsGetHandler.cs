@@ -1,18 +1,13 @@
 ﻿namespace Argon.Application.Accounts.Get;
 
 [UsedImplicitly]
-public class AccountsGetHandler : IRequestHandler<AccountsGetRequest, AccountsGetResponse>
+public class AccountsGetHandler(
+  IApplicationDbContext dbContext
+): IRequestHandler<AccountsGetRequest, AccountsGetResponse>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public AccountsGetHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task<AccountsGetResponse> Handle(AccountsGetRequest request, CancellationToken cancellationToken)
   {
-    AccountsGetResponse? result = await _dbContext
+    AccountsGetResponse? result = await dbContext
       .Accounts
       .AsNoTracking()
       .Where(account => account.Id == request.Id)

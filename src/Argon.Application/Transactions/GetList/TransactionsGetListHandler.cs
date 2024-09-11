@@ -4,18 +4,13 @@ using Argon.Application.Extensions;
 namespace Argon.Application.Transactions.GetList;
 
 [UsedImplicitly]
-public class TransactionsGetListHandler : IRequestHandler<TransactionsGetListRequest, PaginatedList<TransactionsGetListResponse>>
+public class TransactionsGetListHandler(
+  IApplicationDbContext dbContext
+): IRequestHandler<TransactionsGetListRequest, PaginatedList<TransactionsGetListResponse>>
 {
-  private readonly IApplicationDbContext _dbContext;
-
-  public TransactionsGetListHandler(IApplicationDbContext dbContext)
-  {
-    _dbContext = dbContext;
-  }
-
   public async Task<PaginatedList<TransactionsGetListResponse>> Handle(TransactionsGetListRequest request, CancellationToken cancellationToken)
   {
-    return await _dbContext
+    return await dbContext
       .Transactions
       .AsNoTracking()
       .Where(transaction => request.AccountIds == null || request.AccountIds.Count == 0 || transaction.TransactionRows.Any(row => request.AccountIds.Contains(row.AccountId)))

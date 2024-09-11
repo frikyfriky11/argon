@@ -10,19 +10,16 @@
 /// <typeparam name="TRequest">The generic request object</typeparam>
 /// <typeparam name="TResponse">The generic response object</typeparam>
 [ExcludeFromCodeCoverage]
-public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+public class PerformanceBehaviour<TRequest, TResponse>(
+  ILogger logger
+) : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : notnull
 {
-  private readonly ILogger _logger;
-  private readonly Stopwatch _timer;
+  private readonly ILogger _logger = logger.ForContext<TRequest>();
+  private readonly Stopwatch _timer = new();
 
   // ReSharper disable once ContextualLoggerProblem
   // ReSharper disable once SuggestBaseTypeForParameterInConstructor
-  public PerformanceBehaviour(ILogger logger)
-  {
-    _timer = new Stopwatch();
-
-    _logger = logger.ForContext<TRequest>();
-  }
 
   public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
   {
