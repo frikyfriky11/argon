@@ -1,6 +1,6 @@
 ﻿using Argon.Application.Accounts.Favourite;
 
-namespace Argon.Application.Tests.Accounts;
+namespace Argon.Application.Tests.Accounts.Favourite;
 
 [TestFixture]
 public class AccountsFavouriteHandlerTests

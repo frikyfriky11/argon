@@ -1,6 +1,6 @@
 ﻿using Argon.Application.Accounts.Get;
 
-namespace Argon.Application.Tests.Accounts;
+namespace Argon.Application.Tests.Accounts.Get;
 
 [TestFixture]
 public class AccountsGetHandlerTests

@@ -1,6 +1,6 @@
 ﻿using Argon.Application.Accounts.GetList;
 
-namespace Argon.Application.Tests.Accounts;
+namespace Argon.Application.Tests.Accounts.GetList;
 
 [TestFixture]
 public class AccountsGetListHandlerTests

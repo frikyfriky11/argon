@@ -1,7 +1,6 @@
-﻿using Argon.Application.Transactions;
-using Argon.Application.Transactions.Get;
+﻿using Argon.Application.Transactions.Get;
 
-namespace Argon.Application.Tests.Transactions;
+namespace Argon.Application.Tests.Transactions.Get;
 
 [TestFixture]
 public class TransactionsGetHandlerTests
