@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Transactions.Update;
 
-[TestFixture]
 public class TransactionsUpdateHandlerTests
 {
   [SetUp]

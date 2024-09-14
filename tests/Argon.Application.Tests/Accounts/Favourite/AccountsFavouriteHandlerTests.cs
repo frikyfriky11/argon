@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Accounts.Favourite;
 
-[TestFixture]
 public class AccountsFavouriteHandlerTests
 {
   [SetUp]

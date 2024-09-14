@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Transactions.Get;
 
-[TestFixture]
 public class TransactionsGetHandlerTests
 {
   [SetUp]

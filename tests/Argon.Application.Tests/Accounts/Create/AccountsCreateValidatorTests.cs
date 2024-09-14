@@ -3,7 +3,6 @@ using Argon.Application.Tests.Extensions;
 
 namespace Argon.Application.Tests.Accounts.Create;
 
-[TestFixture]
 public class AccountsCreateValidatorTests
 {
   [SetUp]

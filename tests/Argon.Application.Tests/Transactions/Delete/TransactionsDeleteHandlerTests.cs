@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Transactions.Delete;
 
-[TestFixture]
 public class TransactionsDeleteHandlerTests
 {
   [SetUp]

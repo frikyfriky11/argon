@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Accounts.Create;
 
-[TestFixture]
 public class AccountsCreateHandlerTests
 {
   [SetUp]

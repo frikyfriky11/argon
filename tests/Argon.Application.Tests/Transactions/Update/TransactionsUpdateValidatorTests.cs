@@ -3,7 +3,6 @@ using Argon.Application.Transactions.Update;
 
 namespace Argon.Application.Tests.Transactions.Update;
 
-[TestFixture]
 public class TransactionsUpdateValidatorTests
 {
   [SetUp]

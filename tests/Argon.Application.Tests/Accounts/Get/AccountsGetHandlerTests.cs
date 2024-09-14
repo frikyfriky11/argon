@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Accounts.Get;
 
-[TestFixture]
 public class AccountsGetHandlerTests
 {
   [SetUp]

@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Accounts.Delete;
 
-[TestFixture]
 public class AccountsDeleteHandlerTests
 {
   [SetUp]

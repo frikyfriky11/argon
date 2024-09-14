@@ -2,7 +2,6 @@
 
 namespace Argon.Application.Tests.Accounts.Update;
 
-[TestFixture]
 public class AccountsUpdateHandlerTests
 {
   [SetUp]
