@@ -31,47 +31,31 @@ public class TransactionsCreateHandlerTests
       row2,
     });
 
-    Transaction expected = new()
-    {
-      Description = request.Description,
-      Date = request.Date,
-      TransactionRows = new List<TransactionRow>
-      {
-        new()
-        {
-          RowCounter = row1.RowCounter,
-          AccountId = row1.AccountId,
-          Debit = row1.Debit,
-          Credit = row1.Credit,
-          Description = row1.Description,
-        },
-        new()
-        {
-          RowCounter = row2.RowCounter,
-          AccountId = row2.AccountId,
-          Debit = row2.Debit,
-          Credit = row2.Credit,
-          Description = row2.Description,
-        },
-      },
-    };
-
     // act
     TransactionsCreateResponse result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    Transaction? entity = await _dbContext
+    Transaction? dbTransaction = await _dbContext
       .Transactions
       .Include(transaction => transaction.TransactionRows)
       .FirstOrDefaultAsync(x => x.Id == result.Id);
 
-    entity.Should().BeEquivalentTo(expected, config => config
-      .Excluding(x => x.Id)
-      .For(x => x.TransactionRows).Exclude(x => x.Id)
-      .For(x => x.TransactionRows).Exclude(x => x.Transaction)
-      .For(x => x.TransactionRows).Exclude(x => x.TransactionId)
-      .For(x => x.TransactionRows).Exclude(x => x.Account)
-      .Excluding(x => x.Created)
-      .Excluding(x => x.LastModified));
+    dbTransaction.Should().NotBeNull();
+    dbTransaction!.Description.Should().Be(request.Description);
+    dbTransaction.Date.Should().Be(request.Date);
+    dbTransaction.TransactionRows.Should().NotBeEmpty();
+    dbTransaction.TransactionRows.Should().HaveCount(2);
+    
+    dbTransaction.TransactionRows.First().RowCounter.Should().Be(row1.RowCounter);
+    dbTransaction.TransactionRows.First().AccountId.Should().Be(row1.AccountId);
+    dbTransaction.TransactionRows.First().Debit.Should().Be(row1.Debit);
+    dbTransaction.TransactionRows.First().Credit.Should().Be(row1.Credit);
+    dbTransaction.TransactionRows.First().Description.Should().Be(row1.Description);
+
+    dbTransaction.TransactionRows.Last().RowCounter.Should().Be(row2.RowCounter);
+    dbTransaction.TransactionRows.Last().AccountId.Should().Be(row2.AccountId);
+    dbTransaction.TransactionRows.Last().Debit.Should().Be(row2.Debit);
+    dbTransaction.TransactionRows.Last().Credit.Should().Be(row2.Credit);
+    dbTransaction.TransactionRows.Last().Description.Should().Be(row2.Description);
   }
 }

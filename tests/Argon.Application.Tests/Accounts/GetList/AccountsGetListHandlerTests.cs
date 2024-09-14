@@ -19,11 +19,14 @@ public class AccountsGetListHandlerTests
   public async Task Handle_ShouldCompleteCorrectly_WithValidRequest()
   {
     // arrange
+    Account account1 = new Account { Name = "test account 1", Type = AccountType.Cash };
+    Account account2 = new Account { Name = "test account 2", Type = AccountType.Credit };
+    Account account3 = new Account { Name = "test account 3", Type = AccountType.Debit };
     List<Account> accounts = new()
     {
-      new Account { Name = "test account 1", Type = AccountType.Cash },
-      new Account { Name = "test account 2", Type = AccountType.Credit },
-      new Account { Name = "test account 3", Type = AccountType.Debit },
+      account1,
+      account2,
+      account3,
     };
 
     await _dbContext.Accounts.AddRangeAsync(accounts);
@@ -45,7 +48,25 @@ public class AccountsGetListHandlerTests
     List<AccountsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Should().BeEquivalentTo(expected);
+    result.Should().HaveCount(3);
+    
+    result[0].Id.Should().Be(account1.Id);
+    result[0].Name.Should().Be(account1.Name);
+    result[0].Type.Should().Be(account1.Type);
+    result[0].IsFavourite.Should().Be(account1.IsFavourite);
+    result[0].TotalAmount.Should().Be(0);
+    
+    result[1].Id.Should().Be(account2.Id);
+    result[1].Name.Should().Be(account2.Name);
+    result[1].Type.Should().Be(account2.Type);
+    result[1].IsFavourite.Should().Be(account2.IsFavourite);
+    result[1].TotalAmount.Should().Be(0);
+    
+    result[2].Id.Should().Be(account3.Id);
+    result[2].Name.Should().Be(account3.Name);
+    result[2].Type.Should().Be(account3.Type);
+    result[2].IsFavourite.Should().Be(account3.IsFavourite);
+    result[2].TotalAmount.Should().Be(0);
   }
 
   [Test]
@@ -100,8 +121,23 @@ public class AccountsGetListHandlerTests
 
     // assert
     result.Should().HaveCount(3);
-    result.Should().ContainEquivalentOf(new AccountsGetListResponse(Guid.Empty, "Groceries", AccountType.Expense, false, 100), options => options.Excluding(x => x.Id));
-    result.Should().ContainEquivalentOf(new AccountsGetListResponse(Guid.Empty, "Cash", AccountType.Cash, false, 900), options => options.Excluding(x => x.Id));
-    result.Should().ContainEquivalentOf(new AccountsGetListResponse(Guid.Empty, "Salary", AccountType.Revenue, false, -1000), options => options.Excluding(x => x.Id));
+    
+    result[0].Id.Should().Be(cashAccount.Id);
+    result[0].Name.Should().Be(cashAccount.Name);
+    result[0].Type.Should().Be(cashAccount.Type);
+    result[0].IsFavourite.Should().Be(cashAccount.IsFavourite);
+    result[0].TotalAmount.Should().Be(900);
+    
+    result[1].Id.Should().Be(groceriesAccount.Id);
+    result[1].Name.Should().Be(groceriesAccount.Name);
+    result[1].Type.Should().Be(groceriesAccount.Type);
+    result[1].IsFavourite.Should().Be(groceriesAccount.IsFavourite);
+    result[1].TotalAmount.Should().Be(100);
+    
+    result[2].Id.Should().Be(salaryAccount.Id);
+    result[2].Name.Should().Be(salaryAccount.Name);
+    result[2].Type.Should().Be(salaryAccount.Type);
+    result[2].IsFavourite.Should().Be(salaryAccount.IsFavourite);
+    result[2].TotalAmount.Should().Be(-1000);
   }
 }

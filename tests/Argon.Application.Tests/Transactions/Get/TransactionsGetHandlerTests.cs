@@ -38,7 +38,7 @@ public class TransactionsGetHandlerTests
       Credit = 100.00m,
       Description = "test row 2 description",
     };
-    Transaction sampleEntity = new()
+    Transaction transaction = new()
     {
       Date = new DateOnly(2023, 04, 05),
       Description = "test description",
@@ -49,27 +49,32 @@ public class TransactionsGetHandlerTests
       },
     };
 
-    await _dbContext.Transactions.AddAsync(sampleEntity);
+    await _dbContext.Transactions.AddAsync(transaction);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetRequest request = new(sampleEntity.Id);
-
-    TransactionsGetResponse expected = new(
-      sampleEntity.Id,
-      sampleEntity.Date,
-      sampleEntity.Description,
-      new List<TransactionRowsGetResponse>()
-      {
-        new(row1.Id, row1.RowCounter, row1.AccountId, row1.Debit, row1.Credit, row1.Description),
-        new(row2.Id, row2.RowCounter, row2.AccountId, row2.Debit, row2.Credit, row2.Description),
-      }
-    );
+    TransactionsGetRequest request = new(transaction.Id);
 
     // act
     TransactionsGetResponse result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Should().BeEquivalentTo(expected);
+    result.Id.Should().Be(transaction.Id);
+    result.Date.Should().Be(transaction.Date);
+    result.Description.Should().Be(transaction.Description);
+    
+    result.TransactionRows[0].Id.Should().Be(row1.Id);
+    result.TransactionRows[0].RowCounter.Should().Be(row1.RowCounter);
+    result.TransactionRows[0].AccountId.Should().Be(row1.AccountId);
+    result.TransactionRows[0].Debit.Should().Be(row1.Debit);
+    result.TransactionRows[0].Credit.Should().Be(row1.Credit);
+    result.TransactionRows[0].Description.Should().Be(row1.Description);
+    
+    result.TransactionRows[1].Id.Should().Be(row2.Id);
+    result.TransactionRows[1].RowCounter.Should().Be(row2.RowCounter);
+    result.TransactionRows[1].AccountId.Should().Be(row2.AccountId);
+    result.TransactionRows[1].Debit.Should().Be(row2.Debit);
+    result.TransactionRows[1].Credit.Should().Be(row2.Credit);
+    result.TransactionRows[1].Description.Should().Be(row2.Description);
   }
 
   [Test]

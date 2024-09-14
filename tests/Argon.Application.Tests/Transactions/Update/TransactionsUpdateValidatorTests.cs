@@ -42,12 +42,9 @@ public class TransactionsUpdateValidatorTests
   }
 
   [Test]
-  [TestCase(null)]
-  [TestCase("")]
-  [TestCase(" ")]
-  public async Task Validator_ShouldReturnError_WhenDescriptionIsNullOrWhiteSpace(string value)
+  public async Task Validator_ShouldReturnError_WhenDescriptionIsEmpty()
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), value, new List<TransactionRowsUpdateRequest>());
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>());
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Description));
   }

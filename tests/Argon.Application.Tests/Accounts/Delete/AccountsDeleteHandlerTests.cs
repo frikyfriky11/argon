@@ -29,8 +29,8 @@ public class AccountsDeleteHandlerTests
     await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    bool entityExists = await _dbContext.Accounts.AnyAsync(x => x.Id == account.Entity.Id);
-    entityExists.Should().BeFalse();
+    Account? dbAccount = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == account.Entity.Id);
+    dbAccount.Should().BeNull();
   }
 
   [Test]

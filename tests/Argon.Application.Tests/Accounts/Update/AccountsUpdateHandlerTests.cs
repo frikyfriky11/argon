@@ -24,21 +24,15 @@ public class AccountsUpdateHandlerTests
 
     AccountsUpdateRequest request = new("new test account", AccountType.Revenue) { Id = existingAccount.Entity.Id };
 
-    Account expected = new()
-    {
-      Name = request.Name,
-      Type = request.Type,
-    };
-
     // act
     await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    Account? entity = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == existingAccount.Entity.Id);
-
-    entity.Should().BeEquivalentTo(expected, config => config
-      .Excluding(x => x.Created)
-      .Excluding(x => x.LastModified));
+    Account? dbAccount = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == existingAccount.Entity.Id);
+    
+    dbAccount.Should().NotBeNull();
+    dbAccount!.Name.Should().Be(request.Name);
+    dbAccount.Type.Should().Be(request.Type);
   }
 
   [Test]

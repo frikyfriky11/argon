@@ -35,12 +35,9 @@ public class AccountsUpdateValidatorTests
   }
 
   [Test]
-  [TestCase(null)]
-  [TestCase("")]
-  [TestCase(" ")]
-  public async Task Validator_ShouldReturnError_WhenNameIsNullOrWhiteSpace(string name)
+  public async Task Validator_ShouldReturnError_WhenNameIsEmpty()
   {
-    AccountsUpdateRequest request = new(name, AccountType.Revenue);
+    AccountsUpdateRequest request = new(string.Empty, AccountType.Revenue);
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }

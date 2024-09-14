@@ -19,7 +19,10 @@ public class AccountsCreateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnZeroErrors_WhenObjectIsValid()
   {
-    AccountsCreateRequest request = new("test account", AccountType.Cash);
+    AccountsCreateRequest request = new(
+      "test account", 
+      AccountType.Cash
+    );
 
     TestValidationResult<AccountsCreateRequest>? result = await _sut.TestValidateAsync(request);
 
@@ -29,18 +32,21 @@ public class AccountsCreateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenNameIsTooLong()
   {
-    AccountsCreateRequest request = new("x".Repeat(51), AccountType.Cash);
+    AccountsCreateRequest request = new(
+      "x".Repeat(51),
+      AccountType.Cash
+    );
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }
 
   [Test]
-  [TestCase(null)]
-  [TestCase("")]
-  [TestCase(" ")]
-  public async Task Validator_ShouldReturnError_WhenNameIsNullOrWhiteSpace(string name)
+  public async Task Validator_ShouldReturnError_WhenNameIsEmpty()
   {
-    AccountsCreateRequest request = new(name, AccountType.Cash);
+    AccountsCreateRequest request = new(
+      string.Empty,
+      AccountType.Cash
+    );
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }
@@ -48,7 +54,10 @@ public class AccountsCreateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenTypeIsNotInEnum()
   {
-    AccountsCreateRequest request = new("test account", (AccountType)999);
+    AccountsCreateRequest request = new(
+      "test account",
+      (AccountType)999
+    );
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Type));
   }

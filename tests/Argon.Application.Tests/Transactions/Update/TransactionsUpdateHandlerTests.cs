@@ -42,7 +42,7 @@ public class TransactionsUpdateHandlerTests
       Description = "test row 2 description",
     };
 
-    EntityEntry<Transaction> existingEntity = await _dbContext.Transactions.AddAsync(new Transaction
+    EntityEntry<Transaction> existingTransaction = await _dbContext.Transactions.AddAsync(new Transaction
     {
       Date = new DateOnly(2023, 04, 05),
       Description = "test description",
@@ -55,43 +55,45 @@ public class TransactionsUpdateHandlerTests
 
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
+    TransactionRowsUpdateRequest newRow1 = new(existingFirstRow.Id, 1, accountRestaurants.Entity.Id, 200.00m, null, "new test row 1 description");
+    TransactionRowsUpdateRequest newRow2 = new(existingSecondRow.Id, 2, accountCash.Entity.Id, null, 200.00m, "new test row 2 description");
+
     List<TransactionRowsUpdateRequest> rowList = new()
     {
-      new TransactionRowsUpdateRequest(existingFirstRow.Id, 1, accountRestaurants.Entity.Id, 200.00m, null, "new test row 1 description"),
-      new TransactionRowsUpdateRequest(existingSecondRow.Id, 2, accountCash.Entity.Id, null, 200.00m, "new test row 2 description"),
+      newRow1,
+      newRow2,
     };
 
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), "new test description", rowList) { Id = existingEntity.Entity.Id };
-
-    Transaction expected = new()
-    {
-      Date = request.Date,
-      Description = request.Description,
-      TransactionRows = rowList
-        .Select(row => new TransactionRow
-        {
-          RowCounter = row.RowCounter,
-          AccountId = row.AccountId,
-          Description = row.Description,
-          Debit = row.Debit,
-          Credit = row.Credit,
-        })
-        .ToList(),
-    };
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), "new test description", rowList) { Id = existingTransaction.Entity.Id };
 
     // act
     await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    Transaction? entity = await _dbContext.Transactions.FirstOrDefaultAsync(x => x.Id == existingEntity.Entity.Id);
+    Transaction? dbTransaction = await _dbContext
+      .Transactions
+      .Include(transaction => transaction.TransactionRows)
+      .FirstOrDefaultAsync(x => x.Id == existingTransaction.Entity.Id);
 
-    entity.Should().BeEquivalentTo(expected, config => config
-      .For(x => x.TransactionRows).Exclude(x => x.Id)
-      .For(x => x.TransactionRows).Exclude(x => x.Transaction)
-      .For(x => x.TransactionRows).Exclude(x => x.TransactionId)
-      .For(x => x.TransactionRows).Exclude(x => x.Account)
-      .Excluding(x => x.Created)
-      .Excluding(x => x.LastModified));
+    dbTransaction.Should().NotBeNull();
+    dbTransaction!.Date.Should().Be(request.Date);
+    dbTransaction.Description.Should().Be(request.Description);
+
+    dbTransaction.TransactionRows.Should().HaveCount(2);
+
+    dbTransaction.TransactionRows.First().Id.Should().Be(newRow1.Id!.Value);
+    dbTransaction.TransactionRows.First().RowCounter.Should().Be(newRow1.RowCounter);
+    dbTransaction.TransactionRows.First().Debit.Should().Be(newRow1.Debit);
+    dbTransaction.TransactionRows.First().Credit.Should().Be(newRow1.Credit);
+    dbTransaction.TransactionRows.First().Description.Should().Be(newRow1.Description);
+    dbTransaction.TransactionRows.First().AccountId.Should().Be(newRow1.AccountId);
+
+    dbTransaction.TransactionRows.Last().Id.Should().Be(newRow2.Id!.Value);
+    dbTransaction.TransactionRows.Last().RowCounter.Should().Be(newRow2.RowCounter);
+    dbTransaction.TransactionRows.Last().Debit.Should().Be(newRow2.Debit);
+    dbTransaction.TransactionRows.Last().Credit.Should().Be(newRow2.Credit);
+    dbTransaction.TransactionRows.Last().Description.Should().Be(newRow2.Description);
+    dbTransaction.TransactionRows.Last().AccountId.Should().Be(newRow2.AccountId);
   }
 
   [Test]

@@ -19,22 +19,18 @@ public class AccountsCreateHandlerTests
   public async Task Handle_ShouldCompleteCorrectly_WithValidRequest()
   {
     // arrange
-    AccountsCreateRequest request = new("test account", AccountType.Cash);
-
-    Account expected = new()
-    {
-      Name = request.Name,
-      Type = request.Type,
-    };
+    AccountsCreateRequest request = new(
+      "test account",
+      AccountType.Cash
+    );
 
     // act
     AccountsCreateResponse result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    Account? entity = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == result.Id);
-    entity.Should().BeEquivalentTo(expected, config => config
-      .Excluding(x => x.Id)
-      .Excluding(x => x.Created)
-      .Excluding(x => x.LastModified));
+    Account? dbAccount = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == result.Id);
+    dbAccount.Should().NotBeNull();
+    dbAccount!.Name.Should().Be(request.Name);
+    dbAccount.Type.Should().Be(request.Type);
   }
 }

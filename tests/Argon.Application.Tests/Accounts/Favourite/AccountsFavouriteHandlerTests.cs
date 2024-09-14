@@ -30,9 +30,10 @@ public class AccountsFavouriteHandlerTests
     await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    Account? entity = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == existingAccount.Entity.Id);
+    Account? dbAccount = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == existingAccount.Entity.Id);
 
-    entity!.IsFavourite.Should().Be(value);
+    dbAccount.Should().NotBeNull();
+    dbAccount!.IsFavourite.Should().Be(value);
   }
 
   [Test]

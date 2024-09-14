@@ -9,294 +9,201 @@ public class TransactionsGetListHandlerTests
   {
     _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
 
+    _bankAccountId = Guid.NewGuid();
+    _groceriesAccountId = Guid.NewGuid();
+    _carAccountId = Guid.NewGuid();
+    _rentAccountId = Guid.NewGuid();
+
     _sut = new TransactionsGetListHandler(_dbContext);
   }
 
   private IApplicationDbContext _dbContext = null!;
   private TransactionsGetListHandler _sut = null!;
+  private Guid _bankAccountId;
+  private Guid _groceriesAccountId;
+  private Guid _carAccountId;
+  private Guid _rentAccountId;
+
+  private List<Transaction> CreateTestTransactions()
+  {
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account carAccount = new() { Id = _carAccountId, Name = "Car" };
+    Account rentAccount = new() { Id = _rentAccountId, Name = "Rent" };
+
+    TransactionRow transaction1Row1 = new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 };
+    TransactionRow transaction1Row2 = new() { RowCounter = 2, Account = bankAccount, Credit = 50 };
+    Transaction transaction1 = new()
+    {
+      Description = "grocery shopping",
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        transaction1Row1,
+        transaction1Row2,
+      },
+    };
+    
+    TransactionRow transaction2Row1 = new() { RowCounter = 1, Account = carAccount, Debit = 100 };
+    TransactionRow transaction2Row2 = new() { RowCounter = 2, Account = bankAccount, Credit = 100 };
+    Transaction transaction2 = new()
+    {
+      Description = "gas filling",
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        transaction2Row1,
+        transaction2Row2,
+      },
+    };
+    
+    TransactionRow transaction3Row1 = new() { RowCounter = 1, Account = rentAccount, Debit = 600 };
+    TransactionRow transaction3Row2 = new() { RowCounter = 2, Account = bankAccount, Credit = 600 };
+    Transaction transaction3 = new()
+    {
+      Description = "rent paying",
+      Date = new DateOnly(2024, 9, 14),
+      TransactionRows = new List<TransactionRow>
+      {
+        transaction3Row1,
+        transaction3Row2,
+      },
+    };
+
+    return new List<Transaction>
+    {
+      transaction1,
+      transaction2,
+      transaction3,
+    };
+  }
+
+  private static void CheckResults(
+    PaginatedList<TransactionsGetListResponse> result,
+    List<Transaction> transactions,
+    int count,
+    int totalPages,
+    int totalCount,
+    int[] expectedItems
+    )
+  {
+    result.Items.Should().HaveCount(count);
+
+    for (int i = 0; i < result.Items.Count; i++)
+    {
+      TransactionsGetListResponse resultItem = result.Items[i];
+      Transaction expectedItem = transactions[expectedItems[i] - 1];
+
+      resultItem.Id.Should().Be(expectedItem.Id);
+      resultItem.Date.Should().Be(expectedItem.Date);
+      resultItem.Description.Should().Be(expectedItem.Description);
+      resultItem.TransactionRows.Should().HaveCount(expectedItem.TransactionRows.Count);
+      resultItem.TransactionRows[0].RowCounter.Should().Be(expectedItem.TransactionRows.First().RowCounter);
+      resultItem.TransactionRows[0].Description.Should().Be(expectedItem.TransactionRows.First().Description);
+      resultItem.TransactionRows[0].AccountId.Should().Be(expectedItem.TransactionRows.First().AccountId);
+      resultItem.TransactionRows[0].Debit.Should().Be(expectedItem.TransactionRows.First().Debit);
+      resultItem.TransactionRows[0].Credit.Should().Be(expectedItem.TransactionRows.First().Credit);
+      resultItem.TransactionRows[1].RowCounter.Should().Be(expectedItem.TransactionRows.Last().RowCounter);
+      resultItem.TransactionRows[1].Description.Should().Be(expectedItem.TransactionRows.Last().Description);
+      resultItem.TransactionRows[1].AccountId.Should().Be(expectedItem.TransactionRows.Last().AccountId);
+      resultItem.TransactionRows[1].Debit.Should().Be(expectedItem.TransactionRows.Last().Debit);
+      resultItem.TransactionRows[1].Credit.Should().Be(expectedItem.TransactionRows.Last().Credit);
+    }
+    
+    result.PageNumber.Should().Be(1);
+    result.TotalPages.Should().Be(totalPages);
+    result.TotalCount.Should().Be(totalCount);
+    result.HasNextPage.Should().Be(totalPages > 1);
+    result.HasPreviousPage.Should().BeFalse();
+  }
 
   [Test]
   public async Task Handle_ShouldRetrieveAllTransactions_WithoutFilters()
   {
     // arrange
-    List<Transaction> sampleEntities = new()
-    {
-      new Transaction { Date = new DateOnly(2023, 9, 18), Description = "test transaction 1" },
-      new Transaction { Date = new DateOnly(2023, 9, 19), Description = "test transaction 2" },
-      new Transaction { Date = new DateOnly(2023, 9, 20), Description = "test transaction 3" },
-    };
+    List<Transaction> transactions = CreateTestTransactions();
 
-    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
     TransactionsGetListRequest request = new(null, null, null, null, 1, 2);
-
-    List<TransactionsGetListResponse> expected = sampleEntities
-      .OrderByDescending(transaction => transaction.Date)
-      .ThenByDescending(transaction => transaction.Created)
-      .ThenByDescending(transaction => transaction.Id)
-      .Select(transaction => new TransactionsGetListResponse(
-        transaction.Id,
-        transaction.Date,
-        transaction.Description,
-        transaction.TransactionRows
-          .Select(row => new TransactionRowsGetListResponse(
-            row.Id,
-            row.RowCounter,
-            row.AccountId,
-            row.Account.Name,
-            row.Debit,
-            row.Credit,
-            row.Description
-          ))
-          .ToList()
-      ))
-      .Take(2)
-      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Items.Should().BeEquivalentTo(expected);
-    result.PageNumber.Should().Be(1);
-    result.TotalPages.Should().Be(2);
-    result.TotalCount.Should().Be(3);
-    result.HasNextPage.Should().Be(true);
-    result.HasPreviousPage.Should().Be(false);
+    CheckResults(result, transactions, 2, 2, 3, [3, 2]);
   }
 
   [Test]
   public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedIds_WithAccountIdsFilter()
   {
     // arrange
-    Account bankAccount = new() { Name = "Bank" };
-    Account groceriesAccount = new() { Name = "Groceries" };
-    Account carAccount = new() { Name = "Car" };
-    Account rentAccount = new() { Name = "Rent" };
+    List<Transaction> transactions = CreateTestTransactions();
 
-    List<Transaction> sampleEntities = new()
-    {
-      new Transaction
-      {
-        Description = "grocery shopping",
-        TransactionRows = new List<TransactionRow>
-        {
-          new() { Account = groceriesAccount, Debit = 50 },
-          new() { Account = bankAccount, Credit = 50 },
-        },
-      },
-      new Transaction
-      {
-        Description = "gas filling",
-        TransactionRows = new List<TransactionRow>
-        {
-          new() { Account = carAccount, Debit = 100 },
-          new() { Account = bankAccount, Credit = 100 },
-        },
-      },
-      new Transaction
-      {
-        Description = "rent paying",
-        TransactionRows = new List<TransactionRow>
-        {
-          new() { Account = rentAccount, Debit = 600 },
-          new() { Account = bankAccount, Credit = 600 },
-        },
-      },
-    };
-
-    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(new List<Guid> { groceriesAccount.Id, rentAccount.Id }, null, null, null);
-
-    List<TransactionsGetListResponse> expected = sampleEntities
-      .Where(x => x.TransactionRows.Any(row => request.AccountIds!.Contains(row.AccountId)))
-      .OrderByDescending(transaction => transaction.Date)
-      .ThenByDescending(transaction => transaction.Created)
-      .ThenByDescending(transaction => transaction.Id)
-      .Select(transaction => new TransactionsGetListResponse(
-        transaction.Id,
-        transaction.Date,
-        transaction.Description,
-        transaction.TransactionRows
-          .Select(row => new TransactionRowsGetListResponse(
-            row.Id,
-            row.RowCounter,
-            row.AccountId,
-            row.Account.Name,
-            row.Debit,
-            row.Credit,
-            row.Description
-          ))
-          .ToList()
-      ))
-      .ToList();
+    TransactionsGetListRequest request = new(new List<Guid> { _groceriesAccountId, _rentAccountId }, null, null, null);
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Items.Should().BeEquivalentTo(expected);
-    result.PageNumber.Should().Be(1);
-    result.TotalPages.Should().Be(1);
-    result.TotalCount.Should().Be(2);
-    result.HasNextPage.Should().Be(false);
-    result.HasPreviousPage.Should().Be(false);
+    CheckResults(result, transactions, 2, 1, 2, [3, 1]);
   }
 
   [Test]
   public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDescription_WithDescriptionFilter()
   {
     // arrange
-    List<Transaction> sampleEntities = new()
-    {
-      new Transaction { Description = "grocery shopping 1" },
-      new Transaction { Description = "grocery shopping 2" },
-      new Transaction { Description = "gas filling" },
-      new Transaction { Description = "rent paying" },
-    };
+    List<Transaction> transactions = CreateTestTransactions();
 
-    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
     TransactionsGetListRequest request = new(null, "shopping", null, null);
-
-    List<TransactionsGetListResponse> expected = sampleEntities
-      .Where(x => x.Description.Contains(request.Description!))
-      .OrderByDescending(transaction => transaction.Date)
-      .ThenByDescending(transaction => transaction.Created)
-      .ThenByDescending(transaction => transaction.Id)
-      .Select(transaction => new TransactionsGetListResponse(
-        transaction.Id,
-        transaction.Date,
-        transaction.Description,
-        transaction.TransactionRows
-          .Select(row => new TransactionRowsGetListResponse(
-            row.Id,
-            row.RowCounter,
-            row.AccountId,
-            row.Account.Name,
-            row.Debit,
-            row.Credit,
-            row.Description
-          ))
-          .ToList()
-      ))
-      .ToList();
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Items.Should().BeEquivalentTo(expected);
-    result.PageNumber.Should().Be(1);
-    result.TotalPages.Should().Be(1);
-    result.TotalCount.Should().Be(2);
-    result.HasNextPage.Should().Be(false);
-    result.HasPreviousPage.Should().Be(false);
+    CheckResults(result, transactions, 1, 1, 1, [1]);
   }
 
   [Test]
   public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDateFrom_WithDateFromFilter()
   {
     // arrange
-    List<Transaction> sampleEntities = new()
-    {
-      new Transaction { Date = new DateOnly(2023, 8, 7), Description = "grocery shopping" },
-      new Transaction { Date = new DateOnly(2023, 8, 6), Description = "gas filling" },
-      new Transaction { Date = new DateOnly(2023, 8, 5), Description = "rent paying" },
-    };
+    List<Transaction> transactions = CreateTestTransactions();
 
-    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, null, new DateTimeOffset(new DateTime(2023, 8, 6)), null);
-
-    List<TransactionsGetListResponse> expected = sampleEntities
-      .Where(x => x.Date >= DateOnly.FromDateTime(request.DateFrom!.Value.Date))
-      .OrderByDescending(transaction => transaction.Date)
-      .ThenByDescending(transaction => transaction.Created)
-      .ThenByDescending(transaction => transaction.Id)
-      .Select(transaction => new TransactionsGetListResponse(
-        transaction.Id,
-        transaction.Date,
-        transaction.Description,
-        transaction.TransactionRows
-          .Select(row => new TransactionRowsGetListResponse(
-            row.Id,
-            row.RowCounter,
-            row.AccountId,
-            row.Account.Name,
-            row.Debit,
-            row.Credit,
-            row.Description
-          ))
-          .ToList()
-      ))
-      .ToList();
+    TransactionsGetListRequest request = new(null, null, new DateTimeOffset(new DateTime(2024, 9, 13)), null);
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Items.Should().BeEquivalentTo(expected);
-    result.PageNumber.Should().Be(1);
-    result.TotalPages.Should().Be(1);
-    result.TotalCount.Should().Be(2);
-    result.HasNextPage.Should().Be(false);
-    result.HasPreviousPage.Should().Be(false);
+    CheckResults(result, transactions, 2, 1, 2, [3, 2]);
   }
 
   [Test]
   public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDateTo_WithDateToFilter()
   {
     // arrange
-    List<Transaction> sampleEntities = new()
-    {
-      new Transaction { Date = new DateOnly(2023, 8, 7), Description = "grocery shopping" },
-      new Transaction { Date = new DateOnly(2023, 8, 6), Description = "gas filling" },
-      new Transaction { Date = new DateOnly(2023, 8, 5), Description = "rent paying" },
-    };
+    List<Transaction> transactions = CreateTestTransactions();
 
-    await _dbContext.Transactions.AddRangeAsync(sampleEntities);
+    await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, null, null, new DateTimeOffset(new DateTime(2023, 8, 6)));
-
-    List<TransactionsGetListResponse> expected = sampleEntities
-      .Where(x => x.Date <= DateOnly.FromDateTime(request.DateTo!.Value.Date))
-      .OrderByDescending(transaction => transaction.Date)
-      .ThenByDescending(transaction => transaction.Created)
-      .ThenByDescending(transaction => transaction.Id)
-      .Select(transaction => new TransactionsGetListResponse(
-        transaction.Id,
-        transaction.Date,
-        transaction.Description,
-        transaction.TransactionRows
-          .Select(row => new TransactionRowsGetListResponse(
-            row.Id,
-            row.RowCounter,
-            row.AccountId,
-            row.Account.Name,
-            row.Debit,
-            row.Credit,
-            row.Description
-          ))
-          .ToList()
-      ))
-      .ToList();
+    TransactionsGetListRequest request = new(null, null, null, new DateTimeOffset(new DateTime(2024, 9, 13)));
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Items.Should().BeEquivalentTo(expected);
-    result.PageNumber.Should().Be(1);
-    result.TotalPages.Should().Be(1);
-    result.TotalCount.Should().Be(2);
-    result.HasNextPage.Should().Be(false);
-    result.HasPreviousPage.Should().Be(false);
+    CheckResults(result, transactions, 2, 1, 2, [2, 1]);
   }
 }

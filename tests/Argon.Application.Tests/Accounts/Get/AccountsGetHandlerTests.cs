@@ -26,19 +26,15 @@ public class AccountsGetHandlerTests
 
     AccountsGetRequest request = new(account.Id);
 
-    AccountsGetResponse expected = new(
-      account.Id,
-      account.Name,
-      account.Type,
-      account.IsFavourite,
-      0
-    );
-
     // act
     AccountsGetResponse result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    result.Should().BeEquivalentTo(expected);
+    result.Id.Should().Be(account.Id);
+    result.Name.Should().Be(account.Name);
+    result.Type.Should().Be(account.Type);
+    result.IsFavourite.Should().Be(false);
+    result.TotalAmount.Should().Be(0);
   }
 
   [Test]

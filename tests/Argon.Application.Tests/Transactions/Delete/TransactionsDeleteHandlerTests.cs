@@ -29,8 +29,8 @@ public class TransactionsDeleteHandlerTests
     await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    bool entityExists = await _dbContext.Transactions.AnyAsync(x => x.Id == transaction.Entity.Id);
-    entityExists.Should().BeFalse();
+    Transaction? dbTransaction = await _dbContext.Transactions.FirstOrDefaultAsync(x => x.Id == transaction.Entity.Id);
+    dbTransaction.Should().BeNull();
   }
 
   [Test]
