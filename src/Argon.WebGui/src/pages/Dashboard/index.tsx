@@ -11,7 +11,7 @@ export default function Dashboard() {
     queryFn: () => new AccountsClient().getList(null, null),
   });
 
-  if (accounts.isLoading) {
+  if (accounts.isPending) {
     return <p>Loading accounts...</p>;
   }
 

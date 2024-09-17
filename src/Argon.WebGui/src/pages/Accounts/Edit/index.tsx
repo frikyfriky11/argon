@@ -108,7 +108,7 @@ export default function Edit() {
     },
   });
 
-  if (account.isLoading) {
+  if (account.isPending) {
     return <p>Loading account...</p>;
   }
 
@@ -157,7 +157,7 @@ export default function Edit() {
           <CardContent>
             <Form
               account={account.data}
-              isSaving={updateMutation.isLoading}
+              isSaving={updateMutation.isPending}
               onSubmit={(data) => {
                 updateMutation.mutate(data);
               }}

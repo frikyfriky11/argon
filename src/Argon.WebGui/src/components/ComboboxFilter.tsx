@@ -40,7 +40,7 @@ export default function ComboboxFilter<TValue, TItem>({
 
   const [searchFilter, setSearchFilter] = useState("");
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey,
     queryFn,
   });
@@ -79,7 +79,7 @@ export default function ComboboxFilter<TValue, TItem>({
     }
   };
 
-  if (isLoading) {
+  if (isPending) {
     return <p>Loading data...</p>;
   }
 

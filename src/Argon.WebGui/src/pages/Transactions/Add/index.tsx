@@ -56,7 +56,7 @@ export default function Add() {
           <CardHeader title="Crea nuova transazione" />
           <CardContent>
             <Form
-              isSaving={mutation.isLoading}
+              isSaving={mutation.isPending}
               onSubmit={(data) => {
                 mutation.mutate(data);
               }}

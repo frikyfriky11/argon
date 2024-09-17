@@ -104,7 +104,7 @@ export default function Edit() {
     },
   });
 
-  if (transaction.isLoading) {
+  if (transaction.isPending) {
     return <p>Loading transaction...</p>;
   }
 
@@ -148,7 +148,7 @@ export default function Edit() {
           <CardHeader title="Modifica transazione" />
           <CardContent>
             <Form
-              isSaving={updateMutation.isLoading}
+              isSaving={updateMutation.isPending}
               onSubmit={(data) => {
                 updateMutation.mutate(data);
               }}

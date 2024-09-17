@@ -127,7 +127,7 @@ export default function Form({
     }
   }, [formValues, update]);
 
-  if (accounts.isLoading) {
+  if (accounts.isPending) {
     return <p>Loading accounts...</p>;
   }
 

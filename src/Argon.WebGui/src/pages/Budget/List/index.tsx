@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { useState } from "react";
 
@@ -30,20 +30,20 @@ export default function Index() {
   const accounts = useQuery({
     queryKey: ["accounts", startOfMonth, endOfMonth],
     queryFn: () => new AccountsClient().getList(startOfMonth, endOfMonth),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const accountsPreviousMonth = useQuery({
     queryKey: ["accounts", startOfPreviousMonth, endOfPreviousMonth],
     queryFn: () =>
       new AccountsClient().getList(startOfPreviousMonth, endOfPreviousMonth),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const budgetItems = useQuery({
     queryKey: ["budgetItems", year, month],
     queryFn: () => new BudgetItemsClient().getList(year, month),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const budgetItemsPreviousMonth = useQuery({
@@ -57,7 +57,7 @@ export default function Index() {
         startOfPreviousMonth.year,
         startOfPreviousMonth.month,
       ),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const mutation = useMutation({
@@ -73,19 +73,19 @@ export default function Index() {
     },
   });
 
-  if (accounts.isLoading) {
+  if (accounts.isPending) {
     return <p>Loading accounts...</p>;
   }
 
-  if (accountsPreviousMonth.isLoading) {
+  if (accountsPreviousMonth.isPending) {
     return <p>Loading accounts previous month...</p>;
   }
 
-  if (budgetItems.isLoading) {
+  if (budgetItems.isPending) {
     return <p>Loading budget items...</p>;
   }
 
-  if (budgetItemsPreviousMonth.isLoading) {
+  if (budgetItemsPreviousMonth.isPending) {
     return <p>Loading budget items previous month...</p>;
   }
 

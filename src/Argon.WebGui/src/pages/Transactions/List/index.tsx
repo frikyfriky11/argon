@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@uidotdev/usehooks";
 import { DateTime } from "luxon";
 import { useState } from "react";
@@ -41,10 +41,10 @@ export default function Index() {
         page + 1,
         rowsPerPage,
       ),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
-  if (transactions.isLoading) {
+  if (transactions.isPending) {
     return <p>Loading transactions...</p>;
   }
 
