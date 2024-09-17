@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:8.0-preview AS build-env
+﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 
 # the source code will be copied in /src
 WORKDIR /src
@@ -24,7 +24,7 @@ RUN dotnet publish --no-restore -c Release -o out Argon.WebApi/Argon.WebApi.cspr
 
 # this is a multi stage build, so the build process happens on the sdk base image and the final image
 # uses only the runtime/aspnet image, to minimize the size of the resulting image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-preview
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
 # we need to install curl to make the healthchecks work
 RUN apt update -y && apt install curl -y
