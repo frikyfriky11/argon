@@ -40,6 +40,8 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/consistent-type-definitions": ["warn", "type"],
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
     },
   },
 );
