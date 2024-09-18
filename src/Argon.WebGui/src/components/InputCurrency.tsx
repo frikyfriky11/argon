@@ -1,8 +1,7 @@
 import { TextField, TextFieldProps } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
 import { Controller, FieldValues, useFormContext } from "react-hook-form";
-import { FieldPath } from "react-hook-form/dist/types/path";
-import { RegisterOptions } from "react-hook-form/dist/types/validator";
+import { FieldPath, RegisterOptions } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import { resolveJsonPath } from "../utils/ObjectUtils";

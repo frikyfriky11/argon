@@ -16,7 +16,6 @@ console.log("Commit:", import.meta.env.VITE_APP_COMMIT_HASH);
 
 const queryClient = new QueryClient();
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Suspense fallback="Application is loading...">
     {/* this creates a theme context that every MaterialUI component can use */}

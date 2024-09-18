@@ -1,5 +1,5 @@
-export function getEnumAsArray<T extends string, TEnumValue extends number>(
-  enumVariable: { [key in T]: TEnumValue },
+export function getEnumAsArray<TEnumValue extends number>(
+  enumVariable: { [key in string]: TEnumValue },
   converter: (value: number) => string,
 ): { text: string; value: number }[] {
   const values = Object.values(enumVariable);

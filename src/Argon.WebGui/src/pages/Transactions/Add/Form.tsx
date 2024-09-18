@@ -62,7 +62,7 @@ export default function Form({
           rowCounter: 1,
           credit: null,
           debit: null,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
           accountId: null!,
           description: "",
         }),
@@ -70,7 +70,7 @@ export default function Form({
           rowCounter: 2,
           credit: null,
           debit: null,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
           accountId: null!,
           description: "",
         }),
@@ -154,7 +154,7 @@ export default function Form({
                 rowCounter: 1,
                 credit: null,
                 debit: null,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                 accountId: null!,
                 description: "",
               }),
@@ -162,7 +162,7 @@ export default function Form({
                 rowCounter: 2,
                 credit: null,
                 debit: null,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                 accountId: null!,
                 description: "",
               }),
@@ -278,7 +278,7 @@ export default function Form({
                         credit: null,
                         debit: null,
                         description: "",
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                         accountId: null!,
                       }),
                     );

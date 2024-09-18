@@ -11,10 +11,10 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 export default abstract class ServiceBase {
   /**
    * Gets the base URL that will be used by the inherited class to call the API.
-   * @param input This input is ignored.
+   * @param _input This input is ignored.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected getBaseUrl(input: string): string {
+  protected getBaseUrl(_input: string): string {
     return import.meta.env.VITE_APP_BACKEND_API_URI;
   }
 
@@ -41,7 +41,7 @@ export default abstract class ServiceBase {
   }
 
   protected handleApiErrors(
-    url: string,
+    _url: string,
     response: AxiosResponse | XMLHttpRequest,
   ) {
     if (response instanceof XMLHttpRequest) {
@@ -71,7 +71,7 @@ export default abstract class ServiceBase {
               errorMessage += ` - ${key}: ${value.join(", ")}\n`;
             }
           } else {
-            errorMessage += response.data;
+            errorMessage += response.data as string;
           }
         } else {
           errorMessage += "Bad request";

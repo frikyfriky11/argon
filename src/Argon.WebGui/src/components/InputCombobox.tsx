@@ -1,8 +1,7 @@
 import { Autocomplete, AutocompleteProps, TextField } from "@mui/material";
 import * as React from "react";
 import { Controller, FieldValues, useFormContext } from "react-hook-form";
-import { FieldPath } from "react-hook-form/dist/types/path";
-import { RegisterOptions } from "react-hook-form/dist/types/validator";
+import { FieldPath, RegisterOptions } from "react-hook-form";
 
 import { resolveJsonPath } from "../utils/ObjectUtils";
 

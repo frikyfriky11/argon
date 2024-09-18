@@ -199,13 +199,12 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
                 onClick={() => {
                   append(
                     new TransactionRowsGetResponse({
-                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                       id: null!,
                       rowCounter: formValues.transactionRows.length + 1,
                       credit: null,
                       debit: null,
                       description: "",
-                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                       accountId: null!,
                     }),
                   );

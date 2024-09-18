@@ -8,6 +8,7 @@ export function resolveJsonPath(path: string, obj: unknown, separator = ".") {
   // iterate over each property in the path
   for (const property of properties) {
     // if the current object has the property
+    // eslint-disable-next-line no-prototype-builtins
     if (currentValue?.hasOwnProperty(property)) {
       // start again but this time from the object accessed by the property in the path
       currentValue = (currentValue as Record<string, unknown>)[property];
