@@ -1,7 +1,7 @@
 FROM node:20.3 as build-env
 
 # this project uses pnpm as a package manager, so let's install it
-RUN npm i -g pnpm@8.6.6
+RUN npm i -g pnpm@9.6.0
 
 # the source code will be copied in /src
 WORKDIR /src
