@@ -39,12 +39,10 @@ export default function InputCurrencyMini({
   const [isEditing, setIsEditing] = useState(false);
 
   const [rawValue, setRawValue] = useState<string>(
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
     fieldValue?.toString() ?? "",
   );
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
     setRawValue(fieldValue?.toString() ?? "");
   }, [fieldValue]);
 
