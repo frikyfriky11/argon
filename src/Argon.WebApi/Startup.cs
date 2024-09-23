@@ -30,7 +30,7 @@ public class Startup(
 
     // configure the OpenAPI generators and the Swagger GUI
     app.UseOpenApi();
-    app.UseSwaggerUi3();
+    app.UseSwaggerUi();
 
     // add the health checks endpoint
     app.UseHealthChecks("/healthz");
