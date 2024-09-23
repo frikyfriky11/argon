@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EntityFrameworkCore.Exceptions.Common" Version="6.0.3"/>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0"/>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0-preview.2.23153.2"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0-preview.2.23128.3">
@@ -53,7 +52,7 @@
   </PropertyGroup>
 
   <Target Name="NSwag" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)' == 'Debug' And '$(CI)' != 'True' ">
-    <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;RUNNING_NSWAG=True" Command="$(NSwagExe_Net60) run nswag.json /variables:Configuration=$(Configuration) /variables:RunningNSwag=true"/>
+    <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;RUNNING_NSWAG=True" Command="$(NSwagExe_Net80) run nswag.json /variables:Configuration=$(Configuration) /variables:RunningNSwag=true"/>
   </Target>
 
 </Project>
