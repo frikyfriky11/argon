@@ -1,45 +1,54 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useDebounce } from "@uidotdev/usehooks";
 import { DateTime } from "luxon";
-import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
+import useSearchParamsState from "../../../utils/UrlUtils";
 import Filters from "./Filters";
 import ResultsAsJournal from "./ResultsAsJournal";
 import ResultsAsTable from "./ResultsAsTable";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [accountIds, setAccountIds] = useState<string[]>([]);
-  const [description, setDescription] = useState<string | null>(null);
-  const debouncedDescription = useDebounce(description, 1000);
-  const [dateFrom, setDateFrom] = useState<DateTime | null>(null);
-  const [dateTo, setDateTo] = useState<DateTime | null>(null);
-  const [selectedView, setSelectedView] = useState<"table" | "journal">(
-    "table",
-  );
+  const [filters, setFilters] = useSearchParamsState({
+    page: 0,
+    pageSize: 10,
+    accountIds: [] as string[],
+    description: "",
+    dateFrom: null as DateTime | null,
+    dateTo: null as DateTime | null,
+    view: "table" as "table" | "journal",
+  });
+
+  const clearFilters = () => {
+    setFilters((prev) => ({
+      ...prev,
+      page: 0,
+      accountIds: [],
+      description: "",
+      dateFrom: null,
+      dateTo: null,
+    }));
+  };
 
   const transactions = useQuery({
     queryKey: [
       "transactions",
-      accountIds,
-      debouncedDescription,
-      dateFrom,
-      dateTo,
-      page,
-      rowsPerPage,
+      filters.accountIds,
+      filters.description,
+      filters.dateFrom,
+      filters.dateTo,
+      filters.page,
+      filters.pageSize,
     ],
     queryFn: () =>
       new TransactionsClient().getList(
-        accountIds,
-        debouncedDescription,
-        dateFrom,
-        dateTo,
-        page + 1,
-        rowsPerPage,
+        filters.accountIds,
+        filters.description,
+        filters.dateFrom,
+        filters.dateTo,
+        filters.page + 1,
+        filters.pageSize,
       ),
     placeholderData: keepPreviousData,
   });
@@ -55,35 +64,54 @@ export default function Index() {
   return (
     <Stack spacing={4}>
       <Toolbar
-        onSelectedViewChange={setSelectedView}
-        selectedView={selectedView}
+        onSelectedViewChange={(view) => {
+          setFilters((prev) => ({ ...prev, view }));
+        }}
+        selectedView={filters.view}
       />
       <Filters
-        accountIds={accountIds}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        description={description}
-        onAccountIdsChange={setAccountIds}
-        onDateFromChange={setDateFrom}
-        onDateToChange={setDateTo}
-        onDescriptionChange={setDescription}
+        accountIds={filters.accountIds}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        description={filters.description}
+        onAccountIdsChange={(accountIds) => {
+          setFilters((prev) => ({ ...prev, accountIds }));
+        }}
+        onDateFromChange={(dateFrom) => {
+          setFilters((prev) => ({ ...prev, dateFrom }));
+        }}
+        onDateToChange={(dateTo) => {
+          setFilters((prev) => ({ ...prev, dateTo }));
+        }}
+        onDescriptionChange={(description) => {
+          setFilters((prev) => ({ ...prev, description }));
+        }}
+        onClearFilters={clearFilters}
       />
-      {selectedView === "table" && (
+      {filters.view === "table" && (
         <ResultsAsTable
-          onPageChange={setPage}
-          onPageSizeChange={setRowsPerPage}
-          page={page}
-          rowsPerPage={rowsPerPage}
+          onPageChange={(page) => {
+            setFilters((prev) => ({ ...prev, page }));
+          }}
+          onPageSizeChange={(pageSize) => {
+            setFilters((prev) => ({ ...prev, pageSize }));
+          }}
+          page={filters.page}
+          rowsPerPage={filters.pageSize}
           totalRows={transactions.data.totalCount}
           transactions={transactions.data.items}
         />
       )}
-      {selectedView === "journal" && (
+      {filters.view === "journal" && (
         <ResultsAsJournal
-          onPageChange={setPage}
-          onPageSizeChange={setRowsPerPage}
-          page={page}
-          rowsPerPage={rowsPerPage}
+          onPageChange={(page) => {
+            setFilters((prev) => ({ ...prev, page }));
+          }}
+          onPageSizeChange={(pageSize) => {
+            setFilters((prev) => ({ ...prev, pageSize }));
+          }}
+          page={filters.page}
+          rowsPerPage={filters.pageSize}
           totalRows={transactions.data.totalCount}
           transactions={transactions.data.items}
         />
