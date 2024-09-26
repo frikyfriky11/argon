@@ -1,91 +1,82 @@
+import { DateTime } from "luxon";
 import { useSearchParams } from "react-router-dom";
 
-type ParamType = string | number | boolean | (string | number)[];
-
 /**
- * Sets the value of a search parameter in the URL and returns the current state of the search parameter.
- * @param {string} searchParamName - The name of the search parameter to set.
- * @param {T} defaultValue - The default value for the search parameter.
- * @return {readonly [T, (newState: T) => void]} - An array containing the current state of the search parameter and a function to set the new state.
+ * Hook for managing multiple search parameters as a single state object.
  */
-export default function useSearchParamsState<T extends ParamType>(
-  searchParamName: string,
-  defaultValue: T,
-): readonly [
-  searchParamsState: T,
-  setSearchParamsState: (newState: T) => void,
-] {
+export default function useSearchParamsState<T extends Record<string, unknown>>(
+  defaultParams: T,
+): readonly [T, (newParams: (prevValue: T) => T) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // try to get the parameter from the URL
-  const acquiredSearchParam = searchParams.get(searchParamName);
+  const currentParams: object = {};
 
-  let searchParamsState: T;
+  for (const key in defaultParams) {
+    const acquiredSearchParam = searchParams.get(key);
 
-  // try to parse the parameter as an array, a number, a boolean or a string
-  // if the parameter is not set or if it is impossible to parse, use the default value
-  try {
-    if (Array.isArray(defaultValue)) {
-      searchParamsState = (
-        acquiredSearchParam !== null
-          ? JSON.parse(acquiredSearchParam)
-          : defaultValue
-      ) as T;
-    } else if (typeof defaultValue === "number") {
-      searchParamsState = (
-        acquiredSearchParam !== null
-          ? Number(acquiredSearchParam)
-          : defaultValue
-      ) as T;
-    } else if (typeof defaultValue === "boolean") {
-      // having ?param or ?param=true should both be considered as a true value
-      searchParamsState = (
-        acquiredSearchParam !== null
-          ? acquiredSearchParam == "" || acquiredSearchParam === "true"
-          : defaultValue
-      ) as T;
+    if (acquiredSearchParam !== null) {
+      try {
+        if (Array.isArray(defaultParams[key])) {
+          Object.assign(currentParams, {
+            [key]: JSON.parse(acquiredSearchParam) as never[],
+          });
+        } else if (typeof defaultParams[key] === "number") {
+          Object.assign(currentParams, { [key]: Number(acquiredSearchParam) });
+        } else if (typeof defaultParams[key] === "boolean") {
+          Object.assign(currentParams, {
+            [key]: acquiredSearchParam === "" || acquiredSearchParam === "true",
+          });
+        } else if (DateTime.fromISO(acquiredSearchParam).isValid) {
+          Object.assign(currentParams, {
+            [key]: DateTime.fromISO(acquiredSearchParam),
+          });
+        } else {
+          Object.assign(currentParams, { [key]: acquiredSearchParam });
+        }
+      } catch (error) {
+        console.error(
+          `Error caught while parsing URL state for key ${key}:`,
+          error,
+        );
+      }
     } else {
-      searchParamsState = (acquiredSearchParam ?? defaultValue) as T;
+      Object.assign(currentParams, { [key]: defaultParams[key] });
     }
-  } catch (error) {
-    // if we can't parse the URL state, just return the default value
-    console.error(
-      `Error caught while trying to parse URL state with key ${searchParamName}:`,
-      error,
-    );
-
-    searchParamsState = defaultValue;
   }
 
-  /**
-   * Updates the search parameters state with a new state value.
-   *
-   * @param {T} newState - The new state value.
-   */
-  const setSearchParamsState = (newState: T) => {
-    let newSearchValue;
+  // Batching updates for multiple search params
+  const setSearchParamsState = (newParams: (prevValue: T) => T) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
 
-    // if it is an array, we need to stringify it before storing it as state
-    // all the other types should have the toString method built-in so we can use that
-    if (Array.isArray(newState)) {
-      newSearchValue = JSON.stringify(newState);
-    } else {
-      newSearchValue = newState.toString();
-    }
+    // Iterate over the newParams and update the URLSearchParams
+    Object.keys(currentParams).forEach((key) => {
+      const value = newParams(currentParams as T)[key];
 
-    // create a new object with the current state and add the new value to it
-    const next = Object.assign(
-      {},
-      [...searchParams.entries()].reduce(
-        (o, [key, value]) => ({ ...o, [key]: value }),
-        {},
-      ),
-      { [searchParamName]: newSearchValue },
-    );
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          nextSearchParams.set(key, JSON.stringify(value));
+        } else {
+          nextSearchParams.delete(key);
+        }
+      } else if (
+        typeof value === "number" ||
+        typeof value === "boolean" ||
+        typeof value === "string"
+      ) {
+        if (value.toString() !== "") {
+          nextSearchParams.set(key, value.toString());
+        } else {
+          nextSearchParams.delete(key);
+        }
+      } else if (DateTime.isDateTime(value)) {
+        nextSearchParams.set(key, (value as DateTime).toISODate()!);
+      } else {
+        nextSearchParams.delete(key);
+      }
+    });
 
-    setSearchParams(next);
+    setSearchParams(nextSearchParams);
   };
 
-  // return the hook like useState does
-  return [searchParamsState, setSearchParamsState] as const;
+  return [currentParams as T, setSearchParamsState] as const;
 }

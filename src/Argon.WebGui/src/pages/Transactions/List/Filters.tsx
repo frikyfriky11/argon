@@ -1,6 +1,6 @@
-import { Box } from "@mui/material";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import { Box, Button, Stack } from "@mui/material";
 import { DateTime } from "luxon";
-import React from "react";
 
 import ComboboxFilter from "../../../components/ComboboxFilter";
 import DateFilter from "../../../components/DateFilter";
@@ -16,6 +16,7 @@ export type FiltersProps = {
   dateFrom: DateTime | null;
   onDateToChange: (value: DateTime | null) => void;
   dateTo: DateTime | null;
+  onClearFilters: () => void;
 };
 
 export default function Filters({
@@ -27,29 +28,45 @@ export default function Filters({
   dateFrom,
   onDateToChange,
   dateTo,
+  onClearFilters,
 }: FiltersProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
-      <ComboboxFilter
-        label={"Conti"}
-        labelSelector={(item) => item.name}
-        onChange={onAccountIdsChange}
-        queryFn={() => new AccountsClient().getList(null, null)}
-        queryKey={["accounts"]}
-        valueSelector={(item) => item.id}
-        values={accountIds}
-      />
-      <TextFilter
-        label="Descrizione"
-        onChange={onDescriptionChange}
-        value={description}
-      />
-      <DateFilter
-        label="Da data"
-        onChange={onDateFromChange}
-        value={dateFrom}
-      />
-      <DateFilter label="A data" onChange={onDateToChange} value={dateTo} />
-    </Box>
+    <Stack justifyContent="space-between" direction="row" spacing={2}>
+      <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+        <ComboboxFilter
+          label={"Conti"}
+          labelSelector={(item) => item.name}
+          onChange={onAccountIdsChange}
+          queryFn={() => new AccountsClient().getList(null, null)}
+          queryKey={["accounts"]}
+          valueSelector={(item) => item.id}
+          values={accountIds}
+        />
+        <TextFilter
+          label="Descrizione"
+          onChange={onDescriptionChange}
+          value={description}
+        />
+        <DateFilter
+          label="Da data"
+          onChange={onDateFromChange}
+          value={dateFrom}
+        />
+        <DateFilter label="A data" onChange={onDateToChange} value={dateTo} />
+      </Box>
+      <Stack direction="row" spacing={2}>
+        <Button
+          variant="text"
+          color="error"
+          endIcon={<DeleteSweepIcon />}
+          onClick={onClearFilters}
+          disabled={
+            !(accountIds.length > 0 || !!description || !!dateFrom || !!dateTo)
+          }
+        >
+          Reimposta
+        </Button>
+      </Stack>
+    </Stack>
   );
 }
