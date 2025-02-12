@@ -104,6 +104,10 @@ jobs:
             RUNNING_ENVIRONMENT=prod
             BUILD_ID=${{ github.run_id }}
             COMMIT_HASH=${{ github.ref_name }}-${{ github.sha }}
+            VITE_APP_AUTHORITY=${{ secrets.AUTH_AUTHORITY_PROD }}
+            VITE_APP_CLIENT_ID=${{ secrets.AUTH_CLIENT_ID_PROD }}
+            VITE_APP_REDIRECT_URI=${{ secrets.PUBLIC_HOST_PROD }}/auth/post-sign-in
+            VITE_APP_SCOPE=openid profile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -114,6 +118,8 @@ jobs:
     env:
       PUBLIC_HOST_PROD: ${{ secrets.PUBLIC_HOST_PROD }}
       DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      AUTH_AUTHORITY_TEST: ${{ secrets.AUTH_AUTHORITY_TEST }}
+      AUTH_CLIENT_ID_TEST: ${{ secrets.AUTH_CLIENT_ID_TEST }}
 
     steps:
     - name: Check out repository

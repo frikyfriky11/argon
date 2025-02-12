@@ -9,6 +9,8 @@ global using EntityFramework.Exceptions.Common;
 global using FluentValidation.AspNetCore;
 global using JetBrains.Annotations;
 global using MediatR;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Mvc.Filters;
 global using Microsoft.AspNetCore.Mvc;
 global using Serilog.Events;

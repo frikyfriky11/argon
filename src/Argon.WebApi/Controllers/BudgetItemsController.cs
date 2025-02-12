@@ -6,6 +6,7 @@ namespace Argon.WebApi.Controllers;
 /// <summary>
 ///   The Budget Items endpoint allows you to upsert, read and delete Budget Item entities from the application.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class BudgetItemsController(

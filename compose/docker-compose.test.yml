@@ -19,6 +19,8 @@
     environment:
       Cors__Origins__0: "https://${PUBLIC_HOST_TEST}"
       ConnectionStrings__DefaultConnection: "Server=db;Database=ArgonDb;User Id=postgres;Password=Passw0rd!;"
+      Auth__Authority: "${AUTH_AUTHORITY_TEST}"
+      Auth__ClientId: "${AUTH_CLIENT_ID_TEST}"
     restart: unless-stopped
     networks:
       - "traefik"

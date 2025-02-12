@@ -10,6 +10,7 @@ namespace Argon.WebApi.Controllers;
 /// <summary>
 ///   The Accounts endpoint allows you to create, read, update and delete Account entities from the application.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class AccountsController(

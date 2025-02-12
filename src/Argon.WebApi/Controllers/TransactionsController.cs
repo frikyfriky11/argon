@@ -10,6 +10,7 @@ namespace Argon.WebApi.Controllers;
 /// <summary>
 ///   The Transactions endpoint allows you to create, read, update and delete Transaction entities from the application.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class TransactionsController(

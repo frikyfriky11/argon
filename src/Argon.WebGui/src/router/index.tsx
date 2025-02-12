@@ -4,6 +4,11 @@ import { lazy } from "react";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import ProtectedRoute from "./ProtectedRoute.tsx";
+
+const AuthLayout = lazy(() => import("../pages/Auth/Layout"));
+const AuthSignIn = lazy(() => import("../pages/Auth/SignIn"));
+const AuthPostSignIn = lazy(() => import("../pages/Auth/PostSignIn"));
 const Layout = lazy(() => import("../components/Layout"));
 const HomePage = lazy(() => import("../pages/HomePage"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
@@ -30,16 +35,22 @@ export default function MainRouter() {
     >
       <BrowserRouter>
         <Routes>
-          <Route element={<Layout />} path="/">
-            <Route element={<HomePage />} index />
-            <Route element={<Dashboard />} path="/dashboard" />
-            <Route element={<AccountsList />} path="/accounts" />
-            <Route element={<AccountsAdd />} path="/accounts/add" />
-            <Route element={<AccountsEdit />} path="/accounts/:id" />
-            <Route element={<BudgetList />} path="/budget" />
-            <Route element={<TransactionsList />} path="/transactions" />
-            <Route element={<TransactionsAdd />} path="/transactions/add" />
-            <Route element={<TransactionsEdit />} path="/transactions/:id" />
+          <Route element={<AuthLayout />} path="/auth">
+            <Route element={<AuthSignIn />} path="/auth/sign-in" />
+            <Route element={<AuthPostSignIn />} path="/auth/post-sign-in" />
+          </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />} path="/">
+              <Route element={<HomePage />} index />
+              <Route element={<Dashboard />} path="/dashboard" />
+              <Route element={<AccountsList />} path="/accounts" />
+              <Route element={<AccountsAdd />} path="/accounts/add" />
+              <Route element={<AccountsEdit />} path="/accounts/:id" />
+              <Route element={<BudgetList />} path="/budget" />
+              <Route element={<TransactionsList />} path="/transactions" />
+              <Route element={<TransactionsAdd />} path="/transactions/add" />
+              <Route element={<TransactionsEdit />} path="/transactions/:id" />
+            </Route>
           </Route>
           <Route element={<SystemLayout />}>
             <Route element={<SystemNotFound />} path="*" />

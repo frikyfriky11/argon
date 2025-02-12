@@ -1,4 +1,5 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { User } from "oidc-client-ts";
 
 /**
  * This abstract class is inherited by the BackendClient to configure the
@@ -23,6 +24,21 @@ export default abstract class ServiceBase {
    * @param request The request object that will be sent
    */
   protected async transformOptions(request: AxiosRequestConfig) {
+    let accessToken = "";
+
+    const oidcStorage = localStorage.getItem(
+      `oidc.user:${import.meta.env.VITE_APP_AUTHORITY}:${import.meta.env.VITE_APP_CLIENT_ID}`,
+    );
+
+    if (oidcStorage) {
+      const user = User.fromStorageString(oidcStorage);
+      accessToken = user.access_token;
+    }
+
+    if (accessToken && request.headers) {
+      request.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     return new Promise<AxiosRequestConfig<unknown>>((resolve) => {
       resolve(request);
     });
