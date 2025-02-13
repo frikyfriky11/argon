@@ -118,10 +118,10 @@ jobs:
             RUNNING_ENVIRONMENT=test
             BUILD_ID=${{ github.run_id }}
             COMMIT_HASH=${{ github.sha }}
-            VITE_APP_AUTHORITY=${{ secrets.AUTH_AUTHORITY_TEST }}
-            VITE_APP_CLIENT_ID=${{ secrets.AUTH_CLIENT_ID_TEST }}
-            VITE_APP_REDIRECT_URI=${{ secrets.PUBLIC_HOST_TEST }}/auth/post-sign-in
-            VITE_APP_SCOPE=openid profile
+            AUTHORITY=${{ secrets.AUTH_AUTHORITY_TEST }}
+            CLIENT_ID=${{ secrets.AUTH_CLIENT_ID_TEST }}
+            REDIRECT_URI=${{ secrets.PUBLIC_HOST_TEST }}/auth/post-sign-in
+            SCOPE=openid profile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
