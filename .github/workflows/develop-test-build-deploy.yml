@@ -71,7 +71,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/argon-webapi
+          subject-name: ${{ env.REGISTRY }}/frikyfriky11/argon-webapi
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -127,7 +127,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/argon-webgui
+          subject-name: ${{ env.REGISTRY }}/frikyfriky11/argon-webgui
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
