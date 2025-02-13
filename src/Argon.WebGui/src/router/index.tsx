@@ -7,7 +7,6 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute.tsx";
 
 const AuthLayout = lazy(() => import("../pages/Auth/Layout"));
-const AuthSignIn = lazy(() => import("../pages/Auth/SignIn"));
 const AuthPostSignIn = lazy(() => import("../pages/Auth/PostSignIn"));
 const Layout = lazy(() => import("../components/Layout"));
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -36,7 +35,6 @@ export default function MainRouter() {
       <BrowserRouter>
         <Routes>
           <Route element={<AuthLayout />} path="/auth">
-            <Route element={<AuthSignIn />} path="/auth/sign-in" />
             <Route element={<AuthPostSignIn />} path="/auth/post-sign-in" />
           </Route>
           <Route element={<ProtectedRoute />}>
