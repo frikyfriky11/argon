@@ -53,7 +53,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/argon-webapi
+          images: ${{ env.REGISTRY }}/frikyfriky11/argon-webapi
           tags: |
             type=raw,value=latest-develop
             type=sha
@@ -101,7 +101,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/argon-webgui
+          images: ${{ env.REGISTRY }}/frikyfriky11/argon-webgui
           tags: |
             type=raw,value=latest-develop
             type=sha

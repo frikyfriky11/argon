@@ -19,7 +19,7 @@
       retries: 5
 
   webapi:
-    image: "${REGISTRY}/argon-webapi:latest-develop"
+    image: "${REGISTRY}/frikyfriky11/argon-webapi:latest-develop"
     environment:
       Cors__Origins__0: "https://${PUBLIC_HOST_TEST}"
       ConnectionStrings__DefaultConnection: "Server=db;Database=ArgonDb;User Id=postgres;Password=Passw0rd!;"
@@ -42,7 +42,7 @@
         condition: service_healthy
 
   webgui:
-    image: "${REGISTRY}/argon-webgui:latest-develop"
+    image: "${REGISTRY}/frikyfriky11/argon-webgui:latest-develop"
     restart: unless-stopped
     networks:
       - "traefik"
