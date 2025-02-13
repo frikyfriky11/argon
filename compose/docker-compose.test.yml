@@ -5,7 +5,11 @@
       POSTGRES_PASSWORD: "Passw0rd!"
       POSTGRES_DB: "ArgonDb"
     volumes:
-      - "dbdata:/var/lib/postgresql/data"
+      - type: volume
+        source: db
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
     networks:
       - "data"
     healthcheck:
@@ -15,7 +19,7 @@
       retries: 5
 
   webapi:
-    image: "${DOCKER_REGISTRY_URL}/argon/webapi:latest-develop"
+    image: "${REGISTRY}/argon-webapi:latest-develop"
     environment:
       Cors__Origins__0: "https://${PUBLIC_HOST_TEST}"
       ConnectionStrings__DefaultConnection: "Server=db;Database=ArgonDb;User Id=postgres;Password=Passw0rd!;"
@@ -29,16 +33,16 @@
       traefik.enable: "true"
       traefik.http.routers.argon-test-webapi.rule: "Host(`${PUBLIC_HOST_TEST}`) && PathPrefix(`/api/`)"
       traefik.http.routers.argon-test-webapi.tls.certresolver: "sslresolver"
-      traefik.http.routers.argon-test-webapi.middlewares: "basic-auth@file, argon-test-webapi-stripprefix"
+      traefik.http.routers.argon-test-webapi.middlewares: "argon-test-webapi-stripprefix"
       traefik.http.middlewares.argon-test-webapi-stripprefix.stripprefix.prefixes: "/api/"
       traefik.http.services.argon-test-webapi.loadbalancer.server.port: "80"
-      traefik.docker.network: "traefik_proxy"
+      traefik.docker.network: "traefik_traefik"
     depends_on:
       db:
         condition: service_healthy
 
   webgui:
-    image: "${DOCKER_REGISTRY_URL}/argon/webgui:latest-develop"
+    image: "${REGISTRY}/argon-webgui:latest-develop"
     restart: unless-stopped
     networks:
       - "traefik"
@@ -46,19 +50,17 @@
       traefik.enable: "true"
       traefik.http.routers.argon-test-webgui.rule: "Host(`${PUBLIC_HOST_TEST}`)"
       traefik.http.routers.argon-test-webgui.tls.certresolver: "sslresolver"
-      traefik.http.routers.argon-test-webgui.middlewares: "basic-auth@file"
       traefik.http.services.argon-test-webgui.loadbalancer.server.port: "80"
-      traefik.docker.network: "traefik_proxy"
+      traefik.docker.network: "traefik_traefik"
     depends_on:
       webapi:
         condition: service_healthy
 
-volumes:
-  dbdata:
-
 networks:
   traefik:
-    name: "traefik_proxy"
+    name: "traefik_traefik"
     external: true
 
   data:
+    
+${COMPOSE_VOLUMES_TEST}
