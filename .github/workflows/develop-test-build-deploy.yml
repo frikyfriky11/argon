@@ -59,7 +59,6 @@ jobs:
             type=sha
 
       - name: Build Docker image and push to registry
-        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -67,13 +66,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.REGISTRY }}/frikyfriky11/argon-webapi
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
 
   build-push-webgui:
     name: Build WebGui image and push to Docker registry
@@ -107,7 +99,6 @@ jobs:
             type=sha
 
       - name: Build Docker image and push to registry
-        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -124,13 +115,6 @@ jobs:
             SCOPE=openid profile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.REGISTRY }}/frikyfriky11/argon-webgui
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
 
   deploy:
     name: Deploy the app to the TEST env
