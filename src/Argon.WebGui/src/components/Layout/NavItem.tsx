@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
 export type NavItemProps = {
-  href: string;
+  href?: string;
   icon: React.ReactNode;
   title: string;
 };
@@ -50,7 +50,7 @@ export const NavItem = ({
             backgroundColor: "rgba(255,255,255, 0.08)",
           },
         }}
-        to={href}
+        to={href ? href : "#"}
       >
         <Box sx={{ flexGrow: 1 }}>{title}</Box>
       </Button>

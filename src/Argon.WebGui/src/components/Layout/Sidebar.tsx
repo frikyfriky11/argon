@@ -1,6 +1,7 @@
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FolderIcon from "@mui/icons-material/Folder";
+import LogoutIcon from "@mui/icons-material/Logout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import {
   Box,
@@ -11,7 +12,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React from "react";
+import { useAuth } from "react-oidc-context";
 import { Link } from "react-router-dom";
 
 import Logo from "../../assets/logo.png";
@@ -47,6 +48,7 @@ export type DashboardSidebarProps = {
 };
 
 export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
+  const auth = useAuth();
   const theme = useTheme();
 
   const lgUp = useMediaQuery(theme.breakpoints.up("lg"), {
@@ -89,6 +91,13 @@ export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
               title={item.title}
             />
           ))}
+        </Box>
+        <Box>
+          <NavItem
+            icon={<LogoutIcon fontSize="small" />}
+            title={"Logout"}
+            onClick={() => void auth.removeUser()}
+          />
         </Box>
       </Box>
     </>
