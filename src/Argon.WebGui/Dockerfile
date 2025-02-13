@@ -1,4 +1,4 @@
-FROM node:20.3 as build-env
+FROM node:20.3 AS build-env
 
 # this project uses pnpm as a package manager, so let's install it
 RUN npm i -g pnpm@9.6.0
@@ -34,10 +34,10 @@ ARG RUNNING_ENVIRONMENT
 ARG BUILD_ID
 ARG COMMIT_HASH
 # the ENV command injects this variable as an environment variable so that Vite can pick it up when it runs
-ENV VITE_APP_BACKEND_API_URI $BACKEND_API_URI
-ENV VITE_APP_RUNNING_ENVIRONMENT $RUNNING_ENVIRONMENT
-ENV VITE_APP_BUILD_ID $BUILD_ID
-ENV VITE_APP_COMMIT_HASH $COMMIT_HASH
+ENV VITE_APP_BACKEND_API_URI=$BACKEND_API_URI
+ENV VITE_APP_RUNNING_ENVIRONMENT=$RUNNING_ENVIRONMENT
+ENV VITE_APP_BUILD_ID=$BUILD_ID
+ENV VITE_APP_COMMIT_HASH=$COMMIT_HASH
 
 # run the Vite build and prepare the dist folder with the built project
 RUN npm run build
