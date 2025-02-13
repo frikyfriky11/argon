@@ -12,12 +12,15 @@ jobs:
     name: Run .NET backend tests
     runs-on: self-hosted
     
+    env:
+      DOTNET_INSTALL_DIR: "./.dotnet"
+    
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
           
