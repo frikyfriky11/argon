@@ -82,7 +82,7 @@ export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
             mb: 3,
           }}
         />
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1, mb: 3 }}>
           {items.map((item) => (
             <NavItem
               href={item.href}
@@ -92,7 +92,13 @@ export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
             />
           ))}
         </Box>
-        <Box>
+        <Divider
+          sx={{
+            borderColor: "#2D3748",
+            mb: 3,
+          }}
+        />
+        <Box sx={{ pb: 3 }}>
           <NavItem
             icon={<LogoutIcon fontSize="small" />}
             title={"Logout"}
