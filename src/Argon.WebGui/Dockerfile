@@ -36,7 +36,6 @@ ARG COMMIT_HASH
 ARG AUTHORITY
 ARG CLIENT_ID
 ARG REDIRECT_URI
-ARG SCOPE
 # the ENV command injects this variable as an environment variable so that Vite can pick it up when it runs
 ENV VITE_APP_BACKEND_API_URI=$BACKEND_API_URI
 ENV VITE_APP_RUNNING_ENVIRONMENT=$RUNNING_ENVIRONMENT
@@ -45,7 +44,6 @@ ENV VITE_APP_COMMIT_HASH=$COMMIT_HASH
 ENV VITE_APP_AUTHORITY=$AUTHORITY
 ENV VITE_APP_CLIENT_ID=$CLIENT_ID
 ENV VITE_APP_REDIRECT_URI=$REDIRECT_URI
-ENV VITE_APP_SCOPE=$SCOPE
 
 # run the Vite build and prepare the dist folder with the built project
 RUN npm run build

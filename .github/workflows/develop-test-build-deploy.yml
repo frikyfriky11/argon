@@ -112,7 +112,6 @@ jobs:
             AUTHORITY=${{ secrets.AUTH_AUTHORITY_TEST }}
             CLIENT_ID=${{ secrets.AUTH_CLIENT_ID_TEST }}
             REDIRECT_URI=https://${{ secrets.PUBLIC_HOST_TEST }}/auth/post-sign-in
-            SCOPE=openid profile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
