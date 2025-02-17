@@ -20,6 +20,7 @@ import InputDate from "../../../components/InputDate";
 import InputText from "../../../components/InputText";
 import {
   AccountsClient,
+  CounterpartiesClient,
   ITransactionsGetResponse,
   TransactionRowsGetResponse,
 } from "../../../services/backend/BackendClient";
@@ -34,6 +35,11 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
   const accounts = useQuery({
     queryKey: ["accounts"],
     queryFn: () => new AccountsClient().getList(null, null),
+  });
+  const counterparties = useQuery({
+    queryKey: ["counterparties"],
+    queryFn: async () =>
+      (await new CounterpartiesClient().getList(null, 1, 10_000)).items,
   });
 
   const form = useForm<ITransactionsGetResponse>({
@@ -97,6 +103,14 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
     return <p>Error while loading accounts...</p>;
   }
 
+  if (counterparties.isPending) {
+    return <p>Loading counterparties...</p>;
+  }
+
+  if (counterparties.isError) {
+    return <p>Error while loading counterparties...</p>;
+  }
+
   return (
     <FormProvider {...form}>
       <form
@@ -115,18 +129,14 @@ export default function Form({ transaction, onSubmit, isSaving }: FormProps) {
             />
           </Grid>
           <Grid item sm={9} xs={12}>
-            <InputText
-              field={"description"}
+            <InputCombobox
+              field={"counterpartyId"}
               fullWidth
-              label="Descrizione"
-              options={{
-                required: "La descrizione della transazione è obbligatoria",
-                maxLength: {
-                  value: 100,
-                  message:
-                    "La descrizione della transazione non può superare i 50 caratteri",
-                },
-              }}
+              itemLabel={(item) => item.name}
+              itemValue={(item) => item.id}
+              items={counterparties.data}
+              label={"Controparte"}
+              options={{ required: "La controparte è obbligatoria" }}
             />
           </Grid>
           <Grid container item spacing={4}>

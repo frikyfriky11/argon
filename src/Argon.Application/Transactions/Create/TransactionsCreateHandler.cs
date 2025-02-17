@@ -9,7 +9,7 @@ public class TransactionsCreateHandler(
   {
     Transaction entity = new()
     {
-      Description = request.Description,
+      CounterpartyId = request.CounterpartyId,
       Date = request.Date,
       TransactionRows = request
         .TransactionRows

@@ -18,6 +18,9 @@ const BudgetList = lazy(() => import("../pages/Budget/List"));
 const TransactionsList = lazy(() => import("../pages/Transactions/List"));
 const TransactionsAdd = lazy(() => import("../pages/Transactions/Add"));
 const TransactionsEdit = lazy(() => import("../pages/Transactions/Edit"));
+const CounterpartiesList = lazy(() => import("../pages/Counterparties/List"));
+const CounterpartiesAdd = lazy(() => import("../pages/Counterparties/Add"));
+const CounterpartiesEdit = lazy(() => import("../pages/Counterparties/Edit"));
 const SystemLayout = lazy(() => import("../pages/System/Layout"));
 const SystemNotFound = lazy(() => import("../pages/System/NotFound"));
 
@@ -48,6 +51,15 @@ export default function MainRouter() {
               <Route element={<TransactionsList />} path="/transactions" />
               <Route element={<TransactionsAdd />} path="/transactions/add" />
               <Route element={<TransactionsEdit />} path="/transactions/:id" />
+              <Route element={<CounterpartiesList />} path="/counterparties" />
+              <Route
+                element={<CounterpartiesAdd />}
+                path="/counterparties/add"
+              />
+              <Route
+                element={<CounterpartiesEdit />}
+                path="/counterparties/:id"
+              />
             </Route>
           </Route>
           <Route element={<SystemLayout />}>

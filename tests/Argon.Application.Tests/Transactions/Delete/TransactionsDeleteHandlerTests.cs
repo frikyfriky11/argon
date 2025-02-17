@@ -19,7 +19,7 @@ public class TransactionsDeleteHandlerTests
   public async Task Handle_ShouldCompleteCorrectly_WithExistingId()
   {
     // arrange
-    EntityEntry<Transaction> transaction = await _dbContext.Transactions.AddAsync(new Transaction { Date = new DateOnly(2023, 04, 05), Description = "test description" });
+    EntityEntry<Transaction> transaction = await _dbContext.Transactions.AddAsync(new Transaction { Date = new DateOnly(2023, 04, 05) });
 
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 

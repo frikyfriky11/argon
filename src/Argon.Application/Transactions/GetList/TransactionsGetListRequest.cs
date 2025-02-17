@@ -6,7 +6,7 @@ namespace Argon.Application.Transactions.GetList;
 ///   The request to get a list of Transaction entities
 /// </summary>
 /// <param name="AccountIds">The account ids used in the transaction rows</param>
-/// <param name="Description">The description used in the transaction</param>
+/// <param name="CounterpartyIds">The counterparty ids used in the transaction</param>
 /// <param name="DateFrom">The start date to use in the search of the transaction</param>
 /// <param name="DateTo">The end date to use in the search of the transaction</param>
 /// <param name="PageNumber">The page number (defaults to 1)</param>
@@ -14,7 +14,7 @@ namespace Argon.Application.Transactions.GetList;
 [PublicAPI]
 public record TransactionsGetListRequest(
   List<Guid>? AccountIds,
-  string? Description,
+  List<Guid>? CounterpartyIds,
   DateTimeOffset? DateFrom,
   DateTimeOffset? DateTo,
   int PageNumber = 1,

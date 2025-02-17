@@ -76,13 +76,17 @@ public class AccountsGetListHandlerTests
     Account groceriesAccount = new() { Name = "Groceries", Type = AccountType.Expense };
     Account cashAccount = new() { Name = "Cash", Type = AccountType.Cash };
     Account salaryAccount = new() { Name = "Salary", Type = AccountType.Revenue };
+    
+    Counterparty marketCounterparty = new() { Name = "Market" };
+    Counterparty job1Counterparty = new() { Name = "Job 1" };
+    Counterparty job2Counterparty = new() { Name = "Job 2" };
 
     List<Transaction> transactions = new()
     {
       new Transaction
       {
         Date = new DateOnly(2023, 9, 12),
-        Description = "Groceries market",
+        Counterparty = marketCounterparty,
         TransactionRows = new List<TransactionRow>
         {
           new() { Account = groceriesAccount, Debit = 100 },
@@ -92,7 +96,7 @@ public class AccountsGetListHandlerTests
       new Transaction
       {
         Date = new DateOnly(2023, 9, 7),
-        Description = "Salary from job 1",
+        Counterparty = job1Counterparty,
         TransactionRows = new List<TransactionRow>
         {
           new() { Account = cashAccount, Debit = 1000 },
@@ -102,7 +106,7 @@ public class AccountsGetListHandlerTests
       new Transaction
       {
         Date = new DateOnly(2023, 10, 7),
-        Description = "Salary from job 2",
+        Counterparty = job2Counterparty,
         TransactionRows = new List<TransactionRow>
         {
           new() { Account = cashAccount, Debit = 500 },

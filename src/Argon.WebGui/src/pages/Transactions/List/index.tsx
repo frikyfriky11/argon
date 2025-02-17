@@ -14,7 +14,7 @@ export default function Index() {
     page: 0,
     pageSize: 10,
     accountIds: [] as string[],
-    description: "",
+    counterpartyIds: [] as string[],
     dateFrom: null as DateTime | null,
     dateTo: null as DateTime | null,
     view: "table" as "table" | "journal",
@@ -25,7 +25,7 @@ export default function Index() {
       ...prev,
       page: 0,
       accountIds: [],
-      description: "",
+      counterpartyIds: [],
       dateFrom: null,
       dateTo: null,
     }));
@@ -35,7 +35,7 @@ export default function Index() {
     queryKey: [
       "transactions",
       filters.accountIds,
-      filters.description,
+      filters.counterpartyIds,
       filters.dateFrom,
       filters.dateTo,
       filters.page,
@@ -44,7 +44,7 @@ export default function Index() {
     queryFn: () =>
       new TransactionsClient().getList(
         filters.accountIds,
-        filters.description,
+        filters.counterpartyIds,
         filters.dateFrom,
         filters.dateTo,
         filters.page + 1,
@@ -73,7 +73,7 @@ export default function Index() {
         accountIds={filters.accountIds}
         dateFrom={filters.dateFrom}
         dateTo={filters.dateTo}
-        description={filters.description}
+        counterpartyIds={filters.counterpartyIds}
         onAccountIdsChange={(accountIds) => {
           setFilters((prev) => ({ ...prev, accountIds }));
         }}
@@ -83,8 +83,8 @@ export default function Index() {
         onDateToChange={(dateTo) => {
           setFilters((prev) => ({ ...prev, dateTo }));
         }}
-        onDescriptionChange={(description) => {
-          setFilters((prev) => ({ ...prev, description }));
+        onCounterpartyIdsChange={(counterpartyIds) => {
+          setFilters((prev) => ({ ...prev, counterpartyIds }));
         }}
         onClearFilters={clearFilters}
       />

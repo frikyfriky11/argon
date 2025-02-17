@@ -13,6 +13,9 @@ public class TransactionsGetListHandlerTests
     _groceriesAccountId = Guid.NewGuid();
     _carAccountId = Guid.NewGuid();
     _rentAccountId = Guid.NewGuid();
+    _marketCounterpartyId  = Guid.NewGuid();
+    _gasStationCounterpartyId = Guid.NewGuid();
+    _homeownerCounterpartyId = Guid.NewGuid();
 
     _sut = new TransactionsGetListHandler(_dbContext);
   }
@@ -23,6 +26,9 @@ public class TransactionsGetListHandlerTests
   private Guid _groceriesAccountId;
   private Guid _carAccountId;
   private Guid _rentAccountId;
+  private Guid _marketCounterpartyId;
+  private Guid _gasStationCounterpartyId;
+  private Guid _homeownerCounterpartyId;
 
   private List<Transaction> CreateTestTransactions()
   {
@@ -30,12 +36,15 @@ public class TransactionsGetListHandlerTests
     Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
     Account carAccount = new() { Id = _carAccountId, Name = "Car" };
     Account rentAccount = new() { Id = _rentAccountId, Name = "Rent" };
+    Counterparty marketCounterparty = new() { Id = _marketCounterpartyId, Name = "Market" };
+    Counterparty gasStationCounterparty = new() { Id = _gasStationCounterpartyId, Name = "Gas station" };
+    Counterparty homeownerCounterparty = new() { Id = _homeownerCounterpartyId, Name = "Home owner" };
 
     TransactionRow transaction1Row1 = new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 };
     TransactionRow transaction1Row2 = new() { RowCounter = 2, Account = bankAccount, Credit = 50 };
     Transaction transaction1 = new()
     {
-      Description = "grocery shopping",
+      Counterparty = marketCounterparty,
       Date = new DateOnly(2024, 9, 12),
       TransactionRows = new List<TransactionRow>
       {
@@ -48,7 +57,7 @@ public class TransactionsGetListHandlerTests
     TransactionRow transaction2Row2 = new() { RowCounter = 2, Account = bankAccount, Credit = 100 };
     Transaction transaction2 = new()
     {
-      Description = "gas filling",
+      Counterparty = gasStationCounterparty,
       Date = new DateOnly(2024, 9, 13),
       TransactionRows = new List<TransactionRow>
       {
@@ -61,7 +70,7 @@ public class TransactionsGetListHandlerTests
     TransactionRow transaction3Row2 = new() { RowCounter = 2, Account = bankAccount, Credit = 600 };
     Transaction transaction3 = new()
     {
-      Description = "rent paying",
+      Counterparty = homeownerCounterparty,
       Date = new DateOnly(2024, 9, 14),
       TransactionRows = new List<TransactionRow>
       {
@@ -96,7 +105,7 @@ public class TransactionsGetListHandlerTests
 
       resultItem.Id.Should().Be(expectedItem.Id);
       resultItem.Date.Should().Be(expectedItem.Date);
-      resultItem.Description.Should().Be(expectedItem.Description);
+      resultItem.CounterpartyId.Should().Be(expectedItem.CounterpartyId);
       resultItem.TransactionRows.Should().HaveCount(expectedItem.TransactionRows.Count);
       resultItem.TransactionRows[0].RowCounter.Should().Be(expectedItem.TransactionRows.First().RowCounter);
       resultItem.TransactionRows[0].Description.Should().Be(expectedItem.TransactionRows.First().Description);
@@ -154,7 +163,7 @@ public class TransactionsGetListHandlerTests
   }
 
   [Test]
-  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedDescription_WithDescriptionFilter()
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedIds_WithCounterpartyIdsFilter()
   {
     // arrange
     List<Transaction> transactions = CreateTestTransactions();
@@ -162,13 +171,13 @@ public class TransactionsGetListHandlerTests
     await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, "shopping", null, null);
+    TransactionsGetListRequest request = new(null, new List<Guid> { _marketCounterpartyId, _homeownerCounterpartyId }, null, null);
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    CheckResults(result, transactions, 1, 1, 1, [1]);
+    CheckResults(result, transactions, 2, 1, 2, [3, 1]);
   }
 
   [Test]

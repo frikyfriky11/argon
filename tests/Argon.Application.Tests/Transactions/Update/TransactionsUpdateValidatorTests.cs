@@ -21,9 +21,10 @@ public class TransactionsUpdateValidatorTests
   {
     EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Counterparty> marketCounterparty = await _dbContext.Counterparties.AddAsync(new Counterparty() { Name = "Market" });
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), "test description", new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), marketCounterparty.Entity.Id, new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, accountGroceries.Entity.Id, 100.00m, null, "test row 1 description"),
       new(Guid.NewGuid(), 2, accountBank.Entity.Id, null, 100.00m, "test row 2 description"),
@@ -34,25 +35,17 @@ public class TransactionsUpdateValidatorTests
   }
 
   [Test]
-  public async Task Validator_ShouldReturnError_WhenDescriptionIsTooLong()
+  public async Task Validator_ShouldReturnError_WhenCounterpartyIdDoesNotExist()
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), "x".Repeat(101), new List<TransactionRowsUpdateRequest>());
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>());
 
-    await _sut.ShouldFailOnProperty(request, nameof(request.Description));
-  }
-
-  [Test]
-  public async Task Validator_ShouldReturnError_WhenDescriptionIsEmpty()
-  {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>());
-
-    await _sut.ShouldFailOnProperty(request, nameof(request.Description));
+    await _sut.ShouldFailOnProperty(request, nameof(request.CounterpartyId));
   }
 
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowListIsEmpty()
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>());
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>());
 
     await _sut.ShouldFailOnProperty(request, nameof(request.TransactionRows));
   }
@@ -65,7 +58,7 @@ public class TransactionsUpdateValidatorTests
       new TransactionRowsUpdateRequest(Guid.NewGuid(), 1, Guid.NewGuid(), null, null, null),
     };
 
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, rowList);
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), rowList);
 
     await _sut.ShouldFailOnProperty(request, nameof(request.TransactionRows));
   }
@@ -73,7 +66,7 @@ public class TransactionsUpdateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowAccountIdDoesNotExist()
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), null, null, null),
     });
@@ -84,7 +77,7 @@ public class TransactionsUpdateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowCreditAndDebitAreNull()
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), null, null, null),
     });
@@ -97,7 +90,7 @@ public class TransactionsUpdateValidatorTests
   [TestCase(5, 40, 35)]
   public async Task Validator_ShouldReturnError_WhenRowSumIsNotZeroAndIsMissingSomeDebitAmounts(decimal debit, decimal credit, decimal missing)
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), debit, null, null),
       new(Guid.NewGuid(), 1, Guid.NewGuid(), null, credit, null),
@@ -112,7 +105,7 @@ public class TransactionsUpdateValidatorTests
   [TestCase(40, 5, 35)]
   public async Task Validator_ShouldReturnError_WhenRowSumIsNotZeroAndIsMissingSomeCreditAmounts(decimal debit, decimal credit, decimal missing)
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), debit, null, null),
       new(Guid.NewGuid(), 1, Guid.NewGuid(), null, credit, null),
@@ -128,7 +121,7 @@ public class TransactionsUpdateValidatorTests
   [TestCase(123456789.01230)]
   public async Task Validator_ShouldReturnError_WhenRowDebitHasInvalidPrecisionScale(decimal value)
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), value, null, null),
     });
@@ -142,7 +135,7 @@ public class TransactionsUpdateValidatorTests
   [TestCase(123456789.01230)]
   public async Task Validator_ShouldReturnError_WhenRowCreditHasInvalidPrecisionScale(decimal value)
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), null, value, null),
     });
@@ -153,7 +146,7 @@ public class TransactionsUpdateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowDescriptionIsTooLong()
   {
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsUpdateRequest>
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>
     {
       new(Guid.NewGuid(), 1, Guid.NewGuid(), null, null, "x".Repeat(101)),
     });

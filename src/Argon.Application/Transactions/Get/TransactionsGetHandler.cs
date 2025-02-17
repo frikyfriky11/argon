@@ -14,7 +14,7 @@ public class TransactionsGetHandler(
       .Select(transaction => new TransactionsGetResponse(
         transaction.Id,
         transaction.Date,
-        transaction.Description,
+        transaction.CounterpartyId,
         transaction.TransactionRows
           .OrderBy(row => row.RowCounter)
           .ThenBy(row => row.Id)

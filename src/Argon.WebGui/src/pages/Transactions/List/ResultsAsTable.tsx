@@ -64,7 +64,7 @@ export default function ResultsAsTable({
         <TableHead>
           <TableRow>
             <TableCell>Data</TableCell>
-            <TableCell>Descrizione</TableCell>
+            <TableCell>Controparte</TableCell>
             <TableCell>Conti</TableCell>
             <TableCell align="right">Importo</TableCell>
             <TableCell></TableCell>
@@ -78,7 +78,7 @@ export default function ResultsAsTable({
                   .setLocale(i18n.language)
                   .toLocaleString(DateTime.DATE_MED)}
               </TableCell>
-              <TableCell>{transaction.description}</TableCell>
+              <TableCell>{transaction.counterpartyName}</TableCell>
               <TableCell>
                 {stringifyTransactionRows(transaction.transactionRows)}
               </TableCell>

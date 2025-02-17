@@ -16,9 +16,14 @@ public class Transaction : BaseAuditableEntity
   public DateOnly Date { get; set; }
 
   /// <summary>
-  ///   The description of the transaction
+  ///   The id of the counterparty of the transaction
   /// </summary>
-  public string Description { get; set; } = default!;
+  public Guid CounterpartyId { get; set; }
+
+  /// <summary>
+  ///   The counterparty of the transaction
+  /// </summary>
+  public Counterparty Counterparty { get; set; } = default!;
 
   /// <summary>
   ///   All the transaction rows of this transaction
