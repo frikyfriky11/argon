@@ -4,8 +4,8 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 {
   public void Configure(EntityTypeBuilder<Transaction> builder)
   {
-    builder.Property(transaction => transaction.Description)
-      .HasMaxLength(100)
-      .IsRequired();
+    builder.HasOne(transaction => transaction.Counterparty)
+      .WithMany(counterparties => counterparties.Transactions)
+      .HasForeignKey(transaction => transaction.CounterpartyId);
   }
 }

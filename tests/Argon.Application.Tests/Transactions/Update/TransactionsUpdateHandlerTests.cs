@@ -23,6 +23,8 @@ public class TransactionsUpdateHandlerTests
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
     EntityEntry<Account> accountRestaurants = await _dbContext.Accounts.AddAsync(new Account { Name = "Restaurants" });
     EntityEntry<Account> accountCash = await _dbContext.Accounts.AddAsync(new Account { Name = "Cash" });
+    EntityEntry<Counterparty> marketCounterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Market" });
+    EntityEntry<Counterparty> restaurantCounterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Restaurant" });
 
     TransactionRow existingFirstRow = new()
     {
@@ -45,7 +47,7 @@ public class TransactionsUpdateHandlerTests
     EntityEntry<Transaction> existingTransaction = await _dbContext.Transactions.AddAsync(new Transaction
     {
       Date = new DateOnly(2023, 04, 05),
-      Description = "test description",
+      Counterparty = marketCounterparty.Entity,
       TransactionRows = new List<TransactionRow>
       {
         existingFirstRow,
@@ -64,7 +66,7 @@ public class TransactionsUpdateHandlerTests
       newRow2,
     };
 
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), "new test description", rowList) { Id = existingTransaction.Entity.Id };
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), restaurantCounterparty.Entity.Id, rowList) { Id = existingTransaction.Entity.Id };
 
     // act
     await _sut.Handle(request, CancellationToken.None);
@@ -77,7 +79,7 @@ public class TransactionsUpdateHandlerTests
 
     dbTransaction.Should().NotBeNull();
     dbTransaction!.Date.Should().Be(request.Date);
-    dbTransaction.Description.Should().Be(request.Description);
+    dbTransaction.CounterpartyId.Should().Be(request.CounterpartyId);
 
     dbTransaction.TransactionRows.Should().HaveCount(2);
 
@@ -100,7 +102,7 @@ public class TransactionsUpdateHandlerTests
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {
     // arrange
-    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), "new test description", new List<TransactionRowsUpdateRequest>()) { Id = Guid.NewGuid() };
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>()) { Id = Guid.NewGuid() };
 
     // act
     Func<Task> act = async () => await _sut.Handle(request, CancellationToken.None);

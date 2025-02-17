@@ -21,11 +21,12 @@ public class TransactionsCreateHandlerTests
     // arrange
     EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Counterparty> marketCounterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Market" });
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
     TransactionRowsCreateRequest row1 = new(1, accountGroceries.Entity.Id, 100.00m, null, "test row 1 description");
     TransactionRowsCreateRequest row2 = new(2, accountBank.Entity.Id, null, 100.00m, "test row 2 description");
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), "test description", new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), marketCounterparty.Entity.Id, new List<TransactionRowsCreateRequest>
     {
       row1,
       row2,
@@ -41,7 +42,7 @@ public class TransactionsCreateHandlerTests
       .FirstOrDefaultAsync(x => x.Id == result.Id);
 
     dbTransaction.Should().NotBeNull();
-    dbTransaction!.Description.Should().Be(request.Description);
+    dbTransaction!.CounterpartyId.Should().Be(request.CounterpartyId);
     dbTransaction.Date.Should().Be(request.Date);
     dbTransaction.TransactionRows.Should().NotBeEmpty();
     dbTransaction.TransactionRows.Should().HaveCount(2);

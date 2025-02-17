@@ -3,6 +3,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import FolderIcon from "@mui/icons-material/Folder";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import StoreIcon from "@mui/icons-material/Store";
 import {
   Box,
   Divider,
@@ -28,6 +29,11 @@ const items = [
     href: "/accounts",
     icon: <FolderIcon fontSize="small" />,
     title: "Conti",
+  },
+  {
+    href: "/counterparties",
+    icon: <StoreIcon fontSize="small" />,
+    title: "Controparti",
   },
   {
     href: "/transactions",

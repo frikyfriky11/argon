@@ -21,9 +21,10 @@ public class TransactionsCreateValidatorTests
   {
     EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Counterparty> marketCounterparty = await _dbContext.Counterparties.AddAsync(new Counterparty() { Name = "Market" });
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), "test description", new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), marketCounterparty.Entity.Id, new List<TransactionRowsCreateRequest>
     {
       new(1, accountGroceries.Entity.Id, 100.00m, null, "test row 1 description"),
       new(2, accountBank.Entity.Id, null, 100.00m, "test row 2 description"),
@@ -35,25 +36,17 @@ public class TransactionsCreateValidatorTests
   }
 
   [Test]
-  public async Task Validator_ShouldReturnError_WhenDescriptionIsTooLong()
+  public async Task Validator_ShouldReturnError_WhenCounterpartyIdDoesNotExist()
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), "x".Repeat(101), new List<TransactionRowsCreateRequest>());
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>());
 
-    await _sut.ShouldFailOnProperty(request, nameof(request.Description));
-  }
-
-  [Test]
-  public async Task Validator_ShouldReturnError_WhenDescriptionIsEmpty()
-  {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>());
-
-    await _sut.ShouldFailOnProperty(request, nameof(request.Description));
+    await _sut.ShouldFailOnProperty(request, nameof(request.CounterpartyId));
   }
 
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowListIsEmpty()
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>());
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>());
 
     await _sut.ShouldFailOnProperty(request, nameof(request.TransactionRows));
   }
@@ -66,7 +59,7 @@ public class TransactionsCreateValidatorTests
       new TransactionRowsCreateRequest(1, Guid.NewGuid(), null, null, null),
     };
 
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, rowList);
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), rowList);
 
     await _sut.ShouldFailOnProperty(request, nameof(request.TransactionRows));
   }
@@ -74,7 +67,7 @@ public class TransactionsCreateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowAccountIdDoesNotExist()
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), null, null, null),
     });
@@ -85,7 +78,7 @@ public class TransactionsCreateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowCreditAndDebitAreNull()
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), null, null, null),
     });
@@ -98,7 +91,7 @@ public class TransactionsCreateValidatorTests
   [TestCase(5, 40, 35)]
   public async Task Validator_ShouldReturnError_WhenRowSumIsNotZeroAndIsMissingSomeDebitAmounts(decimal debit, decimal credit, decimal missing)
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), debit, null, null),
       new(1, Guid.NewGuid(), null, credit, null),
@@ -113,7 +106,7 @@ public class TransactionsCreateValidatorTests
   [TestCase(40, 5, 35)]
   public async Task Validator_ShouldReturnError_WhenRowSumIsNotZeroAndIsMissingSomeCreditAmounts(decimal debit, decimal credit, decimal missing)
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), debit, null, null),
       new(1, Guid.NewGuid(), null, credit, null),
@@ -129,7 +122,7 @@ public class TransactionsCreateValidatorTests
   [TestCase(123456789.01230)]
   public async Task Validator_ShouldReturnError_WhenRowDebitHasInvalidPrecisionScale(decimal value)
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), value, null, null),
     });
@@ -143,7 +136,7 @@ public class TransactionsCreateValidatorTests
   [TestCase(123456789.01230)]
   public async Task Validator_ShouldReturnError_WhenRowCreditHasInvalidPrecisionScale(decimal value)
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), null, value, null),
     });
@@ -154,7 +147,7 @@ public class TransactionsCreateValidatorTests
   [Test]
   public async Task Validator_ShouldReturnError_WhenRowDescriptionIsTooLong()
   {
-    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), string.Empty, new List<TransactionRowsCreateRequest>
+    TransactionsCreateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsCreateRequest>
     {
       new(1, Guid.NewGuid(), null, null, "x".Repeat(101)),
     });

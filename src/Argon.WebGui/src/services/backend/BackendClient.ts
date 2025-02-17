@@ -587,6 +587,355 @@ export class BudgetItemsClient extends ServiceBase {
     }
 }
 
+export class CounterpartiesClient extends ServiceBase {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        super();
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? this.getBaseUrl("");
+
+    }
+
+    /**
+     * Gets a list of Counterparties
+     * @param name (optional) The name of the counterparties
+     * @param pageNumber (optional) The number of the page to retrieve from the data source
+     * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
+     */
+    getList(name: string | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfCounterpartiesGetListResponse> {
+        let url_ = this.baseUrl + "/Counterparties?";
+        if (name !== undefined && name !== null)
+            url_ += "Name=" + encodeURIComponent("" + name) + "&";
+        if (pageNumber === null)
+            throw new Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGetList(_response));
+        });
+    }
+
+    protected processGetList(response: AxiosResponse): Promise<PaginatedListOfCounterpartiesGetListResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PaginatedListOfCounterpartiesGetListResponse.fromJS(resultData200);
+            return Promise.resolve<PaginatedListOfCounterpartiesGetListResponse>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PaginatedListOfCounterpartiesGetListResponse>(null as any);
+    }
+
+    /**
+     * Creates a new Counterparty
+     * @param request The Counterparty entity to create
+     * @return The id of the newly created Counterparty
+     */
+    create(request: CounterpartiesCreateRequest, cancelToken?: CancelToken): Promise<CounterpartiesCreateResponse> {
+        let url_ = this.baseUrl + "/Counterparties";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processCreate(_response));
+        });
+    }
+
+    protected processCreate(response: AxiosResponse): Promise<CounterpartiesCreateResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CounterpartiesCreateResponse.fromJS(resultData200);
+            return Promise.resolve<CounterpartiesCreateResponse>(result200);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied Counterparty object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartiesCreateResponse>(null as any);
+    }
+
+    /**
+     * Gets an existing Counterparty
+     * @param id The id of the Counterparty
+     * @return The Counterparty with the specified id
+     */
+    get(id: string, cancelToken?: CancelToken): Promise<CounterpartiesGetResponse> {
+        let url_ = this.baseUrl + "/Counterparties/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGet(_response));
+        });
+    }
+
+    protected processGet(response: AxiosResponse): Promise<CounterpartiesGetResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CounterpartiesGetResponse.fromJS(resultData200);
+            return Promise.resolve<CounterpartiesGetResponse>(result200);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Counterparty with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartiesGetResponse>(null as any);
+    }
+
+    /**
+     * Updates an existing Counterparty
+     * @param id The id of the Counterparty
+     * @param request The Counterparty entity to update
+     * @return The Counterparty was correctly updated
+     */
+    update(id: string, request: CounterpartiesUpdateRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/Counterparties/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PUT",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processUpdate(_response));
+        });
+    }
+
+    protected processUpdate(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied Counterparty object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Counterparty with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Deletes an existing Counterparty
+     * @param id The id of the Counterparty
+     * @return Nothing
+     */
+    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/Counterparties/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            responseType: "blob",
+            method: "DELETE",
+            url: url_,
+            headers: {
+                "Accept": "application/octet-stream"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processDelete(_response));
+        });
+    }
+
+    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+}
+
 export class TransactionsClient extends ServiceBase {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -605,18 +954,18 @@ export class TransactionsClient extends ServiceBase {
     /**
      * Gets a list of Transactions
      * @param accountIds (optional) The account ids used in the transaction rows
-     * @param description (optional) The description used in the transaction
+     * @param counterpartyIds (optional) The counterparty ids used in the transaction
      * @param dateFrom (optional) The start date to use in the search of the transaction
      * @param dateTo (optional) The end date to use in the search of the transaction
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, description: string | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
-        if (description !== undefined && description !== null)
-            url_ += "Description=" + encodeURIComponent("" + description) + "&";
+        if (counterpartyIds !== undefined && counterpartyIds !== null)
+            counterpartyIds && counterpartyIds.forEach(item => { url_ += "CounterpartyIds=" + encodeURIComponent("" + item) + "&"; });
         if (dateFrom !== undefined && dateFrom !== null)
             url_ += "DateFrom=" + encodeURIComponent(dateFrom ? "" + dateFrom.toString() : "") + "&";
         if (dateTo !== undefined && dateTo !== null)
@@ -1465,6 +1814,311 @@ export interface IBudgetItemsUpsertRequest {
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
+export class PaginatedListOfCounterpartiesGetListResponse implements IPaginatedListOfCounterpartiesGetListResponse {
+    /** The collection of items that this PaginatedList object represents
+             */
+    items!: CounterpartiesGetListResponse[];
+    /** The number of the page representing the current subset of items
+             */
+    pageNumber!: number;
+    /** The total number of pages that could be retrieved with the current page size
+             */
+    totalPages!: number;
+    /** The total count of items before pagination occurred
+             */
+    totalCount!: number;
+    /** Describes if there is a previous page that can be retrieved by subtracting 1 from the page number
+             */
+    hasPreviousPage!: boolean;
+    /** Describes if there is a next page that can be retrieved by adding 1 to the page number
+             */
+    hasNextPage!: boolean;
+
+    constructor(data?: IPaginatedListOfCounterpartiesGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(CounterpartiesGetListResponse.fromJS(item));
+            }
+            else {
+                this.items = <any>null;
+            }
+            this.pageNumber = _data["pageNumber"] !== undefined ? _data["pageNumber"] : <any>null;
+            this.totalPages = _data["totalPages"] !== undefined ? _data["totalPages"] : <any>null;
+            this.totalCount = _data["totalCount"] !== undefined ? _data["totalCount"] : <any>null;
+            this.hasPreviousPage = _data["hasPreviousPage"] !== undefined ? _data["hasPreviousPage"] : <any>null;
+            this.hasNextPage = _data["hasNextPage"] !== undefined ? _data["hasNextPage"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): PaginatedListOfCounterpartiesGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginatedListOfCounterpartiesGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["pageNumber"] = this.pageNumber !== undefined ? this.pageNumber : <any>null;
+        data["totalPages"] = this.totalPages !== undefined ? this.totalPages : <any>null;
+        data["totalCount"] = this.totalCount !== undefined ? this.totalCount : <any>null;
+        data["hasPreviousPage"] = this.hasPreviousPage !== undefined ? this.hasPreviousPage : <any>null;
+        data["hasNextPage"] = this.hasNextPage !== undefined ? this.hasNextPage : <any>null;
+        return data;
+    }
+}
+
+/** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
+export interface IPaginatedListOfCounterpartiesGetListResponse {
+    /** The collection of items that this PaginatedList object represents
+             */
+    items: CounterpartiesGetListResponse[];
+    /** The number of the page representing the current subset of items
+             */
+    pageNumber: number;
+    /** The total number of pages that could be retrieved with the current page size
+             */
+    totalPages: number;
+    /** The total count of items before pagination occurred
+             */
+    totalCount: number;
+    /** Describes if there is a previous page that can be retrieved by subtracting 1 from the page number
+             */
+    hasPreviousPage: boolean;
+    /** Describes if there is a next page that can be retrieved by adding 1 to the page number
+             */
+    hasNextPage: boolean;
+}
+
+/** The result of the Counterparty entities get list */
+export class CounterpartiesGetListResponse implements ICounterpartiesGetListResponse {
+    /** The id of the counterparty */
+    id!: string;
+    /** The name of the counterparty */
+    name!: string;
+
+    constructor(data?: ICounterpartiesGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["name"] = this.name !== undefined ? this.name : <any>null;
+        return data;
+    }
+}
+
+/** The result of the Counterparty entities get list */
+export interface ICounterpartiesGetListResponse {
+    /** The id of the counterparty */
+    id: string;
+    /** The name of the counterparty */
+    name: string;
+}
+
+/** The result of the get request of a Counterparty entity */
+export class CounterpartiesGetResponse implements ICounterpartiesGetResponse {
+    /** The id of the counterparty */
+    id!: string;
+    /** The name of the counterparty */
+    name!: string;
+
+    constructor(data?: ICounterpartiesGetResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesGetResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesGetResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["name"] = this.name !== undefined ? this.name : <any>null;
+        return data;
+    }
+}
+
+/** The result of the get request of a Counterparty entity */
+export interface ICounterpartiesGetResponse {
+    /** The id of the counterparty */
+    id: string;
+    /** The name of the counterparty */
+    name: string;
+}
+
+/** The result of the creation of a new Counterparty entity */
+export class CounterpartiesCreateResponse implements ICounterpartiesCreateResponse {
+    /** The id of the newly created Counterparty */
+    id!: string;
+
+    constructor(data?: ICounterpartiesCreateResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesCreateResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesCreateResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        return data;
+    }
+}
+
+/** The result of the creation of a new Counterparty entity */
+export interface ICounterpartiesCreateResponse {
+    /** The id of the newly created Counterparty */
+    id: string;
+}
+
+/** The request to create a new Counterparty entity */
+export class CounterpartiesCreateRequest implements ICounterpartiesCreateRequest {
+    /** The name of the counterparty */
+    name!: string;
+
+    constructor(data?: ICounterpartiesCreateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesCreateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesCreateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name !== undefined ? this.name : <any>null;
+        return data;
+    }
+}
+
+/** The request to create a new Counterparty entity */
+export interface ICounterpartiesCreateRequest {
+    /** The name of the counterparty */
+    name: string;
+}
+
+/** The request to update an existing counterparty */
+export class CounterpartiesUpdateRequest implements ICounterpartiesUpdateRequest {
+    /** The name of the counterparty */
+    name!: string;
+
+    constructor(data?: ICounterpartiesUpdateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesUpdateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesUpdateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name !== undefined ? this.name : <any>null;
+        return data;
+    }
+}
+
+/** The request to update an existing counterparty */
+export interface ICounterpartiesUpdateRequest {
+    /** The name of the counterparty */
+    name: string;
+}
+
+/** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
 export class PaginatedListOfTransactionsGetListResponse implements IPaginatedListOfTransactionsGetListResponse {
     /** The collection of items that this PaginatedList object represents
              */
@@ -1563,8 +2217,10 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
     id!: string;
     /** The date of the transaction */
     date!: DateTime;
-    /** The description of the transaction */
-    description!: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId!: string;
+    /** The name of the counterparty of the transaction */
+    counterpartyName!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetListResponse[];
 
@@ -1581,7 +2237,8 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
         if (_data) {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
-            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -1604,7 +2261,8 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
-        data["description"] = this.description !== undefined ? this.description : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -1620,8 +2278,10 @@ export interface ITransactionsGetListResponse {
     id: string;
     /** The date of the transaction */
     date: DateTime;
-    /** The description of the transaction */
-    description: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId: string;
+    /** The name of the counterparty of the transaction */
+    counterpartyName: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetListResponse[];
 }
@@ -1708,8 +2368,8 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     id!: string;
     /** The date of the transaction */
     date!: DateTime;
-    /** The description of the transaction */
-    description!: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
 
@@ -1726,7 +2386,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         if (_data) {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
-            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -1749,7 +2409,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
-        data["description"] = this.description !== undefined ? this.description : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -1765,8 +2425,8 @@ export interface ITransactionsGetResponse {
     id: string;
     /** The date of the transaction */
     date: DateTime;
-    /** The description of the transaction */
-    description: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
 }
@@ -1885,8 +2545,8 @@ export interface ITransactionsCreateResponse {
 export class TransactionsCreateRequest implements ITransactionsCreateRequest {
     /** The date of the transaction */
     date!: DateTime;
-    /** The description of the transaction */
-    description!: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsCreateRequest[];
 
@@ -1902,7 +2562,7 @@ export class TransactionsCreateRequest implements ITransactionsCreateRequest {
     init(_data?: any) {
         if (_data) {
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
-            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -1924,7 +2584,7 @@ export class TransactionsCreateRequest implements ITransactionsCreateRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
-        data["description"] = this.description !== undefined ? this.description : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -1938,8 +2598,8 @@ export class TransactionsCreateRequest implements ITransactionsCreateRequest {
 export interface ITransactionsCreateRequest {
     /** The date of the transaction */
     date: DateTime;
-    /** The description of the transaction */
-    description: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsCreateRequest[];
 }
@@ -2012,8 +2672,8 @@ export interface ITransactionRowsCreateRequest {
 export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
     /** The date of the transaction */
     date!: DateTime;
-    /** The description of the transaction */
-    description!: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsUpdateRequest[];
 
@@ -2029,7 +2689,7 @@ export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
     init(_data?: any) {
         if (_data) {
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
-            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -2051,7 +2711,7 @@ export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
-        data["description"] = this.description !== undefined ? this.description : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -2065,8 +2725,8 @@ export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
 export interface ITransactionsUpdateRequest {
     /** The date of the transaction */
     date: DateTime;
-    /** The description of the transaction */
-    description: string;
+    /** The id of the counterparty of the transaction */
+    counterpartyId: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsUpdateRequest[];
 }

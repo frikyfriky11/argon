@@ -18,7 +18,7 @@ public class TransactionsUpdateHandler(
       throw new NotFoundException(nameof(Transaction), request.Id);
     }
 
-    entity.Description = request.Description;
+    entity.CounterpartyId = request.CounterpartyId;
     entity.Date = request.Date;
 
     List<TransactionRowsUpdateRequest> tempRequestRows = request.TransactionRows;

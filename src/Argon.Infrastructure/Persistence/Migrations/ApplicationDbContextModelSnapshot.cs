@@ -18,7 +18,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0-preview.2.23128.3")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -83,7 +83,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetItems");
                 });
 
-            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+            modelBuilder.Entity("Argon.Domain.Entities.Counterparty", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -92,18 +92,40 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<Instant?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Counterparties");
+                });
+
+            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CounterpartyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
 
                     b.Property<Instant?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CounterpartyId");
 
                     b.ToTable("Transactions");
                 });
@@ -161,6 +183,17 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+                {
+                    b.HasOne("Argon.Domain.Entities.Counterparty", "Counterparty")
+                        .WithMany("Transactions")
+                        .HasForeignKey("CounterpartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Counterparty");
+                });
+
             modelBuilder.Entity("Argon.Domain.Entities.TransactionRow", b =>
                 {
                     b.HasOne("Argon.Domain.Entities.Account", "Account")
@@ -185,6 +218,11 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Navigation("BudgetItems");
 
                     b.Navigation("TransactionRows");
+                });
+
+            modelBuilder.Entity("Argon.Domain.Entities.Counterparty", b =>
+                {
+                    b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>

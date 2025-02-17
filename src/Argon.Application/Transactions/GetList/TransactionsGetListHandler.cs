@@ -14,7 +14,7 @@ public class TransactionsGetListHandler(
       .Transactions
       .AsNoTracking()
       .Where(transaction => request.AccountIds == null || request.AccountIds.Count == 0 || transaction.TransactionRows.Any(row => request.AccountIds.Contains(row.AccountId)))
-      .Where(transaction => string.IsNullOrWhiteSpace(request.Description) || transaction.Description.ToLower().Contains(request.Description.ToLower()))
+      .Where(transaction => request.CounterpartyIds == null || request.CounterpartyIds.Count == 0 || request.CounterpartyIds.Contains(transaction.CounterpartyId))
       .Where(transaction => request.DateFrom == null || transaction.Date >= DateOnly.FromDateTime(request.DateFrom.Value.Date))
       .Where(transaction => request.DateTo == null || transaction.Date <= DateOnly.FromDateTime(request.DateTo.Value.Date))
       .OrderByDescending(transaction => transaction.Date)
@@ -23,7 +23,8 @@ public class TransactionsGetListHandler(
       .Select(transaction => new TransactionsGetListResponse(
         transaction.Id,
         transaction.Date,
-        transaction.Description,
+        transaction.CounterpartyId,
+        transaction.Counterparty.Name,
         transaction.TransactionRows
           .OrderBy(row => row.RowCounter)
           .ThenBy(row => row.Id)

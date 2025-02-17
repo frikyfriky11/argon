@@ -21,6 +21,7 @@ public class TransactionsGetHandlerTests
     // arrange
     EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
     EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Counterparty> marketCounterparty = await _dbContext.Counterparties.AddAsync(new Counterparty() { Name = "Market" });
 
     TransactionRow row1 = new()
     {
@@ -41,7 +42,7 @@ public class TransactionsGetHandlerTests
     Transaction transaction = new()
     {
       Date = new DateOnly(2023, 04, 05),
-      Description = "test description",
+      Counterparty = marketCounterparty.Entity,
       TransactionRows = new List<TransactionRow>
       {
         row1,
@@ -60,7 +61,7 @@ public class TransactionsGetHandlerTests
     // assert
     result.Id.Should().Be(transaction.Id);
     result.Date.Should().Be(transaction.Date);
-    result.Description.Should().Be(transaction.Description);
+    result.CounterpartyId.Should().Be(transaction.CounterpartyId);
     
     result.TransactionRows[0].Id.Should().Be(row1.Id);
     result.TransactionRows[0].RowCounter.Should().Be(row1.RowCounter);

@@ -5,9 +5,9 @@ public class TransactionsCreateValidator : AbstractValidator<TransactionsCreateR
 {
   public TransactionsCreateValidator(IApplicationDbContext dbContext)
   {
-    RuleFor(request => request.Description)
-      .NotEmpty()
-      .MaximumLength(100);
+    RuleFor(request => request.CounterpartyId)
+      .MustAsync(async (id, cancellationToken) => await dbContext.Counterparties.AnyAsync(counterparty => counterparty.Id == id,  cancellationToken))
+      .WithMessage("The counterparty id {PropertyValue} does not exist");
 
     RuleFor(request => request.TransactionRows)
       .NotEmpty()
