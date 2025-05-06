@@ -12,7 +12,7 @@ namespace Argon.Application.Transactions.GetList;
 public record TransactionsGetListResponse(
   Guid Id,
   DateOnly Date,
-  Guid CounterpartyId,
+  Guid? CounterpartyId,
   string CounterpartyName,
   List<TransactionRowsGetListResponse> TransactionRows
 );

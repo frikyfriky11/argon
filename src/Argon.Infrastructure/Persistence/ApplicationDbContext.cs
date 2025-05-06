@@ -20,9 +20,15 @@ public class ApplicationDbContext(
 
   /// <inheritdoc />
   public DbSet<BudgetItem> BudgetItems => Set<BudgetItem>();
-  
+
   /// <inheritdoc />
   public DbSet<Counterparty> Counterparties => Set<Counterparty>();
+
+  /// <inheritdoc />
+  public DbSet<CounterpartyIdentifier> CounterpartyIdentifiers => Set<CounterpartyIdentifier>();
+
+  /// <inheritdoc />
+  public DbSet<BankStatementFile> BankStatementFiles => Set<BankStatementFile>();
 
   protected override void OnModelCreating(ModelBuilder builder)
   {

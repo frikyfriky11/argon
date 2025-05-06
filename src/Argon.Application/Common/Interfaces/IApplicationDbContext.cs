@@ -31,6 +31,16 @@ public interface IApplicationDbContext
   DbSet<Counterparty> Counterparties { get; }
 
   /// <summary>
+  ///   This table contains all the CounterpartyIdentifier entities
+  /// </summary>
+  DbSet<CounterpartyIdentifier> CounterpartyIdentifiers { get; }
+
+  /// <summary>
+  ///   This table contains all the BankStatementFile entities
+  /// </summary>
+  DbSet<BankStatementFile> BankStatementFiles { get; }
+
+  /// <summary>
   ///   Saves the changes asynchronously
   /// </summary>
   /// <param name="cancellationToken">The cancellation token to use</param>

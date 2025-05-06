@@ -16,17 +16,54 @@ public class Transaction : BaseAuditableEntity
   public DateOnly Date { get; set; }
 
   /// <summary>
-  ///   The id of the counterparty of the transaction
+  ///   The id of the counterparty of the transaction.
+  ///   Could be null if this transaction was imported and no suitable counterparty was found.
   /// </summary>
-  public Guid CounterpartyId { get; set; }
+  public Guid? CounterpartyId { get; set; }
 
   /// <summary>
-  ///   The counterparty of the transaction
+  ///   The counterparty of the transaction.
+  ///   Could be null if this transaction was imported and no suitable counterparty was found.
   /// </summary>
-  public Counterparty Counterparty { get; set; } = default!;
+  public Counterparty? Counterparty { get; set; }
+
+  /// <summary>
+  ///   The status of the transaction
+  /// </summary>
+  public TransactionStatus Status { get; set; }
+
+  /// <summary>
+  ///   The id of another transaction identified as a potential duplicate of the current transaction
+  /// </summary>
+  public Guid? PotentialDuplicateOfTransactionId { get; set; }
+
+  /// <summary>
+  ///   Another transaction identified as a potential duplicate of the current transaction
+  /// </summary>
+  public Transaction? PotentialDuplicateOfTransaction { get; set; }
+
+  /// <summary>
+  ///   The id of the bank statement file from where this transaction originated
+  /// </summary>
+  public Guid? BankStatementFileId { get; set; }
+
+  /// <summary>
+  ///   The bank statement file from where this transaction originated
+  /// </summary>
+  public BankStatementFile? BankStatementFile { get; set; }
+
+  /// <summary>
+  ///   The JSON representation of the raw import data of a bank statement file
+  /// </summary>
+  public string? RawImportData { get; set; }
 
   /// <summary>
   ///   All the transaction rows of this transaction
   /// </summary>
   public ICollection<TransactionRow> TransactionRows { get; set; } = default!;
+
+  /// <summary>
+  ///   All the transactions that refer to this transaction as duplicate
+  /// </summary>
+  public ICollection<Transaction> DuplicateTransactions { get; set; } = default!;
 }

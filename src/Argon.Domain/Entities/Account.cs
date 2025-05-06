@@ -35,4 +35,9 @@ public class Account : BaseAuditableEntity
   ///   All the budget items of this account
   /// </summary>
   public ICollection<BudgetItem> BudgetItems { get; set; } = default!;
+
+  /// <summary>
+  ///   All the bank statement files that were mapped to this account
+  /// </summary>
+  public ICollection<BankStatementFile> BankStatementFiles { get; set; } = default!;
 }
