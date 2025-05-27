@@ -12,9 +12,9 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
       .WithMany(transaction => transaction.DuplicateTransactions)
       .HasForeignKey(transaction => transaction.PotentialDuplicateOfTransactionId);
 
-    builder.HasOne(transaction => transaction.BankStatementFile)
-      .WithMany(bankStatementFile => bankStatementFile.Transactions)
-      .HasForeignKey(transaction => transaction.BankStatementFileId);
+    builder.HasOne(transaction => transaction.BankStatement)
+      .WithMany(bankStatement => bankStatement.Transactions)
+      .HasForeignKey(transaction => transaction.BankStatementId);
 
     // if db json support is needed for querying, this should do it:
     // builder.OwnsOne(transaction => transaction.RawImportData, action => action.ToJson());

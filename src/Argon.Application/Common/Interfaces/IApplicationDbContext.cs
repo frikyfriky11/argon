@@ -36,9 +36,9 @@ public interface IApplicationDbContext
   DbSet<CounterpartyIdentifier> CounterpartyIdentifiers { get; }
 
   /// <summary>
-  ///   This table contains all the BankStatementFile entities
+  ///   This table contains all the BankStatement entities
   /// </summary>
-  DbSet<BankStatementFile> BankStatementFiles { get; }
+  DbSet<BankStatement> BankStatements { get; }
 
   /// <summary>
   ///   Saves the changes asynchronously

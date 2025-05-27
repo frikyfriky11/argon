@@ -51,7 +51,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("Argon.Domain.Entities.BankStatementFile", b =>
+            modelBuilder.Entity("Argon.Domain.Entities.BankStatement", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -84,7 +84,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ImportedToAccountId");
 
-                    b.ToTable("BankStatementFiles");
+                    b.ToTable("BankStatements");
                 });
 
             modelBuilder.Entity("Argon.Domain.Entities.BudgetItem", b =>
@@ -174,7 +174,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("BankStatementFileId")
+                    b.Property<Guid?>("BankStatementId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("CounterpartyId")
@@ -200,7 +200,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BankStatementFileId");
+                    b.HasIndex("BankStatementId");
 
                     b.HasIndex("CounterpartyId");
 
@@ -251,10 +251,10 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.ToTable("TransactionRows");
                 });
 
-            modelBuilder.Entity("Argon.Domain.Entities.BankStatementFile", b =>
+            modelBuilder.Entity("Argon.Domain.Entities.BankStatement", b =>
                 {
                     b.HasOne("Argon.Domain.Entities.Account", "ImportedToAccount")
-                        .WithMany("BankStatementFiles")
+                        .WithMany("BankStatements")
                         .HasForeignKey("ImportedToAccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -286,9 +286,9 @@ namespace Argon.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
                 {
-                    b.HasOne("Argon.Domain.Entities.BankStatementFile", "BankStatementFile")
+                    b.HasOne("Argon.Domain.Entities.BankStatement", "BankStatement")
                         .WithMany("Transactions")
-                        .HasForeignKey("BankStatementFileId");
+                        .HasForeignKey("BankStatementId");
 
                     b.HasOne("Argon.Domain.Entities.Counterparty", "Counterparty")
                         .WithMany("Transactions")
@@ -298,7 +298,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                         .WithMany("DuplicateTransactions")
                         .HasForeignKey("PotentialDuplicateOfTransactionId");
 
-                    b.Navigation("BankStatementFile");
+                    b.Navigation("BankStatement");
 
                     b.Navigation("Counterparty");
 
@@ -326,14 +326,14 @@ namespace Argon.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Argon.Domain.Entities.Account", b =>
                 {
-                    b.Navigation("BankStatementFiles");
+                    b.Navigation("BankStatements");
 
                     b.Navigation("BudgetItems");
 
                     b.Navigation("TransactionRows");
                 });
 
-            modelBuilder.Entity("Argon.Domain.Entities.BankStatementFile", b =>
+            modelBuilder.Entity("Argon.Domain.Entities.BankStatement", b =>
                 {
                     b.Navigation("Transactions");
                 });

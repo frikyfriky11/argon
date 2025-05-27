@@ -43,17 +43,17 @@ public class Transaction : BaseAuditableEntity
   public Transaction? PotentialDuplicateOfTransaction { get; set; }
 
   /// <summary>
-  ///   The id of the bank statement file from where this transaction originated
+  ///   The id of the bank statement from where this transaction originated
   /// </summary>
-  public Guid? BankStatementFileId { get; set; }
+  public Guid? BankStatementId { get; set; }
 
   /// <summary>
-  ///   The bank statement file from where this transaction originated
+  ///   The bank statement from where this transaction originated
   /// </summary>
-  public BankStatementFile? BankStatementFile { get; set; }
+  public BankStatement? BankStatement { get; set; }
 
   /// <summary>
-  ///   The JSON representation of the raw import data of a bank statement file
+  ///   The JSON representation of the raw import data of a bank statement
   /// </summary>
   public string? RawImportData { get; set; }
 

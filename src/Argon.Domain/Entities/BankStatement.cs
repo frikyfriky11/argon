@@ -3,10 +3,10 @@
 /// <summary>
 ///   This entity holds the header data for the uploaded bank statement
 /// </summary>
-public class BankStatementFile : BaseAuditableEntity
+public class BankStatement : BaseAuditableEntity
 {
   /// <summary>
-  ///   The id of the bank statement file
+  ///   The id of the bank statement
   /// </summary>
   public Guid Id { get; set; }
 
@@ -36,7 +36,7 @@ public class BankStatementFile : BaseAuditableEntity
   public string ParserName { get; set; } = default!;
 
   /// <summary>
-  ///   All the transactions that this bank statement file generated
+  ///   All the transactions that this bank statement generated
   /// </summary>
   public ICollection<Transaction> Transactions { get; set; } = [];
 }

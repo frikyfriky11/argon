@@ -28,7 +28,7 @@ public class ApplicationDbContext(
   public DbSet<CounterpartyIdentifier> CounterpartyIdentifiers => Set<CounterpartyIdentifier>();
 
   /// <inheritdoc />
-  public DbSet<BankStatementFile> BankStatementFiles => Set<BankStatementFile>();
+  public DbSet<BankStatement> BankStatements => Set<BankStatement>();
 
   protected override void OnModelCreating(ModelBuilder builder)
   {

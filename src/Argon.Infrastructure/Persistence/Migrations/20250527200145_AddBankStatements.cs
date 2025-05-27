@@ -25,7 +25,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 oldType: "uuid");
 
             migrationBuilder.AddColumn<Guid>(
-                name: "BankStatementFileId",
+                name: "BankStatementId",
                 table: "Transactions",
                 type: "uuid",
                 nullable: true);
@@ -50,7 +50,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 defaultValue: 0);
 
             migrationBuilder.CreateTable(
-                name: "BankStatementFiles",
+                name: "BankStatements",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -63,9 +63,9 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BankStatementFiles", x => x.Id);
+                    table.PrimaryKey("PK_BankStatements", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BankStatementFiles_Accounts_ImportedToAccountId",
+                        name: "FK_BankStatements_Accounts_ImportedToAccountId",
                         column: x => x.ImportedToAccountId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
@@ -94,9 +94,9 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transactions_BankStatementFileId",
+                name: "IX_Transactions_BankStatementId",
                 table: "Transactions",
-                column: "BankStatementFileId");
+                column: "BankStatementId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_PotentialDuplicateOfTransactionId",
@@ -104,8 +104,8 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 column: "PotentialDuplicateOfTransactionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BankStatementFiles_ImportedToAccountId",
-                table: "BankStatementFiles",
+                name: "IX_BankStatements_ImportedToAccountId",
+                table: "BankStatements",
                 column: "ImportedToAccountId");
 
             migrationBuilder.CreateIndex(
@@ -114,10 +114,10 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 column: "CounterpartyId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Transactions_BankStatementFiles_BankStatementFileId",
+                name: "FK_Transactions_BankStatements_BankStatementId",
                 table: "Transactions",
-                column: "BankStatementFileId",
-                principalTable: "BankStatementFiles",
+                column: "BankStatementId",
+                principalTable: "BankStatements",
                 principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
@@ -139,7 +139,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Transactions_BankStatementFiles_BankStatementFileId",
+                name: "FK_Transactions_BankStatements_BankStatementId",
                 table: "Transactions");
 
             migrationBuilder.DropForeignKey(
@@ -151,13 +151,13 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 table: "Transactions");
 
             migrationBuilder.DropTable(
-                name: "BankStatementFiles");
+                name: "BankStatements");
 
             migrationBuilder.DropTable(
                 name: "CounterpartyIdentifiers");
 
             migrationBuilder.DropIndex(
-                name: "IX_Transactions_BankStatementFileId",
+                name: "IX_Transactions_BankStatementId",
                 table: "Transactions");
 
             migrationBuilder.DropIndex(
@@ -165,7 +165,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 table: "Transactions");
 
             migrationBuilder.DropColumn(
-                name: "BankStatementFileId",
+                name: "BankStatementId",
                 table: "Transactions");
 
             migrationBuilder.DropColumn(
