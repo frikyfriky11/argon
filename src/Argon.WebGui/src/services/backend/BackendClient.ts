@@ -435,6 +435,218 @@ export class AccountsClient extends ServiceBase {
     }
 }
 
+export class BankStatementsClient extends ServiceBase {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        super();
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? this.getBaseUrl("");
+
+    }
+
+    /**
+     * Parses a new BankStatement
+     * @param request The BankStatement entity to parse
+     * @return The id of the newly created BankStatement
+     */
+    parse(request: BankStatementsParseRequest, cancelToken?: CancelToken): Promise<BankStatementsParseResponse> {
+        let url_ = this.baseUrl + "/BankStatements/Parse";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processParse(_response));
+        });
+    }
+
+    protected processParse(response: AxiosResponse): Promise<BankStatementsParseResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = BankStatementsParseResponse.fromJS(resultData200);
+            return Promise.resolve<BankStatementsParseResponse>(result200);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied BankStatement object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<BankStatementsParseResponse>(null as any);
+    }
+
+    /**
+     * Gets a list of BankStatements
+     * @param request (optional) 
+     */
+    getList(request: BankStatementsGetListRequest | undefined, cancelToken?: CancelToken): Promise<BankStatementsGetListResponse[]> {
+        let url_ = this.baseUrl + "/BankStatements?";
+        if (request === null)
+            throw new Error("The parameter 'request' cannot be null.");
+        else if (request !== undefined)
+            url_ += "request=" + encodeURIComponent("" + request) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGetList(_response));
+        });
+    }
+
+    protected processGetList(response: AxiosResponse): Promise<BankStatementsGetListResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(BankStatementsGetListResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<BankStatementsGetListResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<BankStatementsGetListResponse[]>(null as any);
+    }
+
+    /**
+     * Gets a list of Parsers
+     * @param request (optional) 
+     */
+    parsersGetList(request: BankStatementParsersGetListRequest | undefined, cancelToken?: CancelToken): Promise<BankStatementParsersGetListResponse[]> {
+        let url_ = this.baseUrl + "/BankStatements/Parsers?";
+        if (request === null)
+            throw new Error("The parameter 'request' cannot be null.");
+        else if (request !== undefined)
+            url_ += "request=" + encodeURIComponent("" + request) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processParsersGetList(_response));
+        });
+    }
+
+    protected processParsersGetList(response: AxiosResponse): Promise<BankStatementParsersGetListResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(BankStatementParsersGetListResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<BankStatementParsersGetListResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<BankStatementParsersGetListResponse[]>(null as any);
+    }
+}
+
 export class BudgetItemsClient extends ServiceBase {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -1665,6 +1877,278 @@ export interface IAccountsFavouriteRequest {
     isFavourite: boolean;
 }
 
+/** The result of the parsing of a new Bank Statement */
+export class BankStatementsParseResponse implements IBankStatementsParseResponse {
+    /** The id of the newly created bank statement */
+    bankStatementId!: string;
+
+    constructor(data?: IBankStatementsParseResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.bankStatementId = _data["bankStatementId"] !== undefined ? _data["bankStatementId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BankStatementsParseResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementsParseResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["bankStatementId"] = this.bankStatementId !== undefined ? this.bankStatementId : <any>null;
+        return data;
+    }
+}
+
+/** The result of the parsing of a new Bank Statement */
+export interface IBankStatementsParseResponse {
+    /** The id of the newly created bank statement */
+    bankStatementId: string;
+}
+
+/** The request to parse a new Bank Statement */
+export class BankStatementsParseRequest implements IBankStatementsParseRequest {
+    /** The content of the bank statement */
+    inputFileContents!: string;
+    /** The filename of the bank statement */
+    inputFileName!: string;
+    /** The id of the parser to use */
+    parserId!: string;
+    /** The id of the account to which this bank statement refers to */
+    importToAccountId!: string;
+
+    constructor(data?: IBankStatementsParseRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.inputFileContents = _data["inputFileContents"] !== undefined ? _data["inputFileContents"] : <any>null;
+            this.inputFileName = _data["inputFileName"] !== undefined ? _data["inputFileName"] : <any>null;
+            this.parserId = _data["parserId"] !== undefined ? _data["parserId"] : <any>null;
+            this.importToAccountId = _data["importToAccountId"] !== undefined ? _data["importToAccountId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BankStatementsParseRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementsParseRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["inputFileContents"] = this.inputFileContents !== undefined ? this.inputFileContents : <any>null;
+        data["inputFileName"] = this.inputFileName !== undefined ? this.inputFileName : <any>null;
+        data["parserId"] = this.parserId !== undefined ? this.parserId : <any>null;
+        data["importToAccountId"] = this.importToAccountId !== undefined ? this.importToAccountId : <any>null;
+        return data;
+    }
+}
+
+/** The request to parse a new Bank Statement */
+export interface IBankStatementsParseRequest {
+    /** The content of the bank statement */
+    inputFileContents: string;
+    /** The filename of the bank statement */
+    inputFileName: string;
+    /** The id of the parser to use */
+    parserId: string;
+    /** The id of the account to which this bank statement refers to */
+    importToAccountId: string;
+}
+
+/** The result of the BankStatement entities get list */
+export class BankStatementsGetListResponse implements IBankStatementsGetListResponse {
+    /** The id of the bank statement */
+    id!: string;
+    /** The file name of the bank statement */
+    fileName!: string;
+    /** The parser id used for parsing the bank statement */
+    parserId!: string;
+    /** The parser name used for parsing the bank statement */
+    parserName!: string;
+    /** The number of transactions parsed from the bank statement */
+    transactionsCount!: number;
+
+    constructor(data?: IBankStatementsGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.fileName = _data["fileName"] !== undefined ? _data["fileName"] : <any>null;
+            this.parserId = _data["parserId"] !== undefined ? _data["parserId"] : <any>null;
+            this.parserName = _data["parserName"] !== undefined ? _data["parserName"] : <any>null;
+            this.transactionsCount = _data["transactionsCount"] !== undefined ? _data["transactionsCount"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BankStatementsGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementsGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["fileName"] = this.fileName !== undefined ? this.fileName : <any>null;
+        data["parserId"] = this.parserId !== undefined ? this.parserId : <any>null;
+        data["parserName"] = this.parserName !== undefined ? this.parserName : <any>null;
+        data["transactionsCount"] = this.transactionsCount !== undefined ? this.transactionsCount : <any>null;
+        return data;
+    }
+}
+
+/** The result of the BankStatement entities get list */
+export interface IBankStatementsGetListResponse {
+    /** The id of the bank statement */
+    id: string;
+    /** The file name of the bank statement */
+    fileName: string;
+    /** The parser id used for parsing the bank statement */
+    parserId: string;
+    /** The parser name used for parsing the bank statement */
+    parserName: string;
+    /** The number of transactions parsed from the bank statement */
+    transactionsCount: number;
+}
+
+/** The request to get a list of BankStatement entities */
+export class BankStatementsGetListRequest implements IBankStatementsGetListRequest {
+
+    constructor(data?: IBankStatementsGetListRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): BankStatementsGetListRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementsGetListRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+/** The request to get a list of BankStatement entities */
+export interface IBankStatementsGetListRequest {
+}
+
+/** The result of the BankStatement parsers get list */
+export class BankStatementParsersGetListResponse implements IBankStatementParsersGetListResponse {
+    /** The globally unique id of the parser */
+    parserId!: string;
+    /** The parser display name */
+    parserDisplayName!: string;
+
+    constructor(data?: IBankStatementParsersGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.parserId = _data["parserId"] !== undefined ? _data["parserId"] : <any>null;
+            this.parserDisplayName = _data["parserDisplayName"] !== undefined ? _data["parserDisplayName"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): BankStatementParsersGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementParsersGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["parserId"] = this.parserId !== undefined ? this.parserId : <any>null;
+        data["parserDisplayName"] = this.parserDisplayName !== undefined ? this.parserDisplayName : <any>null;
+        return data;
+    }
+}
+
+/** The result of the BankStatement parsers get list */
+export interface IBankStatementParsersGetListResponse {
+    /** The globally unique id of the parser */
+    parserId: string;
+    /** The parser display name */
+    parserDisplayName: string;
+}
+
+/** The request to get a list of BankStatement parsers */
+export class BankStatementParsersGetListRequest implements IBankStatementParsersGetListRequest {
+
+    constructor(data?: IBankStatementParsersGetListRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): BankStatementParsersGetListRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementParsersGetListRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+/** The request to get a list of BankStatement parsers */
+export interface IBankStatementParsersGetListRequest {
+}
+
 /** The result of the Budget Item entities get list */
 export class BudgetItemsGetListResponse implements IBudgetItemsGetListResponse {
     id!: string;
@@ -2218,11 +2702,15 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
     /** The date of the transaction */
     date!: DateTime;
     /** The id of the counterparty of the transaction */
-    counterpartyId!: string;
+    counterpartyId!: string | null;
     /** The name of the counterparty of the transaction */
     counterpartyName!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetListResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData!: string | null;
+    /** The status of the transaction */
+    status!: TransactionStatus;
 
     constructor(data?: ITransactionsGetListResponse) {
         if (data) {
@@ -2247,6 +2735,8 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
             else {
                 this.transactionRows = <any>null;
             }
+            this.rawImportData = _data["rawImportData"] !== undefined ? _data["rawImportData"] : <any>null;
+            this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
         }
     }
 
@@ -2268,6 +2758,8 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
             for (let item of this.transactionRows)
                 data["transactionRows"].push(item.toJSON());
         }
+        data["rawImportData"] = this.rawImportData !== undefined ? this.rawImportData : <any>null;
+        data["status"] = this.status !== undefined ? this.status : <any>null;
         return data;
     }
 }
@@ -2279,11 +2771,15 @@ export interface ITransactionsGetListResponse {
     /** The date of the transaction */
     date: DateTime;
     /** The id of the counterparty of the transaction */
-    counterpartyId: string;
+    counterpartyId: string | null;
     /** The name of the counterparty of the transaction */
     counterpartyName: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetListResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData: string | null;
+    /** The status of the transaction */
+    status: TransactionStatus;
 }
 
 /** The row of a transaction get list response */
@@ -2293,9 +2789,9 @@ export class TransactionRowsGetListResponse implements ITransactionRowsGetListRe
     /** The progressive number of the transaction row in the scope of the transaction */
     rowCounter!: number;
     /** The id of the account */
-    accountId!: string;
+    accountId!: string | null;
     /** The name of the account */
-    accountName!: string;
+    accountName!: string | null;
     /** The debit amount of the transaction row */
     debit!: number | null;
     /** The credit amount of the transaction row */
@@ -2351,15 +2847,22 @@ export interface ITransactionRowsGetListResponse {
     /** The progressive number of the transaction row in the scope of the transaction */
     rowCounter: number;
     /** The id of the account */
-    accountId: string;
+    accountId: string | null;
     /** The name of the account */
-    accountName: string;
+    accountName: string | null;
     /** The debit amount of the transaction row */
     debit: number | null;
     /** The credit amount of the transaction row */
     credit: number | null;
     /** The description of the transaction row */
     description: string | null;
+}
+
+export enum TransactionStatus {
+    Confirmed = 0,
+    PendingImportReview = 1,
+    PotentialDuplicate = 2,
+    IgnoredImport = 3,
 }
 
 /** The result of the get request of a Transaction entity */
@@ -2369,7 +2872,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     /** The date of the transaction */
     date!: DateTime;
     /** The id of the counterparty of the transaction */
-    counterpartyId!: string;
+    counterpartyId!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
 
@@ -2426,7 +2929,7 @@ export interface ITransactionsGetResponse {
     /** The date of the transaction */
     date: DateTime;
     /** The id of the counterparty of the transaction */
-    counterpartyId: string;
+    counterpartyId: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
 }
@@ -2438,7 +2941,7 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
     /** The progressive number of the transaction row in the scope of the transaction */
     rowCounter!: number;
     /** The id of the account */
-    accountId!: string;
+    accountId!: string | null;
     /** The debit amount of the transaction row */
     debit!: number | null;
     /** The credit amount of the transaction row */
@@ -2492,7 +2995,7 @@ export interface ITransactionRowsGetResponse {
     /** The progressive number of the transaction row in the scope of the transaction */
     rowCounter: number;
     /** The id of the account */
-    accountId: string;
+    accountId: string | null;
     /** The debit amount of the transaction row */
     debit: number | null;
     /** The credit amount of the transaction row */
