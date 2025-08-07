@@ -12,14 +12,17 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
+import { amber, blue } from "@mui/material/colors";
 import { DateTime } from "luxon";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import {
-  ITransactionRowsGetListResponse,
   ITransactionsGetListResponse,
+  TransactionStatus,
 } from "../../../services/backend/BackendClient";
+import AccountsRenderer from "./AccountsRenderer.tsx";
+import CounterpartyRenderer from "./CounterpartyRenderer.tsx";
 
 export type ResultsAsTableProps = {
   transactions: ITransactionsGetListResponse[];
@@ -41,23 +44,6 @@ export default function ResultsAsTable({
 }: ResultsAsTableProps & TableContainerProps) {
   const { i18n } = useTranslation();
 
-  const stringifyTransactionRows = (
-    rows: ITransactionRowsGetListResponse[],
-  ) => {
-    const fromAccounts = rows
-      .filter((row) => row.debit !== null)
-      .map((row) => row.accountName);
-    const toAccounts = rows
-      .filter((row) => row.credit !== null)
-      .map((row) => row.accountName);
-
-    if (fromAccounts.length > 0 && toAccounts.length > 0) {
-      return `${toAccounts.join(" e ")} -> ${fromAccounts.join(" e ")}`;
-    } else {
-      return null;
-    }
-  };
-
   return (
     <TableContainer component={Paper} {...other}>
       <Table>
@@ -72,15 +58,35 @@ export default function ResultsAsTable({
         </TableHead>
         <TableBody>
           {transactions.map((transaction) => (
-            <TableRow hover key={transaction.id}>
+            <TableRow
+              hover
+              key={transaction.id}
+              sx={{
+                backgroundColor:
+                  transaction.status === TransactionStatus.PotentialDuplicate
+                    ? amber["50"]
+                    : transaction.status ===
+                        TransactionStatus.PendingImportReview
+                      ? blue["50"]
+                      : "",
+              }}
+            >
               <TableCell sx={{ whiteSpace: "nowrap" }}>
                 {transaction.date
                   .setLocale(i18n.language)
                   .toLocaleString(DateTime.DATE_MED)}
               </TableCell>
-              <TableCell>{transaction.counterpartyName}</TableCell>
               <TableCell>
-                {stringifyTransactionRows(transaction.transactionRows)}
+                <CounterpartyRenderer
+                  effectiveCounterpartyName={transaction.counterpartyName}
+                  rawImportData={transaction.rawImportData}
+                />
+              </TableCell>
+              <TableCell>
+                <AccountsRenderer
+                  rows={transaction.transactionRows}
+                  rawImportData={transaction.rawImportData}
+                />
               </TableCell>
               <TableCell
                 align="right"
