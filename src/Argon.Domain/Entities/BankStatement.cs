@@ -33,7 +33,7 @@ public class BankStatement : BaseAuditableEntity
   /// <summary>
   ///   The name of the parser used
   /// </summary>
-  public string ParserName { get; set; } = default!;
+  public Guid ParserId { get; set; }
 
   /// <summary>
   ///   All the transactions that this bank statement generated

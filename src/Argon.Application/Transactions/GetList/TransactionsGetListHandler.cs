@@ -13,7 +13,7 @@ public class TransactionsGetListHandler(
     return await dbContext
       .Transactions
       .AsNoTracking()
-      .Where(transaction => request.AccountIds == null || request.AccountIds.Count == 0 || transaction.TransactionRows.Any(row => request.AccountIds.Contains(row.AccountId)))
+      .Where(transaction => request.AccountIds == null || request.AccountIds.Count == 0 || transaction.TransactionRows.Any(row => row.AccountId != null && request.AccountIds.Contains(row.AccountId.Value)))
       .Where(transaction => request.CounterpartyIds == null || request.CounterpartyIds.Count == 0 || transaction.CounterpartyId != null && request.CounterpartyIds.Contains(transaction.CounterpartyId.Value))
       .Where(transaction => request.DateFrom == null || transaction.Date >= DateOnly.FromDateTime(request.DateFrom.Value.Date))
       .Where(transaction => request.DateTo == null || transaction.Date <= DateOnly.FromDateTime(request.DateTo.Value.Date))
@@ -37,7 +37,9 @@ public class TransactionsGetListHandler(
             row.Credit,
             row.Description
           ))
-          .ToList()
+          .ToList(),
+        transaction.RawImportData,
+        transaction.Status
       ))
       .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
     

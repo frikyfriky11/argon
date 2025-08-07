@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Argon.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250527200145_AddBankStatements")]
+    [Migration("20250626053832_AddBankStatements")]
     partial class AddBankStatements
     {
         /// <inheritdoc />
@@ -78,10 +78,8 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Property<Instant?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ParserName")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
+                    b.Property<Guid>("ParserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -218,7 +216,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AccountId")
+                    b.Property<Guid?>("AccountId")
                         .HasColumnType("uuid");
 
                     b.Property<Instant>("Created")
@@ -313,8 +311,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.HasOne("Argon.Domain.Entities.Account", "Account")
                         .WithMany("TransactionRows")
                         .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Argon.Domain.Entities.Transaction", "Transaction")
                         .WithMany("TransactionRows")

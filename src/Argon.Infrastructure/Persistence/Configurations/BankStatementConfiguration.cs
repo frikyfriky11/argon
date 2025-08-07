@@ -8,10 +8,6 @@ public class BankStatementConfiguration : IEntityTypeConfiguration<BankStatement
       .HasMaxLength(250)
       .IsRequired();
     
-    builder.Property(bankStatement => bankStatement.ParserName)
-      .HasMaxLength(250)
-      .IsRequired();
-    
     builder.HasOne(bankStatement => bankStatement.ImportedToAccount)
       .WithMany(account => account.BankStatements)
       .HasForeignKey(bankStatement => bankStatement.ImportedToAccountId);

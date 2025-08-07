@@ -49,6 +49,14 @@ namespace Argon.Infrastructure.Persistence.Migrations
                 nullable: false,
                 defaultValue: 0);
 
+            migrationBuilder.AlterColumn<Guid>(
+                name: "AccountId",
+                table: "TransactionRows",
+                type: "uuid",
+                nullable: true,
+                oldClrType: typeof(Guid),
+                oldType: "uuid");
+
             migrationBuilder.CreateTable(
                 name: "BankStatements",
                 columns: table => new
@@ -57,7 +65,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     FileName = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     FileContent = table.Column<byte[]>(type: "bytea", nullable: false),
                     ImportedToAccountId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParserName = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    ParserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     LastModified = table.Column<Instant>(type: "timestamp with time zone", nullable: true)
                 },
@@ -183,6 +191,16 @@ namespace Argon.Infrastructure.Persistence.Migrations
             migrationBuilder.AlterColumn<Guid>(
                 name: "CounterpartyId",
                 table: "Transactions",
+                type: "uuid",
+                nullable: false,
+                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
+                oldClrType: typeof(Guid),
+                oldType: "uuid",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<Guid>(
+                name: "AccountId",
+                table: "TransactionRows",
                 type: "uuid",
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
