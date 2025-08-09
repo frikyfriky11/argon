@@ -1,0 +1,88 @@
+﻿using Argon.Application.BankStatements.Delete;
+using Argon.Application.BankStatements.Get;
+using Argon.Application.BankStatements.GetList;
+using Argon.Application.BankStatements.Parse;
+using Argon.Application.BankStatements.ParsersGetList;
+
+namespace Argon.WebApi.Controllers;
+
+/// <summary>
+///   The BankStatements endpoint allows you to parse and read BankStatement entities from the application.
+/// </summary>
+[ApiController]
+[Route("[controller]")]
+public class BankStatementsController(
+  ISender mediator
+) : ControllerBase
+{
+  /// <summary>
+  ///   Parses a new BankStatement
+  /// </summary>
+  /// <param name="request">The BankStatement entity to parse</param>
+  /// <returns>The Id of the newly created BankStatement</returns>
+  /// <response code="200">The id of the newly created BankStatement</response>
+  /// <response code="400">The supplied BankStatement object did not pass validation checks</response>
+  [HttpPost("Parse")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  public async Task<ActionResult<BankStatementsParseResponse>> Parse([FromBody] BankStatementsParseRequest request)
+  {
+    return await mediator.Send(request);
+  }
+
+  /// <summary>
+  ///   Gets an existing BankStatement
+  /// </summary>
+  /// <param name="id">The id of the BankStatement</param>
+  /// <returns>The BankStatement with the specified id</returns>
+  /// <response code="200">The BankStatement with the specified id</response>
+  /// <response code="404">A BankStatement with the specified id could not be found</response>
+  [HttpGet("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult<BankStatementGetResponse>> Get([FromRoute] Guid id)
+  {
+    return await mediator.Send(new BankStatementGetRequest(id));
+  }
+
+  /// <summary>
+  ///   Gets a list of BankStatements
+  /// </summary>
+  [HttpGet("")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  public async Task<ActionResult<List<BankStatementsGetListResponse>>> GetList(
+    [FromQuery] BankStatementsGetListRequest request)
+  {
+    return await mediator.Send(request);
+  }
+
+  /// <summary>
+  ///   Gets a list of Parsers
+  /// </summary>
+  [HttpGet("Parsers")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  public async Task<ActionResult<List<BankStatementParsersGetListResponse>>> ParsersGetList(
+    [FromQuery] BankStatementParsersGetListRequest request)
+  {
+    return await mediator.Send(request);
+  }
+
+  /// <summary>
+  ///   Deletes an existing BankStatement
+  /// </summary>
+  /// <param name="id">The id of the BankStatement</param>
+  /// <returns>Nothing</returns>
+  /// <response code="204">The BankStatement was correctly deleted</response>
+  /// <response code="404">A BankStatement with the specified id could not be found</response>
+  [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult> Delete([FromRoute] Guid id)
+  {
+    BankStatementDeleteRequest request = new(id);
+
+    await mediator.Send(request);
+
+    return NoContent();
+  }
+}

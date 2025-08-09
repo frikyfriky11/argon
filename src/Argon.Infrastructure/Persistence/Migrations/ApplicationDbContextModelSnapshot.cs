@@ -51,6 +51,40 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("Argon.Domain.Entities.BankStatement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("FileContent")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("ImportedToAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ParserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportedToAccountId");
+
+                    b.ToTable("BankStatements");
+                });
+
             modelBuilder.Entity("Argon.Domain.Entities.BudgetItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -105,7 +139,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.ToTable("Counterparties");
                 });
 
-            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+            modelBuilder.Entity("Argon.Domain.Entities.CounterpartyIdentifier", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -117,8 +151,10 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<string>("IdentifierText")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
 
                     b.Property<Instant?>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -126,6 +162,47 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CounterpartyId");
+
+                    b.ToTable("CounterpartyIdentifiers");
+                });
+
+            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BankStatementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CounterpartyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<Instant?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PotentialDuplicateOfTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RawImportData")
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankStatementId");
+
+                    b.HasIndex("CounterpartyId");
+
+                    b.HasIndex("PotentialDuplicateOfTransactionId");
 
                     b.ToTable("Transactions");
                 });
@@ -136,7 +213,7 @@ namespace Argon.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AccountId")
+                    b.Property<Guid?>("AccountId")
                         .HasColumnType("uuid");
 
                     b.Property<Instant>("Created")
@@ -172,6 +249,17 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.ToTable("TransactionRows");
                 });
 
+            modelBuilder.Entity("Argon.Domain.Entities.BankStatement", b =>
+                {
+                    b.HasOne("Argon.Domain.Entities.Account", "ImportedToAccount")
+                        .WithMany("BankStatements")
+                        .HasForeignKey("ImportedToAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ImportedToAccount");
+                });
+
             modelBuilder.Entity("Argon.Domain.Entities.BudgetItem", b =>
                 {
                     b.HasOne("Argon.Domain.Entities.Account", "Account")
@@ -183,10 +271,10 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Navigation("Account");
                 });
 
-            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+            modelBuilder.Entity("Argon.Domain.Entities.CounterpartyIdentifier", b =>
                 {
                     b.HasOne("Argon.Domain.Entities.Counterparty", "Counterparty")
-                        .WithMany("Transactions")
+                        .WithMany("Identifiers")
                         .HasForeignKey("CounterpartyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -194,13 +282,33 @@ namespace Argon.Infrastructure.Persistence.Migrations
                     b.Navigation("Counterparty");
                 });
 
+            modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
+                {
+                    b.HasOne("Argon.Domain.Entities.BankStatement", "BankStatement")
+                        .WithMany("Transactions")
+                        .HasForeignKey("BankStatementId");
+
+                    b.HasOne("Argon.Domain.Entities.Counterparty", "Counterparty")
+                        .WithMany("Transactions")
+                        .HasForeignKey("CounterpartyId");
+
+                    b.HasOne("Argon.Domain.Entities.Transaction", "PotentialDuplicateOfTransaction")
+                        .WithMany("DuplicateTransactions")
+                        .HasForeignKey("PotentialDuplicateOfTransactionId");
+
+                    b.Navigation("BankStatement");
+
+                    b.Navigation("Counterparty");
+
+                    b.Navigation("PotentialDuplicateOfTransaction");
+                });
+
             modelBuilder.Entity("Argon.Domain.Entities.TransactionRow", b =>
                 {
                     b.HasOne("Argon.Domain.Entities.Account", "Account")
                         .WithMany("TransactionRows")
                         .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Argon.Domain.Entities.Transaction", "Transaction")
                         .WithMany("TransactionRows")
@@ -215,18 +323,29 @@ namespace Argon.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Argon.Domain.Entities.Account", b =>
                 {
+                    b.Navigation("BankStatements");
+
                     b.Navigation("BudgetItems");
 
                     b.Navigation("TransactionRows");
                 });
 
+            modelBuilder.Entity("Argon.Domain.Entities.BankStatement", b =>
+                {
+                    b.Navigation("Transactions");
+                });
+
             modelBuilder.Entity("Argon.Domain.Entities.Counterparty", b =>
                 {
+                    b.Navigation("Identifiers");
+
                     b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("Argon.Domain.Entities.Transaction", b =>
                 {
+                    b.Navigation("DuplicateTransactions");
+
                     b.Navigation("TransactionRows");
                 });
 #pragma warning restore 612, 618

@@ -21,6 +21,11 @@ const TransactionsEdit = lazy(() => import("../pages/Transactions/Edit"));
 const CounterpartiesList = lazy(() => import("../pages/Counterparties/List"));
 const CounterpartiesAdd = lazy(() => import("../pages/Counterparties/Add"));
 const CounterpartiesEdit = lazy(() => import("../pages/Counterparties/Edit"));
+const BankStatementsList = lazy(() => import("../pages/BankStatements/List"));
+const BankStatementsAdd = lazy(() => import("../pages/BankStatements/Add"));
+const BankStatementsDetail = lazy(
+  () => import("../pages/BankStatements/Detail"),
+);
 const SystemLayout = lazy(() => import("../pages/System/Layout"));
 const SystemNotFound = lazy(() => import("../pages/System/NotFound"));
 
@@ -59,6 +64,15 @@ export default function MainRouter() {
               <Route
                 element={<CounterpartiesEdit />}
                 path="/counterparties/:id"
+              />
+              <Route element={<BankStatementsList />} path="/bank-statements" />
+              <Route
+                element={<BankStatementsAdd />}
+                path="/bank-statements/add"
+              />
+              <Route
+                element={<BankStatementsDetail />}
+                path="/bank-statements/:id"
               />
             </Route>
           </Route>

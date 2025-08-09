@@ -13,7 +13,7 @@ namespace Argon.Application.Transactions.Get;
 public record TransactionRowsGetResponse(
   Guid Id,
   int RowCounter,
-  Guid AccountId,
+  Guid? AccountId,
   decimal? Debit,
   decimal? Credit,
   string? Description

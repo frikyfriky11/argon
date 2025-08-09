@@ -1,6 +1,7 @@
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FolderIcon from "@mui/icons-material/Folder";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import StoreIcon from "@mui/icons-material/Store";
@@ -34,6 +35,11 @@ const items = [
     href: "/counterparties",
     icon: <StoreIcon fontSize="small" />,
     title: "Controparti",
+  },
+  {
+    href: "/bank-statements",
+    icon: <ListAltIcon fontSize="small" />,
+    title: "Estratti conto bancari",
   },
   {
     href: "/transactions",

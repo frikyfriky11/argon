@@ -20,4 +20,9 @@ public class Counterparty : BaseAuditableEntity
   ///   All the transactions of this counterparty
   /// </summary>
   public ICollection<Transaction> Transactions { get; set; } = default!;
+
+  /// <summary>
+  ///   All the identifiers of this counterparty
+  /// </summary>
+  public ICollection<CounterpartyIdentifier> Identifiers { get; set; } = default!;
 }

@@ -12,14 +12,18 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
+import { amber, blue } from "@mui/material/colors";
 import { DateTime } from "luxon";
+import { Fragment, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import {
-  ITransactionRowsGetListResponse,
   ITransactionsGetListResponse,
+  TransactionStatus,
 } from "../../../services/backend/BackendClient";
+import AccountsRenderer from "./AccountsRenderer.tsx";
+import CounterpartyRenderer from "./CounterpartyRenderer.tsx";
 
 export type ResultsAsTableProps = {
   transactions: ITransactionsGetListResponse[];
@@ -28,6 +32,8 @@ export type ResultsAsTableProps = {
   totalRows: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  renderActions?: (transaction: ITransactionsGetListResponse) => ReactNode;
+  renderRowExpansion?: (transaction: ITransactionsGetListResponse) => ReactNode;
 };
 
 export default function ResultsAsTable({
@@ -37,26 +43,11 @@ export default function ResultsAsTable({
   totalRows,
   onPageChange,
   onPageSizeChange,
+  renderActions,
+  renderRowExpansion,
   ...other
 }: ResultsAsTableProps & TableContainerProps) {
   const { i18n } = useTranslation();
-
-  const stringifyTransactionRows = (
-    rows: ITransactionRowsGetListResponse[],
-  ) => {
-    const fromAccounts = rows
-      .filter((row) => row.debit !== null)
-      .map((row) => row.accountName);
-    const toAccounts = rows
-      .filter((row) => row.credit !== null)
-      .map((row) => row.accountName);
-
-    if (fromAccounts.length > 0 && toAccounts.length > 0) {
-      return `${toAccounts.join(" e ")} -> ${fromAccounts.join(" e ")}`;
-    } else {
-      return null;
-    }
-  };
 
   return (
     <TableContainer component={Paper} {...other}>
@@ -72,41 +63,67 @@ export default function ResultsAsTable({
         </TableHead>
         <TableBody>
           {transactions.map((transaction) => (
-            <TableRow hover key={transaction.id}>
-              <TableCell sx={{ whiteSpace: "nowrap" }}>
-                {transaction.date
-                  .setLocale(i18n.language)
-                  .toLocaleString(DateTime.DATE_MED)}
-              </TableCell>
-              <TableCell>{transaction.counterpartyName}</TableCell>
-              <TableCell>
-                {stringifyTransactionRows(transaction.transactionRows)}
-              </TableCell>
-              <TableCell
-                align="right"
-                sx={{ fontFamily: "monospace", whiteSpace: "nowrap" }}
+            <Fragment key={transaction.id}>
+              <TableRow
+                hover
+                sx={{
+                  backgroundColor:
+                    transaction.status === TransactionStatus.PotentialDuplicate
+                      ? amber["50"]
+                      : transaction.status ===
+                          TransactionStatus.PendingImportReview
+                        ? blue["50"]
+                        : "",
+                }}
               >
-                {transaction.transactionRows
-                  .filter((row) => row.debit !== null)
-                  .reduce((acc, row) => acc + (row.debit ?? 0), 0)
-                  .toLocaleString(i18n.language, {
-                    style: "currency",
-                    currency: "EUR",
-                  })}
-              </TableCell>
-              <TableCell align="right">
-                <Button
-                  color="primary"
-                  component={Link}
-                  endIcon={<ArrowForwardIcon />}
-                  size="small"
-                  to={`/transactions/${transaction.id}`}
-                  variant="text"
+                <TableCell sx={{ whiteSpace: "nowrap" }}>
+                  {transaction.date
+                    .setLocale(i18n.language)
+                    .toLocaleString(DateTime.DATE_MED)}
+                </TableCell>
+                <TableCell>
+                  <CounterpartyRenderer
+                    effectiveCounterpartyName={transaction.counterpartyName}
+                    rawImportData={transaction.rawImportData}
+                  />
+                </TableCell>
+                <TableCell>
+                  <AccountsRenderer
+                    rows={transaction.transactionRows}
+                    rawImportData={transaction.rawImportData}
+                  />
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontFamily: "monospace", whiteSpace: "nowrap" }}
                 >
-                  Vedi
-                </Button>
-              </TableCell>
-            </TableRow>
+                  {transaction.transactionRows
+                    .filter((row) => row.debit !== null)
+                    .reduce((acc, row) => acc + (row.debit ?? 0), 0)
+                    .toLocaleString(i18n.language, {
+                      style: "currency",
+                      currency: "EUR",
+                    })}
+                </TableCell>
+                <TableCell align="right">
+                  {renderActions ? (
+                    renderActions(transaction)
+                  ) : (
+                    <Button
+                      color="primary"
+                      component={Link}
+                      endIcon={<ArrowForwardIcon />}
+                      size="small"
+                      to={`/transactions/${transaction.id}`}
+                      variant="text"
+                    >
+                      Vedi
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+              {renderRowExpansion?.(transaction)}
+            </Fragment>
           ))}
         </TableBody>
         <TableFooter>

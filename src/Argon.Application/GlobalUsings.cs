@@ -1,4 +1,5 @@
-﻿global using Argon.Application.Common.Behaviours;
+﻿global using Argon.Application.BankStatements.Parse.Parsers;
+global using Argon.Application.Common.Behaviours;
 global using Argon.Application.Common.Exceptions;
 global using Argon.Application.Common.Interfaces;
 global using Argon.Domain.Entities;
@@ -12,5 +13,8 @@ global using NSwag.Annotations;
 global using Serilog;
 global using System.Diagnostics;
 global using System.Diagnostics.CodeAnalysis;
+global using System.Globalization;
 global using System.Reflection;
 global using System.Text.Json.Serialization;
+global using Argon.Application.Common;
+global using System.Text.Json;

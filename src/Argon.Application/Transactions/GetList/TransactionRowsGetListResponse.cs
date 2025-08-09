@@ -14,8 +14,8 @@ namespace Argon.Application.Transactions.GetList;
 public record TransactionRowsGetListResponse(
   Guid Id,
   int RowCounter,
-  Guid AccountId,
-  string AccountName,
+  Guid? AccountId,
+  string? AccountName,
   decimal? Debit, 
   decimal? Credit,
   string? Description

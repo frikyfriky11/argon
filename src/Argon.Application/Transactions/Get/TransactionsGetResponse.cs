@@ -11,6 +11,6 @@ namespace Argon.Application.Transactions.Get;
 public record TransactionsGetResponse(
   Guid Id,
   DateOnly Date,
-  Guid CounterpartyId,
+  Guid? CounterpartyId,
   List<TransactionRowsGetResponse> TransactionRows
 );

@@ -19,5 +19,17 @@ public static class ServiceCollectionExtensions
 
     // add all the MediatR handlers
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+    // add all the parsers
+    List<Type> parsers = Assembly.GetExecutingAssembly()
+      .DefinedTypes
+      .Where(t => typeof(IParser).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })
+      .Select(t => t.AsType())
+      .ToList();
+
+    foreach (Type parser in parsers) services.AddScoped(typeof(IParser), parser);
+
+    // add all the factories
+    services.AddScoped<IParsersFactory, ParsersFactory>();
   }
 }
