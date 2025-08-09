@@ -1,3 +1,4 @@
+import { useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   Box,
@@ -17,10 +18,14 @@ import {
   IBankStatementsParseRequest,
 } from "../../../services/backend/BackendClient";
 import Form from "./Form";
+import ParsingWarningsDialog from "./ParsingWarningsDialog";
 
 export default function Add() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  const [showWarningsDialog, setShowWarningsDialog] = useState(false);
+  const [parsingWarnings, setParsingWarnings] = useState<string[]>([]);
 
   const mutation = useMutation({
     mutationFn: async (data: IBankStatementsParseRequest) =>
@@ -36,12 +41,11 @@ export default function Add() {
       );
 
       if (response.warnings && response.warnings.length > 0) {
-        response.warnings.forEach((warning) => {
-          enqueueSnackbar(warning, { variant: "warning" });
-        });
+        setParsingWarnings(response.warnings);
+        setShowWarningsDialog(true);
+      } else {
+        navigate("/bank-statements", { replace: true });
       }
-
-      navigate("/bank-statements", { replace: true });
     },
   });
 
@@ -69,6 +73,14 @@ export default function Add() {
           </CardContent>
         </Card>
       </Box>
+      <ParsingWarningsDialog
+        open={showWarningsDialog}
+        onClose={() => {
+          setShowWarningsDialog(false);
+          navigate("/bank-statements", { replace: true });
+        }}
+        warnings={parsingWarnings}
+      />
     </Stack>
   );
 }
