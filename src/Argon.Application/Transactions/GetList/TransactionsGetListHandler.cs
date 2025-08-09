@@ -39,7 +39,8 @@ public class TransactionsGetListHandler(
           ))
           .ToList(),
         transaction.RawImportData,
-        transaction.Status
+        transaction.Status,
+        transaction.PotentialDuplicateOfTransactionId
       ))
       .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
     

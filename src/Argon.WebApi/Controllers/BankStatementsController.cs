@@ -1,4 +1,5 @@
-﻿using Argon.Application.BankStatements.GetList;
+﻿using Argon.Application.BankStatements.Get;
+using Argon.Application.BankStatements.GetList;
 using Argon.Application.BankStatements.Parse;
 using Argon.Application.BankStatements.ParsersGetList;
 
@@ -26,6 +27,21 @@ public class BankStatementsController(
   public async Task<ActionResult<BankStatementsParseResponse>> Parse([FromBody] BankStatementsParseRequest request)
   {
     return await mediator.Send(request);
+  }
+
+  /// <summary>
+  ///   Gets an existing BankStatement
+  /// </summary>
+  /// <param name="id">The id of the BankStatement</param>
+  /// <returns>The BankStatement with the specified id</returns>
+  /// <response code="200">The BankStatement with the specified id</response>
+  /// <response code="404">A BankStatement with the specified id could not be found</response>
+  [HttpGet("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult<BankStatementGetResponse>> Get([FromRoute] Guid id)
+  {
+    return await mediator.Send(new BankStatementGetRequest(id));
   }
 
   /// <summary>

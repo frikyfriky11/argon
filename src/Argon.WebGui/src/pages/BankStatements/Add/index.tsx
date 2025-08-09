@@ -25,7 +25,7 @@ export default function Add() {
   const mutation = useMutation({
     mutationFn: async (data: IBankStatementsParseRequest) =>
       new BankStatementsClient().parse(new BankStatementsParseRequest(data)),
-    onSuccess: async (_, data) => {
+    onSuccess: async (response, data) => {
       await queryClient.invalidateQueries({ queryKey: ["bankStatements"] });
 
       enqueueSnackbar(
@@ -34,6 +34,12 @@ export default function Add() {
           variant: "success",
         },
       );
+
+      if (response.warnings && response.warnings.length > 0) {
+        response.warnings.forEach((warning) => {
+          enqueueSnackbar(warning, { variant: "warning" });
+        });
+      }
 
       navigate("/bank-statements", { replace: true });
     },

@@ -55,6 +55,12 @@ public class TransactionsUpdateHandler(
       });
     }
 
+    if (entity.Status is TransactionStatus.PendingImportReview or TransactionStatus.PotentialDuplicate)
+    {
+      entity.Status = TransactionStatus.Confirmed;
+      entity.PotentialDuplicateOfTransactionId = null;
+    }
+
     await dbContext.SaveChangesAsync(cancellationToken);
   }
 }

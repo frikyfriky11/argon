@@ -26,11 +26,15 @@ public class BankStatementsParseHandler(
     // call the parser and get the result
     List<BankStatementItem> result = await parser.ParseAsync(stream);
 
+    List<string> warnings = [];
+
     foreach (BankStatementItem item in result)
     {
       if (item.ErrorMessage is not null)
-        // TODO handle this error somehow
+      {
+        warnings.Add($"Error parsing '{item.RawInput}': {item.ErrorMessage}");
         continue;
+      }
 
       // try to find a counterparty
       List<Guid> counterparties = item.CounterpartyName is not null ?
@@ -45,17 +49,24 @@ public class BankStatementsParseHandler(
       Guid? counterpartyId;
 
       if (counterparties.Count > 1)
-        // TODO signal too many counterparties found
+      {
+        warnings.Add($"Found {counterparties.Count} counterparties matching '{item.CounterpartyName}' while parsing '{item.RawInput}'. No counterparty assigned.");
         counterpartyId = null;
+      }
       else if (counterparties.Count == 0)
-        // TODO signal no counterparty found
+      {
+        warnings.Add($"No counterparty found matching '{item.CounterpartyName}' while parsing '{item.RawInput}'. No counterparty assigned.");
         counterpartyId = null;
+      }
       else
+      {
         counterpartyId = counterparties[0];
+      }
 
       // try to find a match for transactions that have the same date and account id (always)
       // and also any of the credit, debit or counterparty name fields the same as the item
-      List<Guid> matches = await dbContext
+      // for simplicity, only the first match will be used
+      Guid? match = await dbContext
         .TransactionRows
         .AsNoTracking()
         .Where(row => row.AccountId == request.ImportToAccountId)
@@ -63,16 +74,16 @@ public class BankStatementsParseHandler(
         .Where(row => row.Credit == Math.Abs(item.Amount)
                       || row.Debit == Math.Abs(item.Amount)
                       || row.Transaction.CounterpartyId == counterpartyId)
-        .Select(row => row.Transaction.Id)
-        .ToListAsync(cancellationToken);
+        .Select(row => (Guid?)row.Transaction.Id)
+        .FirstOrDefaultAsync(cancellationToken);
 
       Transaction newTransaction = new()
       {
         Date = item.Date,
         CounterpartyId = counterpartyId,
-        Status = matches.Count != 0 ? TransactionStatus.PotentialDuplicate : TransactionStatus.PendingImportReview,
+        Status = match is not null ? TransactionStatus.PotentialDuplicate : TransactionStatus.PendingImportReview,
         RawImportData = JsonSerializer.Serialize(item.SpecificParsedItem),
-        // TODO PotentialDuplicateOfTransactionId = matches,
+        PotentialDuplicateOfTransactionId = match,
         TransactionRows =
         [
           new TransactionRow
@@ -101,6 +112,6 @@ public class BankStatementsParseHandler(
 
     await dbContext.SaveChangesAsync(cancellationToken);
 
-    return new BankStatementsParseResponse(bankStatement.Id);
+    return new BankStatementsParseResponse(bankStatement.Id, warnings);
   }
 }

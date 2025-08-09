@@ -517,6 +517,71 @@ export class BankStatementsClient extends ServiceBase {
     }
 
     /**
+     * Gets an existing BankStatement
+     * @param id The id of the BankStatement
+     * @return The BankStatement with the specified id
+     */
+    get(id: string, cancelToken?: CancelToken): Promise<BankStatementGetResponse> {
+        let url_ = this.baseUrl + "/BankStatements/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGet(_response));
+        });
+    }
+
+    protected processGet(response: AxiosResponse): Promise<BankStatementGetResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = BankStatementGetResponse.fromJS(resultData200);
+            return Promise.resolve<BankStatementGetResponse>(result200);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A BankStatement with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<BankStatementGetResponse>(null as any);
+    }
+
+    /**
      * Gets a list of BankStatements
      * @param request (optional) 
      */
@@ -1881,6 +1946,8 @@ export interface IAccountsFavouriteRequest {
 export class BankStatementsParseResponse implements IBankStatementsParseResponse {
     /** The id of the newly created bank statement */
     bankStatementId!: string;
+    /** A list of warnings generated during the parsing process */
+    warnings!: string[];
 
     constructor(data?: IBankStatementsParseResponse) {
         if (data) {
@@ -1894,6 +1961,14 @@ export class BankStatementsParseResponse implements IBankStatementsParseResponse
     init(_data?: any) {
         if (_data) {
             this.bankStatementId = _data["bankStatementId"] !== undefined ? _data["bankStatementId"] : <any>null;
+            if (Array.isArray(_data["warnings"])) {
+                this.warnings = [] as any;
+                for (let item of _data["warnings"])
+                    this.warnings!.push(item);
+            }
+            else {
+                this.warnings = <any>null;
+            }
         }
     }
 
@@ -1907,6 +1982,11 @@ export class BankStatementsParseResponse implements IBankStatementsParseResponse
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["bankStatementId"] = this.bankStatementId !== undefined ? this.bankStatementId : <any>null;
+        if (Array.isArray(this.warnings)) {
+            data["warnings"] = [];
+            for (let item of this.warnings)
+                data["warnings"].push(item);
+        }
         return data;
     }
 }
@@ -1915,6 +1995,8 @@ export class BankStatementsParseResponse implements IBankStatementsParseResponse
 export interface IBankStatementsParseResponse {
     /** The id of the newly created bank statement */
     bankStatementId: string;
+    /** A list of warnings generated during the parsing process */
+    warnings: string[];
 }
 
 /** The request to parse a new Bank Statement */
@@ -1973,6 +2055,250 @@ export interface IBankStatementsParseRequest {
     parserId: string;
     /** The id of the account to which this bank statement refers to */
     importToAccountId: string;
+}
+
+/** The result of the BankStatement entity get */
+export class BankStatementGetResponse implements IBankStatementGetResponse {
+    /** The id of the bank statement */
+    id!: string;
+    /** The file name of the bank statement */
+    fileName!: string;
+    /** The parser name used for parsing the bank statement */
+    parserName!: string;
+    /** The list of transactions parsed from the bank statement */
+    transactions!: TransactionsGetListResponse[];
+
+    constructor(data?: IBankStatementGetResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.fileName = _data["fileName"] !== undefined ? _data["fileName"] : <any>null;
+            this.parserName = _data["parserName"] !== undefined ? _data["parserName"] : <any>null;
+            if (Array.isArray(_data["transactions"])) {
+                this.transactions = [] as any;
+                for (let item of _data["transactions"])
+                    this.transactions!.push(TransactionsGetListResponse.fromJS(item));
+            }
+            else {
+                this.transactions = <any>null;
+            }
+        }
+    }
+
+    static fromJS(data: any): BankStatementGetResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new BankStatementGetResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["fileName"] = this.fileName !== undefined ? this.fileName : <any>null;
+        data["parserName"] = this.parserName !== undefined ? this.parserName : <any>null;
+        if (Array.isArray(this.transactions)) {
+            data["transactions"] = [];
+            for (let item of this.transactions)
+                data["transactions"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+/** The result of the BankStatement entity get */
+export interface IBankStatementGetResponse {
+    /** The id of the bank statement */
+    id: string;
+    /** The file name of the bank statement */
+    fileName: string;
+    /** The parser name used for parsing the bank statement */
+    parserName: string;
+    /** The list of transactions parsed from the bank statement */
+    transactions: TransactionsGetListResponse[];
+}
+
+/** The result of the Transaction entities get list */
+export class TransactionsGetListResponse implements ITransactionsGetListResponse {
+    /** The id of the transaction */
+    id!: string;
+    /** The date of the transaction */
+    date!: DateTime;
+    /** The id of the counterparty of the transaction */
+    counterpartyId!: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName!: string;
+    /** The rows of the transaction */
+    transactionRows!: TransactionRowsGetListResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData!: string | null;
+    /** The status of the transaction */
+    status!: TransactionStatus;
+    /** The id of the potential duplicate of the transaction */
+    potentialDuplicateOfTransactionId!: string | null;
+
+    constructor(data?: ITransactionsGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
+            if (Array.isArray(_data["transactionRows"])) {
+                this.transactionRows = [] as any;
+                for (let item of _data["transactionRows"])
+                    this.transactionRows!.push(TransactionRowsGetListResponse.fromJS(item));
+            }
+            else {
+                this.transactionRows = <any>null;
+            }
+            this.rawImportData = _data["rawImportData"] !== undefined ? _data["rawImportData"] : <any>null;
+            this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.potentialDuplicateOfTransactionId = _data["potentialDuplicateOfTransactionId"] !== undefined ? _data["potentialDuplicateOfTransactionId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): TransactionsGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionsGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
+        if (Array.isArray(this.transactionRows)) {
+            data["transactionRows"] = [];
+            for (let item of this.transactionRows)
+                data["transactionRows"].push(item.toJSON());
+        }
+        data["rawImportData"] = this.rawImportData !== undefined ? this.rawImportData : <any>null;
+        data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["potentialDuplicateOfTransactionId"] = this.potentialDuplicateOfTransactionId !== undefined ? this.potentialDuplicateOfTransactionId : <any>null;
+        return data;
+    }
+}
+
+/** The result of the Transaction entities get list */
+export interface ITransactionsGetListResponse {
+    /** The id of the transaction */
+    id: string;
+    /** The date of the transaction */
+    date: DateTime;
+    /** The id of the counterparty of the transaction */
+    counterpartyId: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName: string;
+    /** The rows of the transaction */
+    transactionRows: TransactionRowsGetListResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData: string | null;
+    /** The status of the transaction */
+    status: TransactionStatus;
+    /** The id of the potential duplicate of the transaction */
+    potentialDuplicateOfTransactionId: string | null;
+}
+
+/** The row of a transaction get list response */
+export class TransactionRowsGetListResponse implements ITransactionRowsGetListResponse {
+    /** The id of the transaction row */
+    id!: string;
+    /** The progressive number of the transaction row in the scope of the transaction */
+    rowCounter!: number;
+    /** The id of the account */
+    accountId!: string | null;
+    /** The name of the account */
+    accountName!: string | null;
+    /** The debit amount of the transaction row */
+    debit!: number | null;
+    /** The credit amount of the transaction row */
+    credit!: number | null;
+    /** The description of the transaction row */
+    description!: string | null;
+
+    constructor(data?: ITransactionRowsGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.rowCounter = _data["rowCounter"] !== undefined ? _data["rowCounter"] : <any>null;
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.debit = _data["debit"] !== undefined ? _data["debit"] : <any>null;
+            this.credit = _data["credit"] !== undefined ? _data["credit"] : <any>null;
+            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): TransactionRowsGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionRowsGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["rowCounter"] = this.rowCounter !== undefined ? this.rowCounter : <any>null;
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["debit"] = this.debit !== undefined ? this.debit : <any>null;
+        data["credit"] = this.credit !== undefined ? this.credit : <any>null;
+        data["description"] = this.description !== undefined ? this.description : <any>null;
+        return data;
+    }
+}
+
+/** The row of a transaction get list response */
+export interface ITransactionRowsGetListResponse {
+    /** The id of the transaction row */
+    id: string;
+    /** The progressive number of the transaction row in the scope of the transaction */
+    rowCounter: number;
+    /** The id of the account */
+    accountId: string | null;
+    /** The name of the account */
+    accountName: string | null;
+    /** The debit amount of the transaction row */
+    debit: number | null;
+    /** The credit amount of the transaction row */
+    credit: number | null;
+    /** The description of the transaction row */
+    description: string | null;
+}
+
+export enum TransactionStatus {
+    Confirmed = 0,
+    PendingImportReview = 1,
+    PotentialDuplicate = 2,
 }
 
 /** The result of the BankStatement entities get list */
@@ -2693,176 +3019,6 @@ export interface IPaginatedListOfTransactionsGetListResponse {
     /** Describes if there is a next page that can be retrieved by adding 1 to the page number
              */
     hasNextPage: boolean;
-}
-
-/** The result of the Transaction entities get list */
-export class TransactionsGetListResponse implements ITransactionsGetListResponse {
-    /** The id of the transaction */
-    id!: string;
-    /** The date of the transaction */
-    date!: DateTime;
-    /** The id of the counterparty of the transaction */
-    counterpartyId!: string | null;
-    /** The name of the counterparty of the transaction */
-    counterpartyName!: string;
-    /** The rows of the transaction */
-    transactionRows!: TransactionRowsGetListResponse[];
-    /** The JSON representation of the raw import data of a bank statement */
-    rawImportData!: string | null;
-    /** The status of the transaction */
-    status!: TransactionStatus;
-
-    constructor(data?: ITransactionsGetListResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
-            this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
-            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
-            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
-            if (Array.isArray(_data["transactionRows"])) {
-                this.transactionRows = [] as any;
-                for (let item of _data["transactionRows"])
-                    this.transactionRows!.push(TransactionRowsGetListResponse.fromJS(item));
-            }
-            else {
-                this.transactionRows = <any>null;
-            }
-            this.rawImportData = _data["rawImportData"] !== undefined ? _data["rawImportData"] : <any>null;
-            this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
-        }
-    }
-
-    static fromJS(data: any): TransactionsGetListResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new TransactionsGetListResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id !== undefined ? this.id : <any>null;
-        data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
-        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
-        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
-        if (Array.isArray(this.transactionRows)) {
-            data["transactionRows"] = [];
-            for (let item of this.transactionRows)
-                data["transactionRows"].push(item.toJSON());
-        }
-        data["rawImportData"] = this.rawImportData !== undefined ? this.rawImportData : <any>null;
-        data["status"] = this.status !== undefined ? this.status : <any>null;
-        return data;
-    }
-}
-
-/** The result of the Transaction entities get list */
-export interface ITransactionsGetListResponse {
-    /** The id of the transaction */
-    id: string;
-    /** The date of the transaction */
-    date: DateTime;
-    /** The id of the counterparty of the transaction */
-    counterpartyId: string | null;
-    /** The name of the counterparty of the transaction */
-    counterpartyName: string;
-    /** The rows of the transaction */
-    transactionRows: TransactionRowsGetListResponse[];
-    /** The JSON representation of the raw import data of a bank statement */
-    rawImportData: string | null;
-    /** The status of the transaction */
-    status: TransactionStatus;
-}
-
-/** The row of a transaction get list response */
-export class TransactionRowsGetListResponse implements ITransactionRowsGetListResponse {
-    /** The id of the transaction row */
-    id!: string;
-    /** The progressive number of the transaction row in the scope of the transaction */
-    rowCounter!: number;
-    /** The id of the account */
-    accountId!: string | null;
-    /** The name of the account */
-    accountName!: string | null;
-    /** The debit amount of the transaction row */
-    debit!: number | null;
-    /** The credit amount of the transaction row */
-    credit!: number | null;
-    /** The description of the transaction row */
-    description!: string | null;
-
-    constructor(data?: ITransactionRowsGetListResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
-            this.rowCounter = _data["rowCounter"] !== undefined ? _data["rowCounter"] : <any>null;
-            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
-            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
-            this.debit = _data["debit"] !== undefined ? _data["debit"] : <any>null;
-            this.credit = _data["credit"] !== undefined ? _data["credit"] : <any>null;
-            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
-        }
-    }
-
-    static fromJS(data: any): TransactionRowsGetListResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new TransactionRowsGetListResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id !== undefined ? this.id : <any>null;
-        data["rowCounter"] = this.rowCounter !== undefined ? this.rowCounter : <any>null;
-        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
-        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
-        data["debit"] = this.debit !== undefined ? this.debit : <any>null;
-        data["credit"] = this.credit !== undefined ? this.credit : <any>null;
-        data["description"] = this.description !== undefined ? this.description : <any>null;
-        return data;
-    }
-}
-
-/** The row of a transaction get list response */
-export interface ITransactionRowsGetListResponse {
-    /** The id of the transaction row */
-    id: string;
-    /** The progressive number of the transaction row in the scope of the transaction */
-    rowCounter: number;
-    /** The id of the account */
-    accountId: string | null;
-    /** The name of the account */
-    accountName: string | null;
-    /** The debit amount of the transaction row */
-    debit: number | null;
-    /** The credit amount of the transaction row */
-    credit: number | null;
-    /** The description of the transaction row */
-    description: string | null;
-}
-
-export enum TransactionStatus {
-    Confirmed = 0,
-    PendingImportReview = 1,
-    PotentialDuplicate = 2,
-    IgnoredImport = 3,
 }
 
 /** The result of the get request of a Transaction entity */

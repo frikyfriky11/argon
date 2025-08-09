@@ -10,6 +10,7 @@ namespace Argon.Application.Transactions.GetList;
 /// <param name="TransactionRows">The rows of the transaction</param>
 /// <param name="RawImportData">The JSON representation of the raw import data of a bank statement</param>
 /// <param name="Status">The status of the transaction</param>
+/// <param name="PotentialDuplicateOfTransactionId">The id of the potential duplicate of the transaction</param>
 [PublicAPI]
 public record TransactionsGetListResponse(
   Guid Id,
@@ -18,5 +19,6 @@ public record TransactionsGetListResponse(
   string CounterpartyName,
   List<TransactionRowsGetListResponse> TransactionRows,
   string? RawImportData,
-  TransactionStatus Status
+  TransactionStatus Status,
+  Guid? PotentialDuplicateOfTransactionId
 );

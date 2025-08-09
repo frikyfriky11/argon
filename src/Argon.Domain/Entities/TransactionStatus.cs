@@ -19,9 +19,4 @@ public enum TransactionStatus
   ///   The transaction is probably a duplicate of another transaction and was detected during an import request
   /// </summary>
   PotentialDuplicate = 2,
-  
-  /// <summary>
-  ///   The transaction is generated from an import request and has been marked as to ignore by the user
-  /// </summary>
-  IgnoredImport = 3,
 }
