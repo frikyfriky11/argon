@@ -1,4 +1,5 @@
-﻿using Argon.Application.BankStatements.Get;
+﻿using Argon.Application.BankStatements.Delete;
+using Argon.Application.BankStatements.Get;
 using Argon.Application.BankStatements.GetList;
 using Argon.Application.BankStatements.Parse;
 using Argon.Application.BankStatements.ParsersGetList;
@@ -64,5 +65,24 @@ public class BankStatementsController(
     [FromQuery] BankStatementParsersGetListRequest request)
   {
     return await mediator.Send(request);
+  }
+
+  /// <summary>
+  ///   Deletes an existing BankStatement
+  /// </summary>
+  /// <param name="id">The id of the BankStatement</param>
+  /// <returns>Nothing</returns>
+  /// <response code="204">The BankStatement was correctly deleted</response>
+  /// <response code="404">A BankStatement with the specified id could not be found</response>
+  [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult> Delete([FromRoute] Guid id)
+  {
+    BankStatementDeleteRequest request = new(id);
+
+    await mediator.Send(request);
+
+    return NoContent();
   }
 }
