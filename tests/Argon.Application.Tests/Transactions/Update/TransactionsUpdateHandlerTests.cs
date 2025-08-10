@@ -1,4 +1,4 @@
-﻿using Argon.Application.Transactions.Update;
+using Argon.Application.Transactions.Update;
 
 namespace Argon.Application.Tests.Transactions.Update;
 
@@ -80,6 +80,8 @@ public class TransactionsUpdateHandlerTests
     dbTransaction.Should().NotBeNull();
     dbTransaction!.Date.Should().Be(request.Date);
     dbTransaction.CounterpartyId.Should().Be(request.CounterpartyId);
+    dbTransaction.Status.Should().Be(TransactionStatus.Confirmed);
+    dbTransaction.PotentialDuplicateOfTransactionId.Should().BeNull();
 
     dbTransaction.TransactionRows.Should().HaveCount(2);
 
