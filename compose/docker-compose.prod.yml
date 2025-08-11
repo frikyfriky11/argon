@@ -4,6 +4,7 @@
     environment:
       POSTGRES_PASSWORD: "Passw0rd!"
       POSTGRES_DB: "ArgonDb"
+    restart: unless-stopped
     volumes:
       - "dbdata:/var/lib/postgresql/data"
     networks:
