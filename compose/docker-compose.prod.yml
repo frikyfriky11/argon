@@ -4,8 +4,13 @@
     environment:
       POSTGRES_PASSWORD: "Passw0rd!"
       POSTGRES_DB: "ArgonDb"
+    restart: unless-stopped
     volumes:
-      - "dbdata:/var/lib/postgresql/data"
+      - type: volume
+        source: db
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
     networks:
       - "data"
     healthcheck:
@@ -15,10 +20,12 @@
       retries: 5
 
   webapi:
-    image: "${DOCKER_REGISTRY_URL}/argon/webapi:latest"
+    image: "${REGISTRY}/frikyfriky11/argon-webapi:latest"
     environment:
       Cors__Origins__0: "https://${PUBLIC_HOST_PROD}"
       ConnectionStrings__DefaultConnection: "Server=db;Database=ArgonDb;User Id=postgres;Password=Passw0rd!;"
+      Auth__Authority: "${AUTH_AUTHORITY_PROD}"
+      Auth__ClientId: "${AUTH_CLIENT_ID_PROD}"
     restart: unless-stopped
     networks:
       - "traefik"
@@ -27,16 +34,16 @@
       traefik.enable: "true"
       traefik.http.routers.argon-webapi.rule: "Host(`${PUBLIC_HOST_PROD}`) && PathPrefix(`/api/`)"
       traefik.http.routers.argon-webapi.tls.certresolver: "sslresolver"
-      traefik.http.routers.argon-webapi.middlewares: "basic-auth@file, argon-webapi-stripprefix"
+      traefik.http.routers.argon-webapi.middlewares: "argon-webapi-stripprefix"
       traefik.http.middlewares.argon-webapi-stripprefix.stripprefix.prefixes: "/api/"
       traefik.http.services.argon-webapi.loadbalancer.server.port: "80"
-      traefik.docker.network: "traefik_proxy"
+      traefik.docker.network: "traefik_traefik"
     depends_on:
       db:
         condition: service_healthy
 
   webgui:
-    image: "${DOCKER_REGISTRY_URL}/argon/webgui:latest"
+    image: "${REGISTRY}/frikyfriky11/argon-webgui:latest"
     restart: unless-stopped
     networks:
       - "traefik"
@@ -44,19 +51,17 @@
       traefik.enable: "true"
       traefik.http.routers.argon-webgui.rule: "Host(`${PUBLIC_HOST_PROD}`)"
       traefik.http.routers.argon-webgui.tls.certresolver: "sslresolver"
-      traefik.http.routers.argon-webgui.middlewares: "basic-auth@file"
       traefik.http.services.argon-webgui.loadbalancer.server.port: "80"
-      traefik.docker.network: "traefik_proxy"
+      traefik.docker.network: "traefik_traefik"
     depends_on:
       webapi:
         condition: service_healthy
 
-volumes:
-  dbdata:
-
 networks:
   traefik:
-    name: "traefik_proxy"
+    name: "traefik_traefik"
     external: true
 
   data:
+    
+${COMPOSE_VOLUMES_PROD}

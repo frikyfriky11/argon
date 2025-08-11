@@ -1,26 +1,20 @@
 ﻿namespace Argon.WebApi;
 
-public class Startup
+public class Startup(
+  IConfiguration configuration,
+  IWebHostEnvironment webHostEnvironment
+)
 {
-  private readonly IConfiguration _configuration;
-  private readonly IWebHostEnvironment _webHostEnvironment;
-
-  public Startup(IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
-  {
-    _configuration = configuration;
-    _webHostEnvironment = webHostEnvironment;
-  }
-
   public void ConfigureServices(IServiceCollection services)
   {
     // wire up the application layer
     services.AddApplicationServices();
 
     // wire up the infrastructure layer
-    services.AddInfrastructureServices(_configuration, _webHostEnvironment);
+    services.AddInfrastructureServices(configuration, webHostEnvironment);
 
     // configure the API layer
-    services.AddWebApiServices(_configuration);
+    services.AddWebApiServices(configuration);
   }
 
   public void Configure(IApplicationBuilder app, IWebHostEnvironment webHostEnvironment, ApplicationDbContextInitializer dbContextInitializer)
@@ -28,7 +22,7 @@ public class Startup
     app.UseSerilogRequestLogging();
 
     // initialize and seed the database context only if not running for NSwag generation
-    if (!_configuration.GetValue<bool>("RUNNING_NSWAG"))
+    if (!configuration.GetValue<bool>("RUNNING_NSWAG"))
     {
       dbContextInitializer.Initialize();
       dbContextInitializer.Seed();
@@ -36,7 +30,7 @@ public class Startup
 
     // configure the OpenAPI generators and the Swagger GUI
     app.UseOpenApi();
-    app.UseSwaggerUi3();
+    app.UseSwaggerUi();
 
     // add the health checks endpoint
     app.UseHealthChecks("/healthz");

@@ -4,15 +4,11 @@
 ///   This interceptor intercepts all the SaveChanges calls to the DbContext and updates the
 ///   <see cref="BaseAuditableEntity" /> properties.
 /// </summary>
-public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
+[ExcludeFromCodeCoverage]
+public class AuditableEntitySaveChangesInterceptor(
+  IClock clock
+) : SaveChangesInterceptor
 {
-  private readonly IClock _clock;
-
-  public AuditableEntitySaveChangesInterceptor(IClock clock)
-  {
-    _clock = clock;
-  }
-
   public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
   {
     UpdateEntities(eventData.Context);
@@ -39,12 +35,12 @@ public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
     {
       if (entry.State == EntityState.Added)
       {
-        entry.Entity.Created = _clock.GetCurrentInstant();
+        entry.Entity.Created = clock.GetCurrentInstant();
       }
 
       if (entry.State is EntityState.Added or EntityState.Modified || entry.HasChangedOwnedEntities())
       {
-        entry.Entity.LastModified = _clock.GetCurrentInstant();
+        entry.Entity.LastModified = clock.GetCurrentInstant();
       }
     }
   }

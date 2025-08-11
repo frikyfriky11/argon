@@ -1,5 +1,6 @@
 ﻿namespace Argon.WebApi.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
   /// <summary>
@@ -48,5 +49,13 @@ public static class ServiceCollectionExtensions
         }
       )
     );
+
+    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+      .AddJwtBearer(options =>
+      {
+        options.Authority = configuration.GetValue<string>("Auth:Authority");
+        options.Audience = configuration.GetValue<string>("Auth:ClientId");
+      });
+    services.AddAuthorization();
   }
 }

@@ -27,10 +27,10 @@ export default function Add() {
   const mutation = useMutation({
     mutationFn: async (data: ITransactionsCreateRequest) =>
       new TransactionsClient().create(new TransactionsCreateRequest(data)),
-    onSuccess: async (_, data) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
-      enqueueSnackbar(`Transazione ${data.description} creata`, {
+      enqueueSnackbar("Transazione creata", {
         variant: "success",
       });
 
@@ -56,7 +56,7 @@ export default function Add() {
           <CardHeader title="Crea nuova transazione" />
           <CardContent>
             <Form
-              isSaving={mutation.isLoading}
+              isSaving={mutation.isPending}
               onSubmit={(data) => {
                 mutation.mutate(data);
               }}

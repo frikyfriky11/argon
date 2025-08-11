@@ -27,6 +27,15 @@ export default function DateFilter({
     setAnchorEl(null);
   };
 
+  const handleDateChange = (newValue: DateTime | null) => {
+    if (newValue?.isValid) {
+      // Only call onChange if the new date is valid
+      onChange(newValue);
+    } else {
+      onChange(null);
+    }
+  };
+
   const open = Boolean(anchorEl);
 
   return (
@@ -47,7 +56,7 @@ export default function DateFilter({
         onClose={handleClose}
         open={open}
       >
-        <DatePicker onChange={onChange} value={value} views={views} />
+        <DatePicker onChange={handleDateChange} value={value} views={views} />
       </Popover>
     </div>
   );

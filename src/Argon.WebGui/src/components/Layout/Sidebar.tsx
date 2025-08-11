@@ -1,7 +1,10 @@
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FolderIcon from "@mui/icons-material/Folder";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import LogoutIcon from "@mui/icons-material/Logout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import StoreIcon from "@mui/icons-material/Store";
 import {
   Box,
   Divider,
@@ -11,7 +14,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React from "react";
+import { useAuth } from "react-oidc-context";
 import { Link } from "react-router-dom";
 
 import Logo from "../../assets/logo.png";
@@ -27,6 +30,16 @@ const items = [
     href: "/accounts",
     icon: <FolderIcon fontSize="small" />,
     title: "Conti",
+  },
+  {
+    href: "/counterparties",
+    icon: <StoreIcon fontSize="small" />,
+    title: "Controparti",
+  },
+  {
+    href: "/bank-statements",
+    icon: <ListAltIcon fontSize="small" />,
+    title: "Estratti conto bancari",
   },
   {
     href: "/transactions",
@@ -47,6 +60,7 @@ export type DashboardSidebarProps = {
 };
 
 export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
+  const auth = useAuth();
   const theme = useTheme();
 
   const lgUp = useMediaQuery(theme.breakpoints.up("lg"), {
@@ -80,7 +94,7 @@ export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
             mb: 3,
           }}
         />
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1, mb: 3 }}>
           {items.map((item) => (
             <NavItem
               href={item.href}
@@ -89,6 +103,19 @@ export default function Sidebar({ onClose, open }: DashboardSidebarProps) {
               title={item.title}
             />
           ))}
+        </Box>
+        <Divider
+          sx={{
+            borderColor: "#2D3748",
+            mb: 3,
+          }}
+        />
+        <Box sx={{ pb: 3 }}>
+          <NavItem
+            icon={<LogoutIcon fontSize="small" />}
+            title={"Logout"}
+            onClick={() => void auth.removeUser()}
+          />
         </Box>
       </Box>
     </>

@@ -1,0 +1,147 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { enqueueSnackbar } from "notistack";
+import { Link } from "react-router-dom";
+
+import {
+  ITransactionsGetListResponse,
+  TransactionsClient,
+} from "../../../services/backend/BackendClient.ts";
+
+export type DuplicateResolverProps = {
+  transaction: ITransactionsGetListResponse;
+};
+
+function TransactionCard({
+  title,
+  transaction,
+}: {
+  title: string;
+  transaction: ITransactionsGetListResponse;
+}) {
+  return (
+    <Card sx={{ height: "100%" }}>
+      <CardContent>
+        <Stack spacing={2}>
+          <Typography variant="h6">{title}</Typography>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2" color="text.secondary">
+              Data
+            </Typography>
+            <Typography variant="body2">
+              {transaction.date.toLocaleString()}
+            </Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2" color="text.secondary">
+              Controparte
+            </Typography>
+            <Typography variant="body2">
+              {transaction.counterpartyName}
+            </Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2" color="text.secondary">
+              Importo
+            </Typography>
+            <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+              {transaction.transactionRows
+                .filter((row) => row.debit !== null)
+                .reduce((acc, row) => acc + (row.debit ?? 0), 0)
+                .toLocaleString("it-IT", {
+                  style: "currency",
+                  currency: "EUR",
+                })}
+            </Typography>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function DuplicateResolver({
+  transaction,
+}: DuplicateResolverProps) {
+  const queryClient = useQueryClient();
+
+  const originalTransaction = useQuery({
+    queryKey: ["transactions", transaction.potentialDuplicateOfTransactionId],
+    queryFn: () =>
+      new TransactionsClient().get(
+        transaction.potentialDuplicateOfTransactionId!,
+      ),
+    enabled: !!transaction.potentialDuplicateOfTransactionId,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => new TransactionsClient().delete(transaction.id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["bankStatements"] });
+      enqueueSnackbar("Transazione duplicata eliminata", {
+        variant: "success",
+      });
+    },
+  });
+
+  if (originalTransaction.isPending) {
+    return <p>Loading original transaction...</p>;
+  }
+
+  if (originalTransaction.isError) {
+    return <p>Error while loading original transaction...</p>;
+  }
+
+  return (
+    <Box sx={{ p: 2, backgroundColor: "background.paper" }}>
+      <Stack spacing={2}>
+        <Typography variant="h6">Potenziale Duplicato Rilevato</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Questa transazione importata è molto simile a una già esistente.
+          Controlla i dettagli e decidi come procedere.
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <TransactionCard
+              title="Transazione Importata"
+              transaction={transaction}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TransactionCard
+              title="Transazione Esistente"
+              transaction={originalTransaction.data}
+            />
+          </Grid>
+        </Grid>
+        <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Button
+            color="error"
+            onClick={() => {
+              deleteMutation.mutate();
+            }}
+            disabled={deleteMutation.isPending}
+            variant="text"
+          >
+            È un duplicato (Elimina)
+          </Button>
+          <Button
+            component={Link}
+            to={`/transactions/${transaction.id}`}
+            variant="contained"
+          >
+            Completa
+          </Button>
+        </Stack>
+      </Stack>
+    </Box>
+  );
+}

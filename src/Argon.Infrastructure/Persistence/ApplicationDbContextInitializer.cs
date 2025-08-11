@@ -3,16 +3,12 @@
 /// <summary>
 ///   A useful initializer class that can apply migrations and seed the database context
 /// </summary>
-public class ApplicationDbContextInitializer
+public class ApplicationDbContextInitializer(
+  ILogger logger,
+  ApplicationDbContext context
+)
 {
-  private readonly ApplicationDbContext _context;
-  private readonly ILogger _logger;
-
-  public ApplicationDbContextInitializer(ILogger logger, ApplicationDbContext context)
-  {
-    _logger = logger.ForContext<ApplicationDbContextInitializer>();
-    _context = context;
-  }
+  private readonly ILogger _logger = logger.ForContext<ApplicationDbContextInitializer>();
 
   /// <summary>
   ///   Initializes the database by applying the latest migrations
@@ -21,7 +17,7 @@ public class ApplicationDbContextInitializer
   {
     try
     {
-      _context.Database.Migrate();
+      context.Database.Migrate();
     }
     catch (Exception ex)
     {

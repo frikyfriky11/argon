@@ -3,18 +3,12 @@
 /// <summary>
 ///   The main application database context
 /// </summary>
-public class ApplicationDbContext : DbContext, IApplicationDbContext
+public class ApplicationDbContext(
+  DbContextOptions<ApplicationDbContext> options,
+  ISaveChangesInterceptor saveChangesInterceptor
+) : DbContext(options),
+  IApplicationDbContext
 {
-  private readonly ISaveChangesInterceptor _saveChangesInterceptor;
-
-  public ApplicationDbContext(
-    DbContextOptions<ApplicationDbContext> options,
-    ISaveChangesInterceptor saveChangesInterceptor)
-    : base(options)
-  {
-    _saveChangesInterceptor = saveChangesInterceptor;
-  }
-
   /// <inheritdoc />
   public DbSet<Account> Accounts => Set<Account>();
 
@@ -27,6 +21,15 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
   /// <inheritdoc />
   public DbSet<BudgetItem> BudgetItems => Set<BudgetItem>();
 
+  /// <inheritdoc />
+  public DbSet<Counterparty> Counterparties => Set<Counterparty>();
+
+  /// <inheritdoc />
+  public DbSet<CounterpartyIdentifier> CounterpartyIdentifiers => Set<CounterpartyIdentifier>();
+
+  /// <inheritdoc />
+  public DbSet<BankStatement> BankStatements => Set<BankStatement>();
+
   protected override void OnModelCreating(ModelBuilder builder)
   {
     // apply all the configurations for every entity that implements IEntityTypeConfiguration<T>
@@ -38,7 +41,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
   {
     // add the interceptors (usually the AuditableEntitySaveChangesInterceptor)
-    optionsBuilder.AddInterceptors(_saveChangesInterceptor);
+    optionsBuilder.AddInterceptors(saveChangesInterceptor);
 
     // add nicer exception objects using https://github.com/Giorgi/EntityFramework.Exceptions
     optionsBuilder.UseExceptionProcessor();

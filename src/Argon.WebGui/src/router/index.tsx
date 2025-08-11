@@ -4,6 +4,10 @@ import { lazy } from "react";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import ProtectedRoute from "./ProtectedRoute.tsx";
+
+const AuthLayout = lazy(() => import("../pages/Auth/Layout"));
+const AuthPostSignIn = lazy(() => import("../pages/Auth/PostSignIn"));
 const Layout = lazy(() => import("../components/Layout"));
 const HomePage = lazy(() => import("../pages/HomePage"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
@@ -14,6 +18,14 @@ const BudgetList = lazy(() => import("../pages/Budget/List"));
 const TransactionsList = lazy(() => import("../pages/Transactions/List"));
 const TransactionsAdd = lazy(() => import("../pages/Transactions/Add"));
 const TransactionsEdit = lazy(() => import("../pages/Transactions/Edit"));
+const CounterpartiesList = lazy(() => import("../pages/Counterparties/List"));
+const CounterpartiesAdd = lazy(() => import("../pages/Counterparties/Add"));
+const CounterpartiesEdit = lazy(() => import("../pages/Counterparties/Edit"));
+const BankStatementsList = lazy(() => import("../pages/BankStatements/List"));
+const BankStatementsAdd = lazy(() => import("../pages/BankStatements/Add"));
+const BankStatementsDetail = lazy(
+  () => import("../pages/BankStatements/Detail"),
+);
 const SystemLayout = lazy(() => import("../pages/System/Layout"));
 const SystemNotFound = lazy(() => import("../pages/System/NotFound"));
 
@@ -30,16 +42,39 @@ export default function MainRouter() {
     >
       <BrowserRouter>
         <Routes>
-          <Route element={<Layout />} path="/">
-            <Route element={<HomePage />} index />
-            <Route element={<Dashboard />} path="/dashboard" />
-            <Route element={<AccountsList />} path="/accounts" />
-            <Route element={<AccountsAdd />} path="/accounts/add" />
-            <Route element={<AccountsEdit />} path="/accounts/:id" />
-            <Route element={<BudgetList />} path="/budget" />
-            <Route element={<TransactionsList />} path="/transactions" />
-            <Route element={<TransactionsAdd />} path="/transactions/add" />
-            <Route element={<TransactionsEdit />} path="/transactions/:id" />
+          <Route element={<AuthLayout />} path="/auth">
+            <Route element={<AuthPostSignIn />} path="/auth/post-sign-in" />
+          </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />} path="/">
+              <Route element={<HomePage />} index />
+              <Route element={<Dashboard />} path="/dashboard" />
+              <Route element={<AccountsList />} path="/accounts" />
+              <Route element={<AccountsAdd />} path="/accounts/add" />
+              <Route element={<AccountsEdit />} path="/accounts/:id" />
+              <Route element={<BudgetList />} path="/budget" />
+              <Route element={<TransactionsList />} path="/transactions" />
+              <Route element={<TransactionsAdd />} path="/transactions/add" />
+              <Route element={<TransactionsEdit />} path="/transactions/:id" />
+              <Route element={<CounterpartiesList />} path="/counterparties" />
+              <Route
+                element={<CounterpartiesAdd />}
+                path="/counterparties/add"
+              />
+              <Route
+                element={<CounterpartiesEdit />}
+                path="/counterparties/:id"
+              />
+              <Route element={<BankStatementsList />} path="/bank-statements" />
+              <Route
+                element={<BankStatementsAdd />}
+                path="/bank-statements/add"
+              />
+              <Route
+                element={<BankStatementsDetail />}
+                path="/bank-statements/:id"
+              />
+            </Route>
           </Route>
           <Route element={<SystemLayout />}>
             <Route element={<SystemNotFound />} path="*" />

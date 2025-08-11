@@ -52,7 +52,7 @@ export default function Add() {
           <CardHeader title="Crea nuovo conto" />
           <CardContent>
             <Form
-              isSaving={mutation.isLoading}
+              isSaving={mutation.isPending}
               onSubmit={(data) => {
                 mutation.mutate(data);
               }}

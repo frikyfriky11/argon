@@ -29,6 +29,7 @@ import InputDate from "../../../components/InputDate";
 import InputText from "../../../components/InputText";
 import {
   AccountsClient,
+  CounterpartiesClient,
   ITransactionsCreateRequest,
   TransactionRowsCreateRequest,
 } from "../../../services/backend/BackendClient";
@@ -50,19 +51,24 @@ export default function Form({
     queryKey: ["accounts"],
     queryFn: () => new AccountsClient().getList(null, null),
   });
+  const counterparties = useQuery({
+    queryKey: ["counterparties"],
+    queryFn: async () =>
+      (await new CounterpartiesClient().getList(null, 1, 10_000)).items,
+  });
 
   const dateInputRef = useRef<HTMLDivElement | null>(null);
 
   const form = useForm<ITransactionsCreateRequest>({
     defaultValues: {
       date: DateTime.now(),
-      description: "Nuova transazione 1",
+      counterpartyId: null!,
       transactionRows: [
         new TransactionRowsCreateRequest({
           rowCounter: 1,
           credit: null,
           debit: null,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
           accountId: null!,
           description: "",
         }),
@@ -70,7 +76,7 @@ export default function Form({
           rowCounter: 2,
           credit: null,
           debit: null,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
           accountId: null!,
           description: "",
         }),
@@ -127,12 +133,20 @@ export default function Form({
     }
   }, [formValues, update]);
 
-  if (accounts.isLoading) {
+  if (accounts.isPending) {
     return <p>Loading accounts...</p>;
   }
 
   if (accounts.isError) {
     return <p>Error while loading accounts...</p>;
+  }
+
+  if (counterparties.isPending) {
+    return <p>Loading counterparties...</p>;
+  }
+
+  if (counterparties.isError) {
+    return <p>Error while loading counterparties...</p>;
   }
 
   return (
@@ -144,7 +158,7 @@ export default function Form({
             onSubmit(data);
             form.reset({
               date: formValues.date,
-              description: "",
+              counterpartyId: null!,
             });
             // Clear the field array
             remove();
@@ -154,7 +168,7 @@ export default function Form({
                 rowCounter: 1,
                 credit: null,
                 debit: null,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                 accountId: null!,
                 description: "",
               }),
@@ -162,7 +176,7 @@ export default function Form({
                 rowCounter: 2,
                 credit: null,
                 debit: null,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                 accountId: null!,
                 description: "",
               }),
@@ -190,18 +204,14 @@ export default function Form({
               />
             </Grid>
             <Grid item sm={9} xs={12}>
-              <InputText
-                field={"description"}
+              <InputCombobox
+                field={"counterpartyId"}
                 fullWidth
-                label="Descrizione"
-                options={{
-                  required: "La descrizione della transazione è obbligatoria",
-                  maxLength: {
-                    value: 100,
-                    message:
-                      "La descrizione della transazione non può superare i 50 caratteri",
-                  },
-                }}
+                itemLabel={(item) => item.name}
+                itemValue={(item) => item.id}
+                items={counterparties.data}
+                label={"Controparte"}
+                options={{ required: "La controparte è obbligatoria" }}
               />
             </Grid>
             <Grid container item spacing={4}>
@@ -278,7 +288,7 @@ export default function Form({
                         credit: null,
                         debit: null,
                         description: "",
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
                         accountId: null!,
                       }),
                     );

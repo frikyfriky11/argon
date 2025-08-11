@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { FixedSizeList } from "react-window";
 
 export type ComboboxFilterProps<TValue, TItem> = {
@@ -36,11 +35,9 @@ export default function ComboboxFilter<TValue, TItem>({
   labelSelector,
   showSelectAll,
 }: ComboboxFilterProps<TValue, TItem>) {
-  const { t } = useTranslation();
-
   const [searchFilter, setSearchFilter] = useState("");
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey,
     queryFn,
   });
@@ -79,7 +76,7 @@ export default function ComboboxFilter<TValue, TItem>({
     }
   };
 
-  if (isLoading) {
+  if (isPending) {
     return <p>Loading data...</p>;
   }
 

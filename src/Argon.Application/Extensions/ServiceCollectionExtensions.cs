@@ -1,5 +1,6 @@
 ﻿namespace Argon.Application.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
   /// <summary>
@@ -8,9 +9,6 @@ public static class ServiceCollectionExtensions
   /// <param name="services">The service collection container</param>
   public static void AddApplicationServices(this IServiceCollection services)
   {
-    // add all AutoMapper mappings
-    services.AddAutoMapper(Assembly.GetExecutingAssembly());
-
     // add all the FluentValidation validators
     services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
@@ -21,5 +19,17 @@ public static class ServiceCollectionExtensions
 
     // add all the MediatR handlers
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+    // add all the parsers
+    List<Type> parsers = Assembly.GetExecutingAssembly()
+      .DefinedTypes
+      .Where(t => typeof(IParser).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })
+      .Select(t => t.AsType())
+      .ToList();
+
+    foreach (Type parser in parsers) services.AddScoped(typeof(IParser), parser);
+
+    // add all the factories
+    services.AddScoped<IParsersFactory, ParsersFactory>();
   }
 }

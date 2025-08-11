@@ -1,4 +1,5 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { User } from "oidc-client-ts";
 
 /**
  * This abstract class is inherited by the BackendClient to configure the
@@ -11,10 +12,10 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 export default abstract class ServiceBase {
   /**
    * Gets the base URL that will be used by the inherited class to call the API.
-   * @param input This input is ignored.
+   * @param _input This input is ignored.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected getBaseUrl(input: string): string {
+  protected getBaseUrl(_input: string): string {
     return import.meta.env.VITE_APP_BACKEND_API_URI;
   }
 
@@ -23,6 +24,21 @@ export default abstract class ServiceBase {
    * @param request The request object that will be sent
    */
   protected async transformOptions(request: AxiosRequestConfig) {
+    let accessToken = "";
+
+    const oidcStorage = localStorage.getItem(
+      `oidc.user:${import.meta.env.VITE_APP_AUTHORITY}:${import.meta.env.VITE_APP_CLIENT_ID}`,
+    );
+
+    if (oidcStorage) {
+      const user = User.fromStorageString(oidcStorage);
+      accessToken = user.access_token;
+    }
+
+    if (accessToken && request.headers) {
+      request.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     return new Promise<AxiosRequestConfig<unknown>>((resolve) => {
       resolve(request);
     });
@@ -41,7 +57,7 @@ export default abstract class ServiceBase {
   }
 
   protected handleApiErrors(
-    url: string,
+    _url: string,
     response: AxiosResponse | XMLHttpRequest,
   ) {
     if (response instanceof XMLHttpRequest) {
@@ -71,7 +87,7 @@ export default abstract class ServiceBase {
               errorMessage += ` - ${key}: ${value.join(", ")}\n`;
             }
           } else {
-            errorMessage += response.data;
+            errorMessage += response.data as string;
           }
         } else {
           errorMessage += "Bad request";

@@ -46,7 +46,7 @@ export default function Edit() {
         id,
         new TransactionsUpdateRequest({
           date: data.date,
-          description: data.description,
+          counterpartyId: data.counterpartyId,
           transactionRows: data.transactionRows.map(
             (row) =>
               new TransactionRowsUpdateRequest({
@@ -60,10 +60,10 @@ export default function Edit() {
           ),
         }),
       ),
-    onSuccess: async (_, data) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
-      enqueueSnackbar(`Transazione ${data.description} aggiornata`, {
+      enqueueSnackbar("Transazione aggiornata", {
         variant: "success",
       });
 
@@ -75,12 +75,7 @@ export default function Edit() {
     mutationFn: async () => new TransactionsClient().delete(id),
     onMutate: async () => {
       await confirm({
-        description: (
-          <>
-            Vuoi davvero eliminare la transazione{" "}
-            <strong>{transaction.data?.description}</strong>?
-          </>
-        ),
+        description: <>Vuoi davvero eliminare la transazione?</>,
         title: "Elimina transazione",
         confirmationButtonProps: { color: "error", variant: "contained" },
         confirmationText: "Elimina",
@@ -93,18 +88,15 @@ export default function Edit() {
         refetchType: "none",
       });
 
-      enqueueSnackbar(
-        `Transazione ${transaction.data?.description} eliminata`,
-        {
-          variant: "success",
-        },
-      );
+      enqueueSnackbar("Transazione eliminata", {
+        variant: "success",
+      });
 
       navigate("/transactions", { replace: true });
     },
   });
 
-  if (transaction.isLoading) {
+  if (transaction.isPending) {
     return <p>Loading transaction...</p>;
   }
 
@@ -135,7 +127,7 @@ export default function Edit() {
             <FolderIcon />
           </Avatar>
           <Stack justifyContent="space-between">
-            <Typography variant="h5">{transaction.data.description}</Typography>
+            <Typography variant="h5">Transazione</Typography>
             <Typography variant="caption">ID: {transaction.data.id}</Typography>
           </Stack>
         </Stack>
@@ -148,7 +140,7 @@ export default function Edit() {
           <CardHeader title="Modifica transazione" />
           <CardContent>
             <Form
-              isSaving={updateMutation.isLoading}
+              isSaving={updateMutation.isPending}
               onSubmit={(data) => {
                 updateMutation.mutate(data);
               }}
