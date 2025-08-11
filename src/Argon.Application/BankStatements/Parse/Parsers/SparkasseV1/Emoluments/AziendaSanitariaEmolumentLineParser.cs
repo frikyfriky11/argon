@@ -44,13 +44,13 @@ public class AziendaSanitariaEmolumentLineParser : ILineParser
     return DateOnly.ParseExact(raw, "MMMM yyyy", _cultureInfo);
   }
 
-  private static DateOnly ParsePaymentDate(string rawDescription)
+  private DateOnly ParsePaymentDate(string rawDescription)
   {
     string raw = rawDescription
       .Split(Constants.NewLines, StringSplitOptions.None)[1]
       .Split("data ordine ")[1]
       .Split("*")[0];
 
-    return DateOnly.ParseExact(raw, "ddMMyy");
+    return DateOnly.ParseExact(raw, "ddMMyy", _cultureInfo);
   }
 }

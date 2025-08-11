@@ -57,13 +57,13 @@ public class DrScharEmolumentLineParser : ILineParser
     }
   }
 
-  private static DateOnly ParsePaymentDate(string rawDescription)
+  private DateOnly ParsePaymentDate(string rawDescription)
   {
     string raw = rawDescription
       .Split(Constants.NewLines, StringSplitOptions.None)[1]
       .Split("data regolamento: ")[1]
       .Split(" ")[0];
 
-    return DateOnly.Parse(raw);
+    return DateOnly.ParseExact(raw, "dd/MM/yy", _cultureInfo);
   }
 }
