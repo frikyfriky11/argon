@@ -1,10 +1,8 @@
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+﻿import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DeleteIcon from "@mui/icons-material/Delete";
-import StorefrontIcon from "@mui/icons-material/Storefront";
 import {
   Button,
   ButtonProps,
-  Divider,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -12,7 +10,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 
 export type ActionMenuProps = {
   onDelete: () => void;
@@ -46,13 +43,6 @@ export default function ActionMenu({
         }}
         open={open}
       >
-        <MenuItem component={Link} to={"identifiers"}>
-          <ListItemIcon>
-            <StorefrontIcon />
-          </ListItemIcon>
-          <ListItemText>Nomi alternativi</ListItemText>
-        </MenuItem>
-        <Divider />
         <MenuItem
           onClick={() => {
             setAnchorEl(null);

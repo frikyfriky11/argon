@@ -21,6 +21,15 @@ const TransactionsEdit = lazy(() => import("../pages/Transactions/Edit"));
 const CounterpartiesList = lazy(() => import("../pages/Counterparties/List"));
 const CounterpartiesAdd = lazy(() => import("../pages/Counterparties/Add"));
 const CounterpartiesEdit = lazy(() => import("../pages/Counterparties/Edit"));
+const CounterpartyIdentifiersList = lazy(
+  () => import("../pages/CounterpartyIdentifiers/List"),
+);
+const CounterpartyIdentifiersAdd = lazy(
+  () => import("../pages/CounterpartyIdentifiers/Add"),
+);
+const CounterpartyIdentifiersEdit = lazy(
+  () => import("../pages/CounterpartyIdentifiers/Edit"),
+);
 const BankStatementsList = lazy(() => import("../pages/BankStatements/List"));
 const BankStatementsAdd = lazy(() => import("../pages/BankStatements/Add"));
 const BankStatementsDetail = lazy(
@@ -64,6 +73,18 @@ export default function MainRouter() {
               <Route
                 element={<CounterpartiesEdit />}
                 path="/counterparties/:id"
+              />
+              <Route
+                element={<CounterpartyIdentifiersList />}
+                path="/counterparties/:counterpartyId/identifiers"
+              />
+              <Route
+                element={<CounterpartyIdentifiersAdd />}
+                path="/counterparties/:counterpartyId/identifiers/add"
+              />
+              <Route
+                element={<CounterpartyIdentifiersEdit />}
+                path="/counterparties/:counterpartyId/identifiers/:id"
               />
               <Route element={<BankStatementsList />} path="/bank-statements" />
               <Route
