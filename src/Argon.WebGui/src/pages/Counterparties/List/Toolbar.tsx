@@ -13,16 +13,16 @@ export default function Toolbar(props: BoxProps) {
           flexWrap: "wrap",
         }}
       >
-        <Typography variant="h4">Conti</Typography>
+        <Typography variant="h4">Controparti</Typography>
         <Box>
           <Button
             color="primary"
             component={Link}
             startIcon={<AddIcon />}
-            to="/accounts/add"
+            to="/counterparties/add"
             variant="contained"
           >
-            Nuovo conto
+            Nuova controparte
           </Button>
         </Box>
       </Box>
