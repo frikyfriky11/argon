@@ -1,0 +1,9 @@
+﻿services:
+  db:
+    image: "postgres:15.3-alpine"
+    environment:
+      POSTGRES_PASSWORD: "Passw0rd!"
+      POSTGRES_DB: "ArgonDb"
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
