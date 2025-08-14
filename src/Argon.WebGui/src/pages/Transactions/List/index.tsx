@@ -1,30 +1,25 @@
 import { Stack } from "@mui/material";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
 import useSearchParamsState from "../../../utils/UrlUtils";
 import Filters from "./Filters";
 import ResultsAsFeed from "./ResultsAsFeed";
-import ResultsAsJournal from "./ResultsAsJournal";
-import ResultsAsTable from "./ResultsAsTable";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
   const [filters, setFilters] = useSearchParamsState({
-    page: 0,
     pageSize: 10,
     accountIds: [] as string[],
     counterpartyIds: [] as string[],
     dateFrom: null as DateTime | null,
     dateTo: null as DateTime | null,
-    view: "table" as "table" | "journal" | "feed",
   });
 
   const clearFilters = () => {
     setFilters((prev) => ({
       ...prev,
-      page: 0,
       accountIds: [],
       counterpartyIds: [],
       dateFrom: null,
@@ -32,25 +27,29 @@ export default function Index() {
     }));
   };
 
-  const transactions = useQuery({
+  const transactions = useInfiniteQuery({
     queryKey: [
       "transactions",
       filters.accountIds,
       filters.counterpartyIds,
       filters.dateFrom,
       filters.dateTo,
-      filters.page,
       filters.pageSize,
     ],
-    queryFn: () =>
+    queryFn: ({ pageParam }) =>
       new TransactionsClient().getList(
         filters.accountIds,
         filters.counterpartyIds,
         filters.dateFrom,
         filters.dateTo,
-        filters.page + 1,
+        pageParam,
         filters.pageSize,
       ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.pageNumber + 1 : undefined,
+    getPreviousPageParam: (firstPage) =>
+      firstPage.hasPreviousPage ? firstPage.pageNumber - 1 : undefined,
     placeholderData: keepPreviousData,
   });
 
@@ -64,12 +63,7 @@ export default function Index() {
 
   return (
     <Stack spacing={4}>
-      <Toolbar
-        onSelectedViewChange={(view) => {
-          setFilters((prev) => ({ ...prev, view }));
-        }}
-        selectedView={filters.view}
-      />
+      <Toolbar />
       <Filters
         accountIds={filters.accountIds}
         dateFrom={filters.dateFrom}
@@ -89,37 +83,12 @@ export default function Index() {
         }}
         onClearFilters={clearFilters}
       />
-      {filters.view === "table" && (
-        <ResultsAsTable
-          onPageChange={(page) => {
-            setFilters((prev) => ({ ...prev, page }));
-          }}
-          onPageSizeChange={(pageSize) => {
-            setFilters((prev) => ({ ...prev, pageSize }));
-          }}
-          page={filters.page}
-          rowsPerPage={filters.pageSize}
-          totalRows={transactions.data.totalCount}
-          transactions={transactions.data.items}
-        />
-      )}
-      {filters.view === "journal" && (
-        <ResultsAsJournal
-          onPageChange={(page) => {
-            setFilters((prev) => ({ ...prev, page }));
-          }}
-          onPageSizeChange={(pageSize) => {
-            setFilters((prev) => ({ ...prev, pageSize }));
-          }}
-          page={filters.page}
-          rowsPerPage={filters.pageSize}
-          totalRows={transactions.data.totalCount}
-          transactions={transactions.data.items}
-        />
-      )}
-      {filters.view === "feed" && (
-        <ResultsAsFeed transactions={transactions.data.items} />
-      )}
+      <ResultsAsFeed
+        transactions={transactions.data.pages.flatMap((p) => p.items)}
+        fetchNextPage={transactions.fetchNextPage}
+        hasNextPage={transactions.hasNextPage}
+        isFetchingNextPage={transactions.isFetchingNextPage}
+      />
     </Stack>
   );
 }

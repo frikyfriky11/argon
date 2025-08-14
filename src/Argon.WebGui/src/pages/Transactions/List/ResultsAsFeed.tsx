@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CircularProgress,
   Collapse,
   IconButton,
   ListItemText,
@@ -12,18 +13,31 @@ import {
   Typography,
 } from "@mui/material";
 import { blue, green, grey, red } from "@mui/material/colors";
+import {
+  InfiniteData,
+  InfiniteQueryObserverResult,
+} from "@tanstack/react-query";
 import { DateTime } from "luxon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useInView } from "react-intersection-observer";
 
 import {
   AccountType,
   ITransactionRowsGetListResponse,
   ITransactionsGetListResponse,
+  PaginatedListOfTransactionsGetListResponse,
 } from "../../../services/backend/BackendClient";
 
 export type ResultsAsFeedProps = {
-  transactions: ITransactionsGetListResponse[];
+  transactions?: ITransactionsGetListResponse[];
+  fetchNextPage: () => Promise<
+    InfiniteQueryObserverResult<
+      InfiniteData<PaginatedListOfTransactionsGetListResponse>
+    >
+  >;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
 };
 
 function TransactionRow({ row }: { row: ITransactionRowsGetListResponse }) {
@@ -148,12 +162,38 @@ function TransactionCard({
   );
 }
 
-export default function ResultsAsFeed({ transactions }: ResultsAsFeedProps) {
+export default function ResultsAsFeed({
+  transactions,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+}: ResultsAsFeedProps) {
+  const { ref, inView } = useInView();
+
+  useEffect(() => {
+    if (inView) {
+      void fetchNextPage();
+    }
+  }, [inView, fetchNextPage]);
+
   return (
     <Stack spacing={1}>
-      {transactions.map((transaction) => (
+      {transactions?.map((transaction) => (
         <TransactionCard key={transaction.id} transaction={transaction} />
       ))}
+      <Box ref={ref}>
+        {isFetchingNextPage && (
+          <Box justifyContent="center" p={2} sx={{ display: "flex" }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {!hasNextPage && (
+          <Box justifyContent="center" p={2} sx={{ display: "flex" }}>
+            <Typography fontSize="larger">No more results</Typography>
+          </Box>
+        )}
+      </Box>
     </Stack>
   );
 }
