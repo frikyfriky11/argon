@@ -1,10 +1,11 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
+import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
 import useSearchParamsState from "../../../utils/UrlUtils";
-import Filters from "./Filters";
+import FiltersDialog from "./FiltersDialog";
 import ResultsAsFeed from "./ResultsAsFeed";
 import Toolbar from "./Toolbar";
 
@@ -16,6 +17,8 @@ export default function Index() {
     dateFrom: null as DateTime | null,
     dateTo: null as DateTime | null,
   });
+
+  const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
 
   const clearFilters = () => {
     setFilters((prev) => ({
@@ -63,25 +66,21 @@ export default function Index() {
 
   return (
     <Stack spacing={4}>
-      <Toolbar />
-      <Filters
-        accountIds={filters.accountIds}
-        dateFrom={filters.dateFrom}
-        dateTo={filters.dateTo}
-        counterpartyIds={filters.counterpartyIds}
-        onAccountIdsChange={(accountIds) => {
-          setFilters((prev) => ({ ...prev, accountIds }));
+      <Toolbar
+        onFiltersClick={() => {
+          setIsFiltersDialogOpen(true);
         }}
-        onDateFromChange={(dateFrom) => {
-          setFilters((prev) => ({ ...prev, dateFrom }));
+      />
+      <FiltersDialog
+        open={isFiltersDialogOpen}
+        onClose={() => {
+          setIsFiltersDialogOpen(false);
         }}
-        onDateToChange={(dateTo) => {
-          setFilters((prev) => ({ ...prev, dateTo }));
+        initialFilters={filters}
+        onApply={(newFilters) => {
+          setFilters((prev) => ({ ...prev, ...newFilters }));
         }}
-        onCounterpartyIdsChange={(counterpartyIds) => {
-          setFilters((prev) => ({ ...prev, counterpartyIds }));
-        }}
-        onClearFilters={clearFilters}
+        onClear={clearFilters}
       />
       <ResultsAsFeed
         transactions={transactions.data.pages.flatMap((p) => p.items)}

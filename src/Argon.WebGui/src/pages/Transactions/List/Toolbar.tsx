@@ -1,8 +1,13 @@
 import AddIcon from "@mui/icons-material/Add";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import { Box, BoxProps, Button, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
-export default function Toolbar({ ...props }: BoxProps) {
+export type ToolbarProps = {
+  onFiltersClick: () => void;
+} & BoxProps;
+
+export default function Toolbar({ onFiltersClick, ...props }: ToolbarProps) {
   return (
     <Box {...props}>
       <Box
@@ -18,6 +23,14 @@ export default function Toolbar({ ...props }: BoxProps) {
           <Typography variant="h4">Transazioni</Typography>
         </Stack>
         <Stack direction="row" gap={2}>
+          <Button
+            color="primary"
+            onClick={onFiltersClick}
+            startIcon={<FilterListIcon />}
+            variant="outlined"
+          >
+            Filtri
+          </Button>
           <Button
             color="primary"
             component={Link}
