@@ -55,7 +55,7 @@ export default function Index() {
 
   return (
     <Stack spacing={4}>
-      <Toolbar counterpartyId={counterpartyId ?? ""} />
+      <Toolbar counterpartyId={counterpartyId} />
       <Filters
         identifierText={filters.identifierText}
         onIdentifierTextChange={(identifierText) => {

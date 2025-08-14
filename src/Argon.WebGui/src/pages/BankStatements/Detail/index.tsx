@@ -86,7 +86,9 @@ export default function Index() {
         <Button
           color="error"
           startIcon={<DeleteIcon />}
-          onClick={() => deleteMutation.mutate()}
+          onClick={() => {
+            deleteMutation.mutate();
+          }}
           disabled={deleteMutation.isPending}
           variant="contained"
         >

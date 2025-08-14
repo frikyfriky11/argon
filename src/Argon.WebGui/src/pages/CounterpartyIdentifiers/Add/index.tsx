@@ -59,7 +59,7 @@ export default function Add() {
           <CardHeader title="Crea nuovo nome alternativo" />
           <CardContent>
             <Form
-              counterpartyId={counterpartyId ?? ""}
+              counterpartyId={counterpartyId}
               isSaving={mutation.isPending}
               onSubmit={(data) => {
                 mutation.mutate(data);

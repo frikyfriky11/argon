@@ -1,4 +1,3 @@
-import { useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   Box,
@@ -10,6 +9,7 @@ import {
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { enqueueSnackbar } from "notistack";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import {
@@ -40,7 +40,7 @@ export default function Add() {
         },
       );
 
-      if (response.warnings && response.warnings.length > 0) {
+      if (response.warnings.length > 0) {
         setParsingWarnings(response.warnings);
         setShowWarningsDialog(true);
       } else {
