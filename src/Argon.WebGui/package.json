@@ -11,6 +11,9 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write ./**/*.{js,jsx,ts,tsx,css,md,json}"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  },
   "dependencies": {
     "@date-io/luxon": "^3.0.0",
     "@emotion/react": "^11.13.3",
