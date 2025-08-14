@@ -1,6 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import SegmentIcon from "@mui/icons-material/Segment";
 import TableRowsIcon from "@mui/icons-material/TableRows";
+import ViewStreamIcon from "@mui/icons-material/ViewStream";
 import {
   Box,
   BoxProps,
@@ -14,8 +15,8 @@ import {
 import { Link } from "react-router-dom";
 
 export type ToolbarProps = {
-  selectedView: "table" | "journal";
-  onSelectedViewChange: (value: "table" | "journal") => void;
+  selectedView: "table" | "journal" | "feed";
+  onSelectedViewChange: (value: "table" | "journal" | "feed") => void;
 };
 
 export default function Toolbar({
@@ -41,7 +42,7 @@ export default function Toolbar({
             exclusive
             onChange={(_, value) => {
               onSelectedViewChange(
-                (value as "table" | "journal" | null) ?? "table",
+                (value as "table" | "journal" | "feed" | null) ?? "table",
               );
             }}
             size="small"
@@ -55,6 +56,11 @@ export default function Toolbar({
             <ToggleButton value={"journal"}>
               <Tooltip title="Giornale">
                 <SegmentIcon />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value={"feed"}>
+              <Tooltip title="Feed">
+                <ViewStreamIcon />
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>

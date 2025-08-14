@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import { TransactionsClient } from "../../../services/backend/BackendClient";
 import useSearchParamsState from "../../../utils/UrlUtils";
 import Filters from "./Filters";
+import ResultsAsFeed from "./ResultsAsFeed";
 import ResultsAsJournal from "./ResultsAsJournal";
 import ResultsAsTable from "./ResultsAsTable";
 import Toolbar from "./Toolbar";
@@ -17,7 +18,7 @@ export default function Index() {
     counterpartyIds: [] as string[],
     dateFrom: null as DateTime | null,
     dateTo: null as DateTime | null,
-    view: "table" as "table" | "journal",
+    view: "table" as "table" | "journal" | "feed",
   });
 
   const clearFilters = () => {
@@ -115,6 +116,9 @@ export default function Index() {
           totalRows={transactions.data.totalCount}
           transactions={transactions.data.items}
         />
+      )}
+      {filters.view === "feed" && (
+        <ResultsAsFeed transactions={transactions.data.items} />
       )}
     </Stack>
   );
