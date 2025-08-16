@@ -23,6 +23,8 @@ public class TransactionsGetHandler(
             row.Id,
             row.RowCounter,
             row.AccountId,
+            row.Account != null ? row.Account.Name : null,
+            row.Account != null ? row.Account.Type : null,
             row.Debit,
             row.Credit,
             row.Description
