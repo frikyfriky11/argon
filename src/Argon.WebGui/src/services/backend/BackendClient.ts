@@ -3777,6 +3777,8 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     date!: DateTime;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
 
@@ -3794,6 +3796,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -3817,6 +3820,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -3834,6 +3838,8 @@ export interface ITransactionsGetResponse {
     date: DateTime;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
 }
@@ -3846,6 +3852,10 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
     rowCounter!: number;
     /** The id of the account */
     accountId!: string | null;
+    /** The name of the account */
+    accountName!: string | null;
+    /** The type of the account */
+    accountType!: AccountType | null;
     /** The debit amount of the transaction row */
     debit!: number | null;
     /** The credit amount of the transaction row */
@@ -3867,6 +3877,8 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.rowCounter = _data["rowCounter"] !== undefined ? _data["rowCounter"] : <any>null;
             this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
             this.debit = _data["debit"] !== undefined ? _data["debit"] : <any>null;
             this.credit = _data["credit"] !== undefined ? _data["credit"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
@@ -3885,6 +3897,8 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["rowCounter"] = this.rowCounter !== undefined ? this.rowCounter : <any>null;
         data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
         data["debit"] = this.debit !== undefined ? this.debit : <any>null;
         data["credit"] = this.credit !== undefined ? this.credit : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
@@ -3900,6 +3914,10 @@ export interface ITransactionRowsGetResponse {
     rowCounter: number;
     /** The id of the account */
     accountId: string | null;
+    /** The name of the account */
+    accountName: string | null;
+    /** The type of the account */
+    accountType: AccountType | null;
     /** The debit amount of the transaction row */
     debit: number | null;
     /** The credit amount of the transaction row */
