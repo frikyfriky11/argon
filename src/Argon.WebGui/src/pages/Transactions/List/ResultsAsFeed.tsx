@@ -1,4 +1,5 @@
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
@@ -21,6 +22,7 @@ import { DateTime } from "luxon";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useInView } from "react-intersection-observer";
+import { Link } from "react-router-dom";
 
 import {
   AccountType,
@@ -112,15 +114,24 @@ function TransactionCard({
     <Card key={transaction.id}>
       <CardHeader
         action={
-          <IconButton
-            onClick={() => {
-              setExpanded(!expanded);
-            }}
-            aria-expanded={expanded}
-            aria-label="show more"
-          >
-            <ExpandMoreIcon />
-          </IconButton>
+          <Box>
+            <IconButton
+              component={Link}
+              to={`/transactions/${transaction.id}`}
+              aria-label="edit"
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                setExpanded(!expanded);
+              }}
+              aria-expanded={expanded}
+              aria-label="show more"
+            >
+              <ExpandMoreIcon />
+            </IconButton>
+          </Box>
         }
         title={transaction.counterpartyName}
         subheader={transaction.date
