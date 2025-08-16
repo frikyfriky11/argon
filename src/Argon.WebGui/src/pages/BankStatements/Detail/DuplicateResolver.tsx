@@ -10,6 +10,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { enqueueSnackbar } from "notistack";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { DateTime } from "luxon";
 
 import {
   ITransactionsGetListResponse,
@@ -27,6 +29,8 @@ function TransactionCard({
   title: string;
   transaction: ITransactionsGetListResponse;
 }) {
+  const { i18n } = useTranslation();
+
   return (
     <Card sx={{ height: "100%" }}>
       <CardContent>
@@ -37,7 +41,7 @@ function TransactionCard({
               Data
             </Typography>
             <Typography variant="body2">
-              {transaction.date.toLocaleString()}
+              {transaction.date.setLocale(i18n.language).toLocaleString(DateTime.DATE_MED)}
             </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
