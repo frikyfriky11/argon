@@ -15,6 +15,7 @@ public class TransactionsGetHandler(
         transaction.Id,
         transaction.Date,
         transaction.CounterpartyId,
+        transaction.Counterparty != null ? transaction.Counterparty.Name : string.Empty,
         transaction.TransactionRows
           .OrderBy(row => row.RowCounter)
           .ThenBy(row => row.Id)

@@ -3777,6 +3777,8 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     date!: DateTime;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
 
@@ -3794,6 +3796,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -3817,6 +3820,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -3834,6 +3838,8 @@ export interface ITransactionsGetResponse {
     date: DateTime;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
 }
