@@ -10,7 +10,7 @@
     <Description>The application layer containing the business logic for the Argon App</Description>
     <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
     <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
-    <Version>1.6.0</Version>
+    <Version>1.7.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
