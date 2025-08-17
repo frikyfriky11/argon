@@ -83,7 +83,7 @@ public class BankStatementsParseHandler(
         .TransactionRows
         .AsNoTracking()
         .Where(row => row.AccountId == request.ImportToAccountId)
-        .Where(row => row.Transaction.Date == item.Date)
+        .Where(row => row.Transaction.Date >= item.Date.AddDays(-3) && row.Transaction.Date <= item.Date.AddDays(3))
         .Where(row => row.Credit == Math.Abs(item.Amount)
                       || row.Debit == Math.Abs(item.Amount)
                       || row.Transaction.CounterpartyId == counterpartyId)
