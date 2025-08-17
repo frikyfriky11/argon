@@ -24,7 +24,9 @@ export default function ParsingWarningsDialog({
 }: ParsingWarningsDialogProps) {
   return (
     <Dialog onClose={onClose} open={open} maxWidth="md" fullWidth>
-      <DialogTitle variant="h6">Avvisi di Parsing ({warnings.length})</DialogTitle>
+      <DialogTitle variant="h6">
+        Avvisi di Parsing ({warnings.length})
+      </DialogTitle>
       <DialogContent dividers>
         <List>
           {warnings.map((warning, index) => (

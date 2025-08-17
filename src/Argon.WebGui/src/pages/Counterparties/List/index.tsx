@@ -5,6 +5,7 @@ import { CounterpartiesClient } from "../../../services/backend/BackendClient";
 import useSearchParamsState from "../../../utils/UrlUtils";
 import Filters from "./Filters.tsx";
 import ResultsAsTable from "./ResultsAsTable.tsx";
+import Toolbar from "./Toolbar.tsx";
 
 export default function Index() {
   const [filters, setFilters] = useSearchParamsState({
@@ -42,6 +43,7 @@ export default function Index() {
 
   return (
     <Stack spacing={4}>
+      <Toolbar />
       <Filters
         name={filters.name}
         onNameChange={(name) => {

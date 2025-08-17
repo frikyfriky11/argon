@@ -1,4 +1,4 @@
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+﻿import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import {
   Button,
   Paper,
@@ -22,8 +22,8 @@ import {
   ITransactionsGetListResponse,
   TransactionStatus,
 } from "../../../services/backend/BackendClient";
-import AccountsRenderer from "./AccountsRenderer.tsx";
-import CounterpartyRenderer from "./CounterpartyRenderer.tsx";
+import AccountsRenderer from "../../Transactions/List/AccountsRenderer.tsx";
+import CounterpartyRenderer from "../../Transactions/List/CounterpartyRenderer.tsx";
 
 export type ResultsAsTableProps = {
   transactions: ITransactionsGetListResponse[];

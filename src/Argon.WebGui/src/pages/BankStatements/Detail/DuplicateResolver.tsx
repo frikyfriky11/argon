@@ -1,20 +1,54 @@
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import {
   Box,
   Button,
   Card,
   CardContent,
   Grid,
+  ListItemText,
   Stack,
   Typography,
 } from "@mui/material";
+import { grey } from "@mui/material/colors";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DateTime } from "luxon";
 import { enqueueSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import {
+  ITransactionRowsGetListResponse,
   ITransactionsGetListResponse,
   TransactionsClient,
 } from "../../../services/backend/BackendClient.ts";
+
+function TransactionRow({ row }: { row: ITransactionRowsGetListResponse }) {
+  const { i18n } = useTranslation();
+
+  const isDebit = row.debit !== null;
+  const amount = (isDebit ? row.debit : row.credit)?.toLocaleString(
+    i18n.language,
+    {
+      style: "currency",
+      currency: "EUR",
+    },
+  );
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Box sx={{ flexGrow: 1 }}>
+        <ListItemText primary={row.accountName} secondary={row.description} />
+      </Box>
+      <Typography sx={{ fontFamily: "monospace", pl: 1 }}>{amount}</Typography>
+    </Box>
+  );
+}
 
 export type DuplicateResolverProps = {
   transaction: ITransactionsGetListResponse;
@@ -27,6 +61,15 @@ function TransactionCard({
   title: string;
   transaction: ITransactionsGetListResponse;
 }) {
+  const { i18n } = useTranslation();
+
+  const debits = transaction.transactionRows.filter(
+    (row) => row.debit !== null,
+  );
+  const credits = transaction.transactionRows.filter(
+    (row) => row.credit !== null,
+  );
+
   return (
     <Card sx={{ height: "100%" }}>
       <CardContent>
@@ -37,7 +80,9 @@ function TransactionCard({
               Data
             </Typography>
             <Typography variant="body2">
-              {transaction.date.toLocaleString()}
+              {transaction.date
+                .setLocale(i18n.language)
+                .toLocaleString(DateTime.DATE_MED)}
             </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
@@ -62,6 +107,25 @@ function TransactionCard({
                 })}
             </Typography>
           </Stack>
+          <Box
+            sx={{
+              backgroundColor: grey[100],
+              borderRadius: 1,
+              p: 2,
+            }}
+          >
+            <Stack spacing={1}>
+              {credits.map((row) => (
+                <TransactionRow key={row.id} row={row} />
+              ))}
+              <Box sx={{ display: "flex", justifyContent: "center", my: 1 }}>
+                <ArrowDownwardIcon />
+              </Box>
+              {debits.map((row) => (
+                <TransactionRow key={row.id} row={row} />
+              ))}
+            </Stack>
+          </Box>
         </Stack>
       </CardContent>
     </Card>

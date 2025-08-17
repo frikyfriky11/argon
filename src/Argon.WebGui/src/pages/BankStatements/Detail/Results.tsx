@@ -14,8 +14,8 @@ import {
   ITransactionsGetListResponse,
   TransactionStatus,
 } from "../../../services/backend/BackendClient.ts";
-import ResultsAsTable from "../../Transactions/List/ResultsAsTable.tsx";
 import DuplicateResolver from "./DuplicateResolver.tsx";
+import ResultsAsTable from "./ResultsAsTable.tsx";
 
 export type ResultsProps = {
   transactions: ITransactionsGetListResponse[];

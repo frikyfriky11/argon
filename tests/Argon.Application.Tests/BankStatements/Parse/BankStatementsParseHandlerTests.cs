@@ -205,23 +205,16 @@ public class BankStatementsParseHandlerTests
       Type = AccountType.Cash,
     });
 
-    Counterparty counterparty = new()
+    Counterparty counterparty1 = new()
     {
-      Name = "Multiple Match",
+      Name = "Amazon 1",
     };
-    await _dbContext.Counterparties.AddAsync(counterparty);
-    await _dbContext.SaveChangesAsync(CancellationToken.None);
-
-    await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier
+    Counterparty counterparty2 = new()
     {
-      CounterpartyId = counterparty.Id,
-      IdentifierText = "Multiple Match",
-    });
-    await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier
-    {
-      CounterpartyId = counterparty.Id,
-      IdentifierText = "Multiple Match",
-    });
+      Name = "Amazon 2",
+    };
+    await _dbContext.Counterparties.AddAsync(counterparty1);
+    await _dbContext.Counterparties.AddAsync(counterparty2);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
     Guid parserId = Guid.NewGuid();
@@ -236,7 +229,7 @@ public class BankStatementsParseHandlerTests
           Date = DateOnly.FromDateTime(DateTime.Now),
           Amount = 100,
           RawInput = "Valid Data",
-          CounterpartyName = "Multiple Match",
+          CounterpartyName = "Amazon",
         },
       });
 
@@ -257,7 +250,121 @@ public class BankStatementsParseHandlerTests
 
     // Assert
     response.Warnings.Should().NotBeEmpty();
-    response.Warnings.Should().ContainSingle(w => w.Contains("Found 2 counterparties matching 'Multiple Match' while parsing 'Valid Data'. No counterparty assigned."));
+    response.Warnings.Should().ContainSingle(w => w.Contains("Found 2 counterparties matching 'Amazon' while parsing 'Valid Data'. No counterparty assigned."));
+  }
+
+  [Test]
+  public async Task Handle_ShouldMatchCounterpartyCorrectly_WhenParsedNameIsSubsetOfExistingCounterparty()
+  {
+    // Arrange
+    EntityEntry<Account> account = await _dbContext.Accounts.AddAsync(new Account
+    {
+      Name = "Test Account",
+      Type = AccountType.Cash,
+    });
+
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty
+    {
+      Name = "Amazon 1",
+    });
+
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    Guid parserId = Guid.NewGuid();
+    string parserDisplayName = "Test Parser";
+    _mockParser.Setup(p => p.ParserId).Returns(parserId);
+    _mockParser.Setup(p => p.ParserDisplayName).Returns(parserDisplayName);
+    _mockParser.Setup(p => p.ParseAsync(It.IsAny<Stream>()))
+      .ReturnsAsync(new List<BankStatementItem>
+      {
+        new()
+        {
+          Date = DateOnly.FromDateTime(DateTime.Now),
+          Amount = 100,
+          RawInput = "Valid Data",
+          CounterpartyName = "Amazon",
+        },
+      });
+
+    _mockParsersFactory.Setup(f => f.CreateParserAsync(parserId)).ReturnsAsync(_mockParser.Object);
+
+    BankStatementsParseRequest request = new(
+      new byte[]
+      {
+        0x01, 0x02,
+      },
+      "test.xlsx",
+      parserId,
+      account.Entity.Id
+    );
+
+    // Act
+    BankStatementsParseResponse response = await _sut.Handle(request, CancellationToken.None);
+
+    // Assert
+    response.Warnings.Should().BeEmpty();
+    response.Should().NotBeNull();
+    Transaction importedTransaction = await _dbContext
+      .Transactions
+      .FirstAsync(bs => bs.BankStatementId == response.BankStatementId);
+    importedTransaction.CounterpartyId.Should().Be(counterparty.Entity.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldMatchCounterpartyCorrectly_WhenParsedNameIsSupersetOfExistingCounterparty()
+  {
+    // Arrange
+    EntityEntry<Account> account = await _dbContext.Accounts.AddAsync(new Account
+    {
+      Name = "Test Account",
+      Type = AccountType.Cash,
+    });
+
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty
+    {
+      Name = "Amazon",
+    });
+
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    Guid parserId = Guid.NewGuid();
+    string parserDisplayName = "Test Parser";
+    _mockParser.Setup(p => p.ParserId).Returns(parserId);
+    _mockParser.Setup(p => p.ParserDisplayName).Returns(parserDisplayName);
+    _mockParser.Setup(p => p.ParseAsync(It.IsAny<Stream>()))
+      .ReturnsAsync(new List<BankStatementItem>
+      {
+        new()
+        {
+          Date = DateOnly.FromDateTime(DateTime.Now),
+          Amount = 100,
+          RawInput = "Valid Data",
+          CounterpartyName = "Amazon 123",
+        },
+      });
+
+    _mockParsersFactory.Setup(f => f.CreateParserAsync(parserId)).ReturnsAsync(_mockParser.Object);
+
+    BankStatementsParseRequest request = new(
+      new byte[]
+      {
+        0x01, 0x02,
+      },
+      "test.xlsx",
+      parserId,
+      account.Entity.Id
+    );
+
+    // Act
+    BankStatementsParseResponse response = await _sut.Handle(request, CancellationToken.None);
+
+    // Assert
+    response.Warnings.Should().BeEmpty();
+    response.Should().NotBeNull();
+    Transaction importedTransaction = await _dbContext
+      .Transactions
+      .FirstAsync(bs => bs.BankStatementId == response.BankStatementId);
+    importedTransaction.CounterpartyId.Should().Be(counterparty.Entity.Id);
   }
 
   [Test]

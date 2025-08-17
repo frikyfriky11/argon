@@ -103,13 +103,13 @@ public class DebitCardPaymentLineParser : ILineParser
     return rawDescription.Contains("all'estero", StringComparison.InvariantCultureIgnoreCase);
   }
 
-  private static DateOnly ParsePaymentDate(string rawDescription)
+  private DateOnly ParsePaymentDate(string rawDescription)
   {
     string raw = rawDescription
       .Split(Constants.NewLines, StringSplitOptions.None)[1]
       .Split(" ")[1];
 
-    return DateOnly.Parse(raw);
+    return DateOnly.ParseExact(raw, "dd/MM/yy", _cultureInfo);
   }
 
   private string ParseCircuitName(string rawDescription)

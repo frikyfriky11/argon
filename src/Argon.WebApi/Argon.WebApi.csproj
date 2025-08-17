@@ -12,7 +12,7 @@
     <PackageProjectUrl>https://github.com/frikyfriky11/argon</PackageProjectUrl>
     <RepositoryUrl>https://github.com/frikyfriky11/argon</RepositoryUrl>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.6.0</Version>
+    <Version>1.7.0</Version>
     <UserSecretsId>c5308b9b-87c6-447f-a55c-5160af8b3e30</UserSecretsId>
   </PropertyGroup>
 

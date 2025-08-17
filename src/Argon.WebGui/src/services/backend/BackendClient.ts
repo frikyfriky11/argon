@@ -1274,6 +1274,358 @@ export class CounterpartiesClient extends ServiceBase {
     }
 }
 
+export class CounterpartyIdentifiersClient extends ServiceBase {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        super();
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? this.getBaseUrl("");
+
+    }
+
+    /**
+     * Gets a list of CounterpartyIdentifiers
+     * @param counterpartyId (optional) The id of the counterparty
+     * @param identifierText (optional) The actual text of the counterpartyIdentifiers
+     * @param pageNumber (optional) The number of the page to retrieve from the data source
+     * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
+     */
+    getList(counterpartyId: string | null | undefined, identifierText: string | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfCounterpartyIdentifiersGetListResponse> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers?";
+        if (counterpartyId !== undefined && counterpartyId !== null)
+            url_ += "CounterpartyId=" + encodeURIComponent("" + counterpartyId) + "&";
+        if (identifierText !== undefined && identifierText !== null)
+            url_ += "IdentifierText=" + encodeURIComponent("" + identifierText) + "&";
+        if (pageNumber === null)
+            throw new Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGetList(_response));
+        });
+    }
+
+    protected processGetList(response: AxiosResponse): Promise<PaginatedListOfCounterpartyIdentifiersGetListResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PaginatedListOfCounterpartyIdentifiersGetListResponse.fromJS(resultData200);
+            return Promise.resolve<PaginatedListOfCounterpartyIdentifiersGetListResponse>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PaginatedListOfCounterpartyIdentifiersGetListResponse>(null as any);
+    }
+
+    /**
+     * Creates a new CounterpartyIdentifier
+     * @param request The CounterpartyIdentifier entity to create
+     * @return The id of the newly created CounterpartyIdentifier
+     */
+    create(request: CounterpartyIdentifiersCreateRequest, cancelToken?: CancelToken): Promise<CounterpartyIdentifiersCreateResponse> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processCreate(_response));
+        });
+    }
+
+    protected processCreate(response: AxiosResponse): Promise<CounterpartyIdentifiersCreateResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CounterpartyIdentifiersCreateResponse.fromJS(resultData200);
+            return Promise.resolve<CounterpartyIdentifiersCreateResponse>(result200);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied CounterpartyIdentifier object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartyIdentifiersCreateResponse>(null as any);
+    }
+
+    /**
+     * Gets an existing CounterpartyIdentifier
+     * @param id The id of the CounterpartyIdentifier
+     * @return The CounterpartyIdentifier with the specified id
+     */
+    get(id: string, cancelToken?: CancelToken): Promise<CounterpartyIdentifiersGetResponse> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processGet(_response));
+        });
+    }
+
+    protected processGet(response: AxiosResponse): Promise<CounterpartyIdentifiersGetResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CounterpartyIdentifiersGetResponse.fromJS(resultData200);
+            return Promise.resolve<CounterpartyIdentifiersGetResponse>(result200);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A CounterpartyIdentifier with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartyIdentifiersGetResponse>(null as any);
+    }
+
+    /**
+     * Updates an existing CounterpartyIdentifier
+     * @param id The id of the CounterpartyIdentifier
+     * @param request The CounterpartyIdentifier entity to update
+     * @return The CounterpartyIdentifier was correctly updated
+     */
+    update(id: string, request: CounterpartyIdentifiersUpdateRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PUT",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processUpdate(_response));
+        });
+    }
+
+    protected processUpdate(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied CounterpartyIdentifier object did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A CounterpartyIdentifier with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Deletes an existing CounterpartyIdentifier
+     * @param id The id of the CounterpartyIdentifier
+     * @return Nothing
+     */
+    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            responseType: "blob",
+            method: "DELETE",
+            url: url_,
+            headers: {
+                "Accept": "application/octet-stream"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processDelete(_response));
+        });
+    }
+
+    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+}
+
 export class TransactionsClient extends ServiceBase {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -2290,6 +2642,8 @@ export class TransactionRowsGetListResponse implements ITransactionRowsGetListRe
     accountId!: string | null;
     /** The name of the account */
     accountName!: string | null;
+    /** The type of the account */
+    accountType!: AccountType | null;
     /** The debit amount of the transaction row */
     debit!: number | null;
     /** The credit amount of the transaction row */
@@ -2312,6 +2666,7 @@ export class TransactionRowsGetListResponse implements ITransactionRowsGetListRe
             this.rowCounter = _data["rowCounter"] !== undefined ? _data["rowCounter"] : <any>null;
             this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
             this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
             this.debit = _data["debit"] !== undefined ? _data["debit"] : <any>null;
             this.credit = _data["credit"] !== undefined ? _data["credit"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
@@ -2331,6 +2686,7 @@ export class TransactionRowsGetListResponse implements ITransactionRowsGetListRe
         data["rowCounter"] = this.rowCounter !== undefined ? this.rowCounter : <any>null;
         data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
         data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
         data["debit"] = this.debit !== undefined ? this.debit : <any>null;
         data["credit"] = this.credit !== undefined ? this.credit : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
@@ -2348,6 +2704,8 @@ export interface ITransactionRowsGetListResponse {
     accountId: string | null;
     /** The name of the account */
     accountName: string | null;
+    /** The type of the account */
+    accountType: AccountType | null;
     /** The debit amount of the transaction row */
     debit: number | null;
     /** The credit amount of the transaction row */
@@ -2990,6 +3348,335 @@ export interface ICounterpartiesUpdateRequest {
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
+export class PaginatedListOfCounterpartyIdentifiersGetListResponse implements IPaginatedListOfCounterpartyIdentifiersGetListResponse {
+    /** The collection of items that this PaginatedList object represents
+             */
+    items!: CounterpartyIdentifiersGetListResponse[];
+    /** The number of the page representing the current subset of items
+             */
+    pageNumber!: number;
+    /** The total number of pages that could be retrieved with the current page size
+             */
+    totalPages!: number;
+    /** The total count of items before pagination occurred
+             */
+    totalCount!: number;
+    /** Describes if there is a previous page that can be retrieved by subtracting 1 from the page number
+             */
+    hasPreviousPage!: boolean;
+    /** Describes if there is a next page that can be retrieved by adding 1 to the page number
+             */
+    hasNextPage!: boolean;
+
+    constructor(data?: IPaginatedListOfCounterpartyIdentifiersGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(CounterpartyIdentifiersGetListResponse.fromJS(item));
+            }
+            else {
+                this.items = <any>null;
+            }
+            this.pageNumber = _data["pageNumber"] !== undefined ? _data["pageNumber"] : <any>null;
+            this.totalPages = _data["totalPages"] !== undefined ? _data["totalPages"] : <any>null;
+            this.totalCount = _data["totalCount"] !== undefined ? _data["totalCount"] : <any>null;
+            this.hasPreviousPage = _data["hasPreviousPage"] !== undefined ? _data["hasPreviousPage"] : <any>null;
+            this.hasNextPage = _data["hasNextPage"] !== undefined ? _data["hasNextPage"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): PaginatedListOfCounterpartyIdentifiersGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginatedListOfCounterpartyIdentifiersGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["pageNumber"] = this.pageNumber !== undefined ? this.pageNumber : <any>null;
+        data["totalPages"] = this.totalPages !== undefined ? this.totalPages : <any>null;
+        data["totalCount"] = this.totalCount !== undefined ? this.totalCount : <any>null;
+        data["hasPreviousPage"] = this.hasPreviousPage !== undefined ? this.hasPreviousPage : <any>null;
+        data["hasNextPage"] = this.hasNextPage !== undefined ? this.hasNextPage : <any>null;
+        return data;
+    }
+}
+
+/** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
+export interface IPaginatedListOfCounterpartyIdentifiersGetListResponse {
+    /** The collection of items that this PaginatedList object represents
+             */
+    items: CounterpartyIdentifiersGetListResponse[];
+    /** The number of the page representing the current subset of items
+             */
+    pageNumber: number;
+    /** The total number of pages that could be retrieved with the current page size
+             */
+    totalPages: number;
+    /** The total count of items before pagination occurred
+             */
+    totalCount: number;
+    /** Describes if there is a previous page that can be retrieved by subtracting 1 from the page number
+             */
+    hasPreviousPage: boolean;
+    /** Describes if there is a next page that can be retrieved by adding 1 to the page number
+             */
+    hasNextPage: boolean;
+}
+
+/** The result of the CounterpartyIdentifier entities get list */
+export class CounterpartyIdentifiersGetListResponse implements ICounterpartyIdentifiersGetListResponse {
+    /** The id of the counterpartyIdentifier */
+    id!: string;
+    /** The id of the counterparty */
+    counterpartyId!: string;
+    /** The actual text of the counterpartyIdentifier */
+    identifierText!: string;
+
+    constructor(data?: ICounterpartyIdentifiersGetListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.identifierText = _data["identifierText"] !== undefined ? _data["identifierText"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersGetListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersGetListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["identifierText"] = this.identifierText !== undefined ? this.identifierText : <any>null;
+        return data;
+    }
+}
+
+/** The result of the CounterpartyIdentifier entities get list */
+export interface ICounterpartyIdentifiersGetListResponse {
+    /** The id of the counterpartyIdentifier */
+    id: string;
+    /** The id of the counterparty */
+    counterpartyId: string;
+    /** The actual text of the counterpartyIdentifier */
+    identifierText: string;
+}
+
+/** The result of the get request of a CounterpartyIdentifier entity */
+export class CounterpartyIdentifiersGetResponse implements ICounterpartyIdentifiersGetResponse {
+    /** The id of the counterpartyIdentifier */
+    id!: string;
+    /** The id of the counterparty */
+    counterpartyId!: string;
+    /** The actual text of the counterpartyIdentifier */
+    identifierText!: string;
+
+    constructor(data?: ICounterpartyIdentifiersGetResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.identifierText = _data["identifierText"] !== undefined ? _data["identifierText"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersGetResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersGetResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["identifierText"] = this.identifierText !== undefined ? this.identifierText : <any>null;
+        return data;
+    }
+}
+
+/** The result of the get request of a CounterpartyIdentifier entity */
+export interface ICounterpartyIdentifiersGetResponse {
+    /** The id of the counterpartyIdentifier */
+    id: string;
+    /** The id of the counterparty */
+    counterpartyId: string;
+    /** The actual text of the counterpartyIdentifier */
+    identifierText: string;
+}
+
+/** The result of the creation of a new CounterpartyIdentifier entity */
+export class CounterpartyIdentifiersCreateResponse implements ICounterpartyIdentifiersCreateResponse {
+    /** The id of the newly created CounterpartyIdentifier */
+    id!: string;
+
+    constructor(data?: ICounterpartyIdentifiersCreateResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersCreateResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersCreateResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id !== undefined ? this.id : <any>null;
+        return data;
+    }
+}
+
+/** The result of the creation of a new CounterpartyIdentifier entity */
+export interface ICounterpartyIdentifiersCreateResponse {
+    /** The id of the newly created CounterpartyIdentifier */
+    id: string;
+}
+
+/** The request to create a new CounterpartyIdentifier entity */
+export class CounterpartyIdentifiersCreateRequest implements ICounterpartyIdentifiersCreateRequest {
+    /** The id of the counterparty */
+    counterpartyId!: string;
+    /** The actual text of the counterparty identifier */
+    identifierText!: string;
+
+    constructor(data?: ICounterpartyIdentifiersCreateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.identifierText = _data["identifierText"] !== undefined ? _data["identifierText"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersCreateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersCreateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["identifierText"] = this.identifierText !== undefined ? this.identifierText : <any>null;
+        return data;
+    }
+}
+
+/** The request to create a new CounterpartyIdentifier entity */
+export interface ICounterpartyIdentifiersCreateRequest {
+    /** The id of the counterparty */
+    counterpartyId: string;
+    /** The actual text of the counterparty identifier */
+    identifierText: string;
+}
+
+/** The request to update an existing counterpartyIdentifier */
+export class CounterpartyIdentifiersUpdateRequest implements ICounterpartyIdentifiersUpdateRequest {
+    /** The id of the counterparty */
+    counterpartyId!: string;
+    /** The actual text of the counterpartyIdentifier */
+    identifierText!: string;
+
+    constructor(data?: ICounterpartyIdentifiersUpdateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.identifierText = _data["identifierText"] !== undefined ? _data["identifierText"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersUpdateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersUpdateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["identifierText"] = this.identifierText !== undefined ? this.identifierText : <any>null;
+        return data;
+    }
+}
+
+/** The request to update an existing counterpartyIdentifier */
+export interface ICounterpartyIdentifiersUpdateRequest {
+    /** The id of the counterparty */
+    counterpartyId: string;
+    /** The actual text of the counterpartyIdentifier */
+    identifierText: string;
+}
+
+/** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
 export class PaginatedListOfTransactionsGetListResponse implements IPaginatedListOfTransactionsGetListResponse {
     /** The collection of items that this PaginatedList object represents
              */
@@ -3090,6 +3777,8 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     date!: DateTime;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
 
@@ -3107,6 +3796,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
                 this.transactionRows = [] as any;
                 for (let item of _data["transactionRows"])
@@ -3130,6 +3820,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
             data["transactionRows"] = [];
             for (let item of this.transactionRows)
@@ -3147,6 +3838,8 @@ export interface ITransactionsGetResponse {
     date: DateTime;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
+    /** The name of the counterparty of the transaction */
+    counterpartyName: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
 }
@@ -3159,6 +3852,10 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
     rowCounter!: number;
     /** The id of the account */
     accountId!: string | null;
+    /** The name of the account */
+    accountName!: string | null;
+    /** The type of the account */
+    accountType!: AccountType | null;
     /** The debit amount of the transaction row */
     debit!: number | null;
     /** The credit amount of the transaction row */
@@ -3180,6 +3877,8 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.rowCounter = _data["rowCounter"] !== undefined ? _data["rowCounter"] : <any>null;
             this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
             this.debit = _data["debit"] !== undefined ? _data["debit"] : <any>null;
             this.credit = _data["credit"] !== undefined ? _data["credit"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
@@ -3198,6 +3897,8 @@ export class TransactionRowsGetResponse implements ITransactionRowsGetResponse {
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["rowCounter"] = this.rowCounter !== undefined ? this.rowCounter : <any>null;
         data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
         data["debit"] = this.debit !== undefined ? this.debit : <any>null;
         data["credit"] = this.credit !== undefined ? this.credit : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
@@ -3213,6 +3914,10 @@ export interface ITransactionRowsGetResponse {
     rowCounter: number;
     /** The id of the account */
     accountId: string | null;
+    /** The name of the account */
+    accountName: string | null;
+    /** The type of the account */
+    accountType: AccountType | null;
     /** The debit amount of the transaction row */
     debit: number | null;
     /** The credit amount of the transaction row */

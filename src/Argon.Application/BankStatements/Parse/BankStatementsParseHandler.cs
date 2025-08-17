@@ -37,14 +37,27 @@ public class BankStatementsParseHandler(
       }
 
       // try to find a counterparty
-      List<Guid> counterparties = item.CounterpartyName is not null ?
-        await dbContext
-        .CounterpartyIdentifiers
-        .AsNoTracking()
-        .Where(counterpartyIdentifier => counterpartyIdentifier.IdentifierText.ToLower() == item.CounterpartyName.ToLower())
-        .Select(counterpartyIdentifier => counterpartyIdentifier.CounterpartyId)
-        .ToListAsync(cancellationToken)
+      List<Guid> counterpartiesByIdentifier = item.CounterpartyName is not null
+        ? await dbContext
+          .CounterpartyIdentifiers
+          .AsNoTracking()
+          .Where(counterpartyIdentifier => counterpartyIdentifier.IdentifierText.ToLower().Contains(item.CounterpartyName.ToLower())
+                                           || item.CounterpartyName.ToLower().Contains(counterpartyIdentifier.IdentifierText.ToLower()))
+          .Select(counterpartyIdentifier => counterpartyIdentifier.CounterpartyId)
+          .ToListAsync(cancellationToken)
         : [];
+
+      List<Guid> counterpartiesByName = item.CounterpartyName is not null
+        ? await dbContext
+          .Counterparties
+          .AsNoTracking()
+          .Where(counterparty => counterparty.Name.ToLower().Contains(item.CounterpartyName.ToLower())
+                                 || item.CounterpartyName.ToLower().Contains(counterparty.Name.ToLower()))
+          .Select(counterparty => counterparty.Id)
+          .ToListAsync(cancellationToken)
+        : [];
+
+      List<Guid> counterparties = counterpartiesByIdentifier.Concat(counterpartiesByName).Distinct().ToList();
 
       Guid? counterpartyId;
 
@@ -70,7 +83,7 @@ public class BankStatementsParseHandler(
         .TransactionRows
         .AsNoTracking()
         .Where(row => row.AccountId == request.ImportToAccountId)
-        .Where(row => row.Transaction.Date == item.Date)
+        .Where(row => row.Transaction.Date >= item.Date.AddDays(-3) && row.Transaction.Date <= item.Date.AddDays(3))
         .Where(row => row.Credit == Math.Abs(item.Amount)
                       || row.Debit == Math.Abs(item.Amount)
                       || row.Transaction.CounterpartyId == counterpartyId)

@@ -1,29 +1,28 @@
 import { Stack } from "@mui/material";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
+import { useState } from "react";
 
 import { TransactionsClient } from "../../../services/backend/BackendClient";
 import useSearchParamsState from "../../../utils/UrlUtils";
-import Filters from "./Filters";
-import ResultsAsJournal from "./ResultsAsJournal";
-import ResultsAsTable from "./ResultsAsTable";
+import FiltersDialog from "./FiltersDialog";
+import ResultsAsFeed from "./ResultsAsFeed";
 import Toolbar from "./Toolbar";
 
 export default function Index() {
   const [filters, setFilters] = useSearchParamsState({
-    page: 0,
     pageSize: 10,
     accountIds: [] as string[],
     counterpartyIds: [] as string[],
     dateFrom: null as DateTime | null,
     dateTo: null as DateTime | null,
-    view: "table" as "table" | "journal",
   });
+
+  const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
 
   const clearFilters = () => {
     setFilters((prev) => ({
       ...prev,
-      page: 0,
       accountIds: [],
       counterpartyIds: [],
       dateFrom: null,
@@ -31,25 +30,29 @@ export default function Index() {
     }));
   };
 
-  const transactions = useQuery({
+  const transactions = useInfiniteQuery({
     queryKey: [
       "transactions",
       filters.accountIds,
       filters.counterpartyIds,
       filters.dateFrom,
       filters.dateTo,
-      filters.page,
       filters.pageSize,
     ],
-    queryFn: () =>
+    queryFn: ({ pageParam }) =>
       new TransactionsClient().getList(
         filters.accountIds,
         filters.counterpartyIds,
         filters.dateFrom,
         filters.dateTo,
-        filters.page + 1,
+        pageParam,
         filters.pageSize,
       ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.pageNumber + 1 : undefined,
+    getPreviousPageParam: (firstPage) =>
+      firstPage.hasPreviousPage ? firstPage.pageNumber - 1 : undefined,
     placeholderData: keepPreviousData,
   });
 
@@ -64,58 +67,27 @@ export default function Index() {
   return (
     <Stack spacing={4}>
       <Toolbar
-        onSelectedViewChange={(view) => {
-          setFilters((prev) => ({ ...prev, view }));
+        onFiltersClick={() => {
+          setIsFiltersDialogOpen(true);
         }}
-        selectedView={filters.view}
       />
-      <Filters
-        accountIds={filters.accountIds}
-        dateFrom={filters.dateFrom}
-        dateTo={filters.dateTo}
-        counterpartyIds={filters.counterpartyIds}
-        onAccountIdsChange={(accountIds) => {
-          setFilters((prev) => ({ ...prev, accountIds }));
+      <FiltersDialog
+        open={isFiltersDialogOpen}
+        onClose={() => {
+          setIsFiltersDialogOpen(false);
         }}
-        onDateFromChange={(dateFrom) => {
-          setFilters((prev) => ({ ...prev, dateFrom }));
+        initialFilters={filters}
+        onApply={(newFilters) => {
+          setFilters((prev) => ({ ...prev, ...newFilters }));
         }}
-        onDateToChange={(dateTo) => {
-          setFilters((prev) => ({ ...prev, dateTo }));
-        }}
-        onCounterpartyIdsChange={(counterpartyIds) => {
-          setFilters((prev) => ({ ...prev, counterpartyIds }));
-        }}
-        onClearFilters={clearFilters}
+        onClear={clearFilters}
       />
-      {filters.view === "table" && (
-        <ResultsAsTable
-          onPageChange={(page) => {
-            setFilters((prev) => ({ ...prev, page }));
-          }}
-          onPageSizeChange={(pageSize) => {
-            setFilters((prev) => ({ ...prev, pageSize }));
-          }}
-          page={filters.page}
-          rowsPerPage={filters.pageSize}
-          totalRows={transactions.data.totalCount}
-          transactions={transactions.data.items}
-        />
-      )}
-      {filters.view === "journal" && (
-        <ResultsAsJournal
-          onPageChange={(page) => {
-            setFilters((prev) => ({ ...prev, page }));
-          }}
-          onPageSizeChange={(pageSize) => {
-            setFilters((prev) => ({ ...prev, pageSize }));
-          }}
-          page={filters.page}
-          rowsPerPage={filters.pageSize}
-          totalRows={transactions.data.totalCount}
-          transactions={transactions.data.items}
-        />
-      )}
+      <ResultsAsFeed
+        transactions={transactions.data.pages.flatMap((p) => p.items)}
+        fetchNextPage={transactions.fetchNextPage}
+        hasNextPage={transactions.hasNextPage}
+        isFetchingNextPage={transactions.isFetchingNextPage}
+      />
     </Stack>
   );
 }
