@@ -25,6 +25,7 @@ public class OutgoingBankTransferLineParserTests
   [TestCase("DISPOSIZIONE RIPETITIVA")]
   [TestCase("VS DISPOSIZIONE DI BONIFICO")]
   [TestCase("ADDEBITO BONIFICO DA HOME BANKING")]
+  [TestCase("DISPOSIZIONE VS. FAVORE")]
   public void CanParse_ShouldReturnTrue_GivenValidInput(string rawDescription)
   {
     bool result = _sut.CanParse(rawDescription);
@@ -106,6 +107,22 @@ public class OutgoingBankTransferLineParserTests
       new DateOnly(2025, 1, 15),
       "spostamento liquidita",
       false
+    );
+
+    yield return CreateTestCase(
+      new DateOnly(2025, 4, 2),
+      new DateOnly(2025, 4, 2),
+      """
+      DISPOSIZIONE VS. FAVORE
+      uri : ez8a4ox3px3treyakvayno4zanxopryt home banking ordinante : sanipro rimborso sn25-010030 - conteggio delle prestazioni d el 28/03/2025 *data ordine 020425*
+      """,
+      110.00m,
+      "Sanipro",
+      false,
+      new DateOnly(2025, 4, 2),
+      new DateOnly(2025, 4, 2),
+      "rimborso sn25-010030 - conteggio delle prestazioni d el 28/03/2025",
+      true
     );
   }
 }
