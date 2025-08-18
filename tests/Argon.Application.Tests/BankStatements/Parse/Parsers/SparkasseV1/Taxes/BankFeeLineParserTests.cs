@@ -40,6 +40,32 @@ public class BankFeeLineParserTests
 
   [TestCase("CANONE")]
   [TestCase("COMPETENZE")]
+  [TestCase("COMMISSIONE")]
+  [SetCulture("en-US")] // Set culture to ensure dates are parsed correctly regardless of the running thread's culture
+  public void Parse_ShouldReturnCorrectOutput_GivenValidInput(string rawDescription)
+  {
+    // Arrange
+    DateOnly accountingDate = new(2025, 1, 1);
+    DateOnly currencyDate = new(2025, 1, 1);
+    const decimal amount = 2.00m;
+
+    BankFeeItem expected = new(
+      accountingDate,
+      currencyDate,
+      rawDescription,
+      amount
+    );
+
+    // Act
+    BaseItem result = _sut.Parse(accountingDate, currencyDate, rawDescription, amount);
+
+    // Assert
+    result.Should().BeEquivalentTo(expected);
+  }
+
+  [TestCase("CANONE")]
+  [TestCase("COMPETENZE")]
+  [TestCase("COMMISSIONE")]
   public void CanParse_ShouldReturnTrue_GivenValidInput(string rawDescription)
   {
     // Act
