@@ -25,11 +25,16 @@ public class IncomingBankTransferLineParser : ILineParser
      * BONIFICO VS. FAVORE
      * langebner walter, kammerlander karmen wertstellung: 27/12/24 id.zahler: it97 d060 4558 9600 0000 5001 391 cro: 28023069012 beschreibung: telecamera
      */
+    /*
+     * BONIFICO - SEPA ISTANTANEO A VS FAVORE
+     * chiara zanirato & luca bellemo data regolamento: 23/05/25 cod.id.ord: lt26 3250 0593 9996 0120 banca ordinante: revolt21xxx cro: revitr25052338266547366 valuta fissa: 23/05/25 note: hotel milano id.operazione: notprovided
+     */
     string senderName = ParseSenderName(rawDescription);
     DateOnly orderDate = ParseOrderDate(rawDescription);
     string senderIban = ParseSenderIban(rawDescription);
     string reason = ParseReason(rawDescription);
     bool isSameBank = ParseIsSameBank(rawDescription);
+    bool isInstantPayment = ParseIsInstantPayment(rawDescription);
 
     return new IncomingBankTransferItem(
       accountingDate,
@@ -40,7 +45,8 @@ public class IncomingBankTransferLineParser : ILineParser
       orderDate,
       senderIban,
       reason,
-      isSameBank
+      isSameBank,
+      isInstantPayment
     );
   }
 
@@ -84,5 +90,10 @@ public class IncomingBankTransferLineParser : ILineParser
       .Split([" data regolamento: ", " val. accredito: ", " wertstellung: "], StringSplitOptions.None)[0];
 
     return _cultureInfo.TextInfo.ToTitleCase(raw);
+  }
+
+  private static bool ParseIsInstantPayment(string rawDescription)
+  {
+    return rawDescription.Contains("SEPA ISTANTANEO");
   }
 }

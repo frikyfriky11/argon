@@ -41,7 +41,8 @@ public class IncomingBankTransferLineParserTests
       DateOnly orderDate,
       string senderIban,
       string reason,
-      bool isSameBank)
+      bool isSameBank,
+      bool isInstantPayment)
     {
       return (accountingDate, currencyDate, rawDescription, amount,
         new IncomingBankTransferItem(
@@ -53,7 +54,8 @@ public class IncomingBankTransferLineParserTests
           orderDate,
           senderIban,
           reason,
-          isSameBank
+          isSameBank,
+          isInstantPayment
         ));
     }
 
@@ -69,6 +71,7 @@ public class IncomingBankTransferLineParserTests
       new DateOnly(2025, 1, 14),
       "IT18I0811558491000304031458",
       "rimborso ikea",
+      false,
       false
     );
 
@@ -84,7 +87,8 @@ public class IncomingBankTransferLineParserTests
       new DateOnly(2025, 1, 13),
       "IT41A0604558960000005350025",
       "rimborso pizza",
-      true
+      true,
+      false
     );
 
     yield return CreateTestCase(
@@ -99,6 +103,23 @@ public class IncomingBankTransferLineParserTests
       new DateOnly(2024, 12, 27),
       "IT97D0604558960000005001391",
       "telecamera",
+      true,
+      false
+    );
+
+    yield return CreateTestCase(
+      new DateOnly(2025, 5, 23),
+      new DateOnly(2025, 5, 23),
+      """
+      BONIFICO - SEPA ISTANTANEO A VS FAVORE
+      chiara zanirato & luca bellemo data regolamento: 23/05/25 cod.id.ord: lt26 3250 0593 9996 0120 banca ordinante: revolt21xxx cro: revitr25052338266547366 valuta fissa: 23/05/25 note: hotel milano id.operazione: notprovided
+      """,
+      168.90m,
+      "Chiara Zanirato & Luca Bellemo",
+      new DateOnly(2025, 5, 23),
+      "LT263250059399960120",
+      "hotel milano",
+      false,
       true
     );
   }

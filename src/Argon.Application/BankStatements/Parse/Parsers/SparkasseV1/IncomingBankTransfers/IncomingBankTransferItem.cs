@@ -9,7 +9,8 @@ public record IncomingBankTransferItem(
   DateOnly OrderDate,
   string SenderIban,
   string Reason,
-  bool IsSameBank
+  bool IsSameBank,
+  bool IsInstantPayment
 ) : BaseItem(AccountingDate, CurrencyDate, RawDescription, Amount)
 {
   public override string CounterpartyName => SenderName;
