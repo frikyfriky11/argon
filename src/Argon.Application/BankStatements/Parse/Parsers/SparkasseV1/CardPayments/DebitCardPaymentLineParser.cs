@@ -7,7 +7,8 @@ public class DebitCardPaymentLineParser : ILineParser
   public bool CanParse(string rawDescription)
   {
     return rawDescription.Contains("PAGAMENTO DEBITO VISA/MASTERCARD", StringComparison.InvariantCultureIgnoreCase)
-           || rawDescription.Contains("PAGAM. POS MAESTRO CARTA", StringComparison.InvariantCultureIgnoreCase);
+           || rawDescription.Contains("PAGAM. POS MAESTRO CARTA", StringComparison.InvariantCultureIgnoreCase)
+           || rawDescription.Contains("ACCREDITO VISA", StringComparison.InvariantCultureIgnoreCase);
   }
 
   public BaseItem Parse(DateOnly accountingDate, DateOnly currencyDate, string rawDescription, decimal amount)
@@ -20,6 +21,10 @@ public class DebitCardPaymentLineParser : ILineParser
     /*
      * PAGAM. POS MAESTRO CARTA 6351744
      * del 02/12/24 16:37 in italia a merano ita valuta eur paese italia c/o hotel therme meran thermenplatz 1
+     */
+    /*
+     * ACCREDITO VISA
+     * del 03/05/25 all'estero a 800-279-6620 valuta eur paese lussemburgo c/o amzn mktp it carta n. 416363******3171
      */
     string circuitName = ParseCircuitName(rawDescription);
     DateOnly paymentDate = ParsePaymentDate(rawDescription);
