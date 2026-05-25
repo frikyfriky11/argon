@@ -1,6 +1,6 @@
 # Argon CLI
 
-`argon` is a thin command-line client over the Argon WebApi. It authenticates against the same Authentik OIDC provider as the browser front-end and exposes CRUD for **Accounts, Counterparties, Counterparty Identifiers, and Transactions**.
+`argon` is a thin command-line client over the Argon WebApi. It authenticates against the same Authentik OIDC provider as the browser front-end and exposes the surface needed to keep the ledger reconciled day to day: **Accounts, Counterparties, Counterparty Identifiers, and Transactions**.
 
 > Out of scope for v1: Bank Statements, Budget Items. Both live on the API and can be added later.
 
@@ -28,7 +28,7 @@ Run directly from source with `dotnet run`. Everything after `--` is forwarded t
 dotnet run --project src/Argon.Cli -- login
 dotnet run --project src/Argon.Cli -- whoami
 dotnet run --project src/Argon.Cli -- accounts list
-dotnet run --project src/Argon.Cli -- tx list --account <id>
+dotnet run --project src/Argon.Cli -- tx list --account Sparkasse
 ```
 
 Make it less verbose during a hacking session:
@@ -97,50 +97,240 @@ dotnet user-secrets --project src/Argon.Cli remove "Auth:ClientId"
 
 Secrets land at `~/.microsoft/usersecrets/argon-cli/secrets.json` (Linux/macOS) or `%APPDATA%\Microsoft\UserSecrets\argon-cli\secrets.json` (Windows).
 
-### Output formats
+## Output formats
 
 Every command accepts `-o`/`--output` with `table` (default), `json`, or `csv`. `table` prints scalar columns of the response, `json` pretty-prints, and `csv` emits one row per record. Nested children (like transaction rows) only show up under `json` for the list endpoints — `argon tx get <id>` always shows the rows.
 
-## Quick reference
+JSON output has two ergonomic touches that make life easier when piping into `jq`:
+
+- **`rawImportData` is flattened**. The original string is still there for fidelity, but every field inside it (`amount`, `accountingDate`, `currencyDate`, `rawDescription`, `counterpartyName`, parser-specific extras) is also lifted onto the surrounding transaction. So instead of `(.rawImportData | fromjson | .Amount)`, you can just write `.amount`. Pre-existing top-level fields take precedence on conflict.
+- **`accountType` carries its name**. Wherever an `accountType` integer appears, a sibling `accountTypeName` carries the enum string (`Cash`, `Expense`, `Revenue`, `Setup`, `Debit`, `Credit`). The integer is preserved.
 
 ```bash
-# Auth
-argon login
-argon whoami
-argon logout
+argon tx list -o json | jq '.[0] | {amount, counterpartyName, status}'
+argon accounts list -o json | jq '.[] | select(.accountTypeName == "Expense") | .name'
+```
 
-# Accounts
+## Common conventions
+
+A few things hold across every command — worth reading once.
+
+### Names are accepted wherever an account or counterparty id is expected
+
+`--account`, `--counterparty`, the `tx categorize --account`, the `tx set-counterparty <counterparty>` positional, the account portion inside `--row`, and `tx history --counterparty` all accept either a GUID **or** the entity's exact name (case-insensitive). The CLI fetches the list once per invocation and resolves locally:
+
+```bash
+argon tx list --counterparty "Eurospar"
+argon tx categorize <tx-id> --account "Alimentari"
+argon tx create --counterparty "Amazon" \
+    -r "Sparkasse famiglia":0:12.34 \
+    -r "Store digitali":12.34:0
+```
+
+If a name matches more than one record the CLI errors out and prints the candidate GUIDs so you can disambiguate. `id` arguments on `get` / `update` / `delete` stay strict GUIDs because they target one specific record.
+
+### `--status` accepts short aliases
+
+`tx list --status` takes any of:
+
+- `pending` (or `pending-import-review` / `PendingImportReview`)
+- `confirmed`
+- `duplicate` (or `potential-duplicate` / `PotentialDuplicate`)
+
+### Pagination
+
+`list` commands that paginate (`tx list`, `cp list`, `cpi list`) accept `--page` and `--page-size`. Use `--page-size -1` to fetch everything in one call — handy when piping to JSON.
+
+### Amount syntax in `--row`
+
+`-r` / `--row` takes a colon-separated tuple. The empty side uses `0`:
+
+```
+<account>:<debit>:<credit>[:<description>]                # tx create
+[rowId]:<account>:<debit>:<credit>[:<description>]        # tx update (empty rowId = new row)
+```
+
+`<account>` is a name or GUID; amounts use `.` as the decimal separator. The two-row default for a single bank movement is "cash side credit, expense side debit" (or vice versa for income).
+
+## Auth
+
+```bash
+argon login        # device-code flow; on a desktop the URL opens automatically
+argon whoami       # prints user info from the cached id_token claims
+argon logout       # removes the local credentials file
+```
+
+In headless / SSH sessions the CLI detects `SSH_CONNECTION` / `SSH_TTY` and refuses to launch a browser — copy the printed URL to a desktop browser instead.
+
+## Accounts
+
+```bash
 argon accounts list
-argon accounts list --from 2026-01-01 --to 2026-05-20
+argon accounts list --from 2026-01-01 --to 2026-05-20      # restrict total-amount window
+argon accounts get <id>
 argon accounts create --name "Checking" --type Cash
 argon accounts update <id> --name "Renamed" --type Cash
-argon accounts favourite <id>            # toggles favourite on
+argon accounts favourite <id>                              # toggles favourite on
 argon accounts favourite <id> --is-favourite false
 argon accounts delete <id>
+```
 
-# Counterparties
-argon counterparties list --name acme
-argon counterparties create --name "ACME Corp"
+`--type` takes the enum name — `Cash`, `Expense`, `Revenue`, `Setup`, `Debit`, `Credit`. `--from`/`--to` only affect the running-total window in the response, not which accounts are returned.
+
+## Counterparties
+
+```bash
+argon counterparties list                                  # paginated
+argon counterparties list --name "amazon"                  # case-insensitive substring filter
+argon counterparties list --page-size -1                   # fetch all
+argon cp get <id>
+argon cp create --name "ACME Corp"
 argon cp update <id> --name "New name"
 argon cp delete <id>
+```
 
-# Counterparty identifiers
-argon counterparty-identifiers create --counterparty <cp> --text "IT60X0542811101000000123456"
-argon cpi list --counterparty <cp>
+`cp` is an alias for `counterparties`.
 
-# Transactions
-argon tx list --account <a> --from 2026-01-01 --page-size 50
-argon tx get <id>
-# Rows: <accountId>:<debit>:<credit>[:<description>]. Use 0 for the empty side.
-argon tx create --date 2026-05-20 --counterparty <cp> \
-    -r <acc1>:100:0:"groceries" \
-    -r <acc2>:0:100:"cash out"
-argon tx delete <id>
+## Counterparty identifiers
+
+Identifiers are the strings (IBANs, card descriptors, raw substrings) the importer uses to auto-match a counterparty against a bank-statement line.
+
+```bash
+argon cpi list                                              # paginated, all identifiers
+argon cpi list --counterparty "Stadtwerke Bruneck"
+argon cpi list --text "STADTWERKE"
+argon cpi get <id>
+argon cpi create --counterparty "Stadtwerke Bruneck" --text "STADTWERKE"
+argon cpi update <id> --counterparty "Stadtwerke Bruneck" --text "STADTWERKE BRUNECK"
+argon cpi delete <id>
+```
+
+### `cpi resolve <raw-text>` — preview what the importer would match
+
+Given an arbitrary string (typically a snippet of a bank line), `resolve` returns the counterparties the importer would auto-match for it, with flags for whether each match came from a counterparty identifier, the counterparty name, or both:
+
+```bash
+argon cpi resolve "BONIFICO STADTWERKE BRUNECK 0001"
+argon cpi resolve "AMAZON EU SARL" -o json
+```
+
+Two counterparties = ambiguous match = importer leaves the row uncategorised. Zero matches = no auto-match. One match = importer will assign it.
+
+## Transactions
+
+`tx` is an alias for `transactions`.
+
+### Listing
+
+```bash
+argon tx list                                              # most recent first, paginated
+argon tx list --status pending                             # rows still awaiting an account
+argon tx list --status duplicate                           # potential duplicates flagged by the importer
+argon tx list --account "Sparkasse famiglia" --from 2026-01-01
+argon tx list --counterparty "Eurospar" --counterparty "Iperpoli"     # repeatable
+argon tx list --page-size 50
+argon tx list --page-size -1 -o json | jq '.[] | .amount'
+```
+
+`--account` and `--counterparty` are repeatable for "any of these". `--from` and `--to` are inclusive. `--status` is the most useful filter during a reconciliation pass — `pending` is everything the importer left for a human to categorise.
+
+### Reading
+
+```bash
+argon tx get <id>                                          # shows date, counterparty, then rows
+argon tx get <id> -o json                                  # full payload including rawImportData
+```
+
+### Creating a manual transaction
+
+Both rows are filled by hand. Amounts use `0` for the empty side; the two sides must sum to zero (it's a double-entry ledger).
+
+```bash
+argon tx create --date 2026-05-20 --counterparty "Mein Beck" \
+    -r "Sparkasse famiglia":0:8.50:"breakfast" \
+    -r "Alimentari":8.50:0
+```
+
+### Updating a transaction (full payload)
+
+`update` rewrites the transaction in one shot. Pass the row id in front of an existing row to keep it; leave the row id empty (`:`) to insert a new row.
+
+```bash
+argon tx update <tx-id> --date 2026-05-20 --counterparty "Mein Beck" \
+    -r <row1-id>:"Sparkasse famiglia":0:8.50 \
+    -r <row2-id>:"Ristoranti":8.50:0
+```
+
+For the much more common case of "the importer left one row blank and I just need to fill it in", reach for `tx categorize` instead.
+
+### `tx categorize` — fill in one row of a pending transaction
+
+```bash
+argon tx categorize <tx-id> --account "Alimentari"
+argon tx categorize <tx-id> --row 2 --account "Skoda Fabia - Benzina"
+```
+
+The CLI fetches the transaction, picks the unique row without an assigned account, and patches just that row. The transaction auto-confirms once every row has an account. Use `--row <counter>` (the 1-based `rowCounter` shown in `tx get`) when there are multiple blank rows or you want to overwrite a specific one.
+
+### `tx set-counterparty` — fix the counterparty on a transaction
+
+```bash
+argon tx set-counterparty <tx-id> "Stadtwerke Bruneck"
+argon tx set-counterparty <tx-id> 6b20ecc8-1234-...
+```
+
+Useful when the importer's auto-match landed on the wrong counterparty (or none).
+
+### `tx history --counterparty` — frequency table by account
+
+Answers "for this counterparty, which accounts has it historically been posted to, and how often?". Ordered by descending count.
+
+```bash
+argon tx history --counterparty "Eurospar"
+argon tx history --counterparty "Amazon" -o json
+```
+
+A typical Amazon row will show several expense accounts (`Libri`, `Giochi`, `Elettronica`, `Cosmetica`, ...) plus the cash side. During reconciliation it's the fastest answer to "what does this usually map to?".
+
+### Deleting
+
+```bash
+argon tx delete <tx-id>
+```
+
+## Reconciliation walkthrough
+
+The day-to-day loop after running the bank-statement importer:
+
+```bash
+# 1. See how much is left to do
+argon tx list --status pending --page-size -1
+
+# 2. Pick one and inspect it (rows will show which one is missing an account)
+argon tx get <tx-id>
+
+# 3. Check what this counterparty usually maps to
+argon tx history --counterparty "Eurospar"
+
+# 4. Categorise the blank row (auto-confirms the transaction)
+argon tx categorize <tx-id> --account "Alimentari"
+
+# 5. Sometimes the auto-matched counterparty is wrong — fix it before categorising
+argon tx set-counterparty <tx-id> "Stadtwerke Bruneck"
+```
+
+Wrapping the whole pending list in a script is straightforward — every operation accepts names so you never have to copy GUIDs around:
+
+```bash
+argon tx list --status pending --page-size -1 -o json |
+  jq -r '.[] | "\(.id)\t\(.counterpartyName)\t\(.amount)\t\(.rawDescription)"'
 ```
 
 ## Troubleshooting
 
 - **`Not signed in. Run argon login.`** — your token file is missing, expired without a refresh token, or the refresh failed. Run `argon login` again.
+- **`No <thing> matching '<name>'.`** — a name didn't resolve. Either it's misspelled or it doesn't exist yet; `argon accounts list` / `cp list` will show the canonical spellings.
+- **`Multiple <thing> entries match '<name>' (ids: ...). Disambiguate with the GUID.`** — two records share the name. Pass one of the printed GUIDs instead.
 - **Headless / SSH session** — the CLI detects `SSH_CONNECTION` / `SSH_TTY` and will **not** try to launch a browser. Copy the printed URL into a browser on another machine.
 - **Reset everything** — delete the credentials file:
   - Linux/macOS: `rm ~/.config/argon-cli/credentials.json`
@@ -150,4 +340,4 @@ argon tx delete <id>
 
 ## Adding a new command
 
-The shape to copy is `Commands/AccountsCommand.cs`: a static class with a single `Build(CliContextFactory)` entry point that returns a configured `Command`. Each subcommand is a small private method that defines its options, then `SetHandler` calls the matching method on the generated `*Client` from `Generated/BackendClient.cs`. Register the new top-level command in `Program.cs` next to the others.
+The shape to copy is `Commands/AccountsCommand.cs`: a static class with a single `Build(CliContextFactory)` entry point that returns a configured `Command`. Each subcommand is a small private method that defines its options, then `SetHandler` calls the matching method on the generated `*Client` from `Generated/BackendClient.cs`. When the new command takes an account or counterparty reference, use `app.Resolver.ResolveAccountAsync` / `ResolveCounterpartyAsync` to accept names as well as GUIDs. Register the new top-level command in `Program.cs` next to the others.
