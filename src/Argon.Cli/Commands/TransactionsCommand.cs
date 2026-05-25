@@ -21,8 +21,8 @@ internal static class TransactionsCommand
 
   private static Command ListCommand(CliContextFactory factory)
   {
-    Option<Guid[]> accountIds = new("--account", "Filter by account id (repeatable)") { AllowMultipleArgumentsPerToken = true };
-    Option<Guid[]> counterpartyIds = new("--counterparty", "Filter by counterparty id (repeatable)") { AllowMultipleArgumentsPerToken = true };
+    Option<string[]> accountRefs = new("--account", "Filter by account name or id (repeatable)") { AllowMultipleArgumentsPerToken = true };
+    Option<string[]> counterpartyRefs = new("--counterparty", "Filter by counterparty name or id (repeatable)") { AllowMultipleArgumentsPerToken = true };
     Option<DateTimeOffset?> from = new("--from", "Date from (inclusive)");
     Option<DateTimeOffset?> to = new("--to", "Date to (inclusive)");
     Option<TransactionStatus?> status = new(
@@ -33,23 +33,27 @@ internal static class TransactionsCommand
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
 
     Command cmd = new("list", "List transactions")
-      { accountIds, counterpartyIds, from, to, status, page, pageSize };
+      { accountRefs, counterpartyRefs, from, to, status, page, pageSize };
 
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
-      Guid[]? accounts = ctx.ParseResult.GetValueForOption(accountIds);
-      Guid[]? counterparties = ctx.ParseResult.GetValueForOption(counterpartyIds);
+      CancellationToken ct = ctx.GetCancellationToken();
+      string[]? accountInputs = ctx.ParseResult.GetValueForOption(accountRefs);
+      string[]? counterpartyInputs = ctx.ParseResult.GetValueForOption(counterpartyRefs);
+
+      List<Guid>? accountIds = await ResolveAllAsync(accountInputs, app.Resolver.ResolveAccountAsync, ct);
+      List<Guid>? counterpartyIds = await ResolveAllAsync(counterpartyInputs, app.Resolver.ResolveCounterpartyAsync, ct);
 
       PaginatedListOfTransactionsGetListResponse result = await app.Transactions.GetListAsync(
-        accountIds: accounts is { Length: > 0 } ? accounts : null,
-        counterpartyIds: counterparties is { Length: > 0 } ? counterparties : null,
+        accountIds: accountIds,
+        counterpartyIds: counterpartyIds,
         dateFrom: ctx.ParseResult.GetValueForOption(from),
         dateTo: ctx.ParseResult.GetValueForOption(to),
         status: ctx.ParseResult.GetValueForOption(status),
         pageNumber: ctx.ParseResult.GetValueForOption(page),
         pageSize: ctx.ParseResult.GetValueForOption(pageSize),
-        cancellationToken: ctx.GetCancellationToken());
+        cancellationToken: ct);
 
       OutputFormatter.Write(result.Items, app.Output);
       if (app.Output == OutputFormat.Table)
@@ -93,36 +97,37 @@ internal static class TransactionsCommand
     Option<DateOnly> date = new("--date", parseArgument: r =>
         DateOnly.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
       description: "Transaction date (yyyy-MM-dd)") { IsRequired = true };
-    Option<Guid> counterpartyId = new("--counterparty", "Counterparty id") { IsRequired = true };
+    Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
     Option<string[]> rows = new(
       new[] { "--row", "-r" },
-      "Row in the form <accountId>:<debit>:<credit>[:<description>]. Repeatable.")
+      "Row in the form <account>:<debit>:<credit>[:<description>] (account name or id). Repeatable.")
     {
       IsRequired = true,
       AllowMultipleArgumentsPerToken = false,
     };
 
-    Command cmd = new("create", "Create a transaction") { date, counterpartyId, rows };
+    Command cmd = new("create", "Create a transaction") { date, counterpartyRef, rows };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
 
       string[] rowValues = ctx.ParseResult.GetValueForOption(rows) ?? Array.Empty<string>();
       List<TransactionRowsCreateRequest> parsed = new();
       int counter = 1;
       foreach (string raw in rowValues)
       {
-        parsed.Add(ParseCreateRow(raw, counter++));
+        parsed.Add(await ParseCreateRowAsync(raw, counter++, app.Resolver, ct));
       }
 
       TransactionsCreateRequest request = new()
       {
         Date = ctx.ParseResult.GetValueForOption(date),
-        CounterpartyId = ctx.ParseResult.GetValueForOption(counterpartyId),
+        CounterpartyId = await app.Resolver.ResolveCounterpartyAsync(ctx.ParseResult.GetValueForOption(counterpartyRef)!, ct),
         TransactionRows = parsed,
       };
 
-      TransactionsCreateResponse result = await app.Transactions.CreateAsync(request, ctx.GetCancellationToken());
+      TransactionsCreateResponse result = await app.Transactions.CreateAsync(request, ct);
       OutputFormatter.Write(result, app.Output);
     });
     return cmd;
@@ -134,39 +139,40 @@ internal static class TransactionsCommand
     Option<DateOnly> date = new("--date", parseArgument: r =>
         DateOnly.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
       description: "Transaction date (yyyy-MM-dd)") { IsRequired = true };
-    Option<Guid> counterpartyId = new("--counterparty", "Counterparty id") { IsRequired = true };
+    Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
     Option<string[]> rows = new(
       new[] { "--row", "-r" },
-      "Row in the form [rowId]:<accountId>:<debit>:<credit>[:<description>]. Empty rowId means new row.")
+      "Row in the form [rowId]:<account>:<debit>:<credit>[:<description>] (account name or id). Empty rowId means new row.")
     {
       IsRequired = true,
       AllowMultipleArgumentsPerToken = false,
     };
 
-    Command cmd = new("update", "Update a transaction") { id, date, counterpartyId, rows };
+    Command cmd = new("update", "Update a transaction") { id, date, counterpartyRef, rows };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
 
       string[] rowValues = ctx.ParseResult.GetValueForOption(rows) ?? Array.Empty<string>();
       List<TransactionRowsUpdateRequest> parsed = new();
       int counter = 1;
       foreach (string raw in rowValues)
       {
-        parsed.Add(ParseUpdateRow(raw, counter++));
+        parsed.Add(await ParseUpdateRowAsync(raw, counter++, app.Resolver, ct));
       }
 
       TransactionsUpdateRequest request = new()
       {
         Date = ctx.ParseResult.GetValueForOption(date),
-        CounterpartyId = ctx.ParseResult.GetValueForOption(counterpartyId),
+        CounterpartyId = await app.Resolver.ResolveCounterpartyAsync(ctx.ParseResult.GetValueForOption(counterpartyRef)!, ct),
         TransactionRows = parsed,
       };
 
       await app.Transactions.UpdateAsync(
         ctx.ParseResult.GetValueForArgument(id),
         request,
-        ctx.GetCancellationToken());
+        ct);
       Console.WriteLine("updated.");
     });
     return cmd;
@@ -187,16 +193,17 @@ internal static class TransactionsCommand
     return cmd;
   }
 
-  private static TransactionRowsCreateRequest ParseCreateRow(string raw, int counter)
+  private static async Task<TransactionRowsCreateRequest> ParseCreateRowAsync(
+    string raw, int counter, ReferenceResolver resolver, CancellationToken cancellationToken)
   {
     string[] parts = raw.Split(':', 4);
     if (parts.Length < 3)
     {
       throw new ArgumentException(
-        $"Invalid row '{raw}'. Expected <accountId>:<debit>:<credit>[:<description>].");
+        $"Invalid row '{raw}'. Expected <account>:<debit>:<credit>[:<description>].");
     }
 
-    Guid accountId = Guid.Parse(parts[0]);
+    Guid accountId = await resolver.ResolveAccountAsync(parts[0], cancellationToken);
     decimal? debit = ParseAmount(parts[1]);
     decimal? credit = ParseAmount(parts[2]);
     string? description = parts.Length == 4 ? parts[3] : null;
@@ -211,17 +218,18 @@ internal static class TransactionsCommand
     };
   }
 
-  private static TransactionRowsUpdateRequest ParseUpdateRow(string raw, int counter)
+  private static async Task<TransactionRowsUpdateRequest> ParseUpdateRowAsync(
+    string raw, int counter, ReferenceResolver resolver, CancellationToken cancellationToken)
   {
     string[] parts = raw.Split(':', 5);
     if (parts.Length < 4)
     {
       throw new ArgumentException(
-        $"Invalid row '{raw}'. Expected [rowId]:<accountId>:<debit>:<credit>[:<description>].");
+        $"Invalid row '{raw}'. Expected [rowId]:<account>:<debit>:<credit>[:<description>].");
     }
 
     Guid? rowId = string.IsNullOrWhiteSpace(parts[0]) ? null : Guid.Parse(parts[0]);
-    Guid accountId = Guid.Parse(parts[1]);
+    Guid accountId = await resolver.ResolveAccountAsync(parts[1], cancellationToken);
     decimal? debit = ParseAmount(parts[2]);
     decimal? credit = ParseAmount(parts[3]);
     string? description = parts.Length == 5 ? parts[4] : null;
@@ -235,6 +243,25 @@ internal static class TransactionsCommand
       Credit = credit,
       Description = description,
     };
+  }
+
+  private static async Task<List<Guid>?> ResolveAllAsync(
+    string[]? inputs,
+    Func<string, CancellationToken, Task<Guid>> resolve,
+    CancellationToken cancellationToken)
+  {
+    if (inputs is not { Length: > 0 })
+    {
+      return null;
+    }
+
+    List<Guid> resolved = new(inputs.Length);
+    foreach (string input in inputs)
+    {
+      resolved.Add(await resolve(input, cancellationToken));
+    }
+
+    return resolved;
   }
 
   private static decimal? ParseAmount(string raw)

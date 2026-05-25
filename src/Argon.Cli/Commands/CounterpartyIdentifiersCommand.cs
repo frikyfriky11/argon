@@ -20,21 +20,25 @@ internal static class CounterpartyIdentifiersCommand
 
   private static Command ListCommand(CliContextFactory factory)
   {
-    Option<Guid?> counterpartyId = new("--counterparty", "Filter by counterparty id");
+    Option<string?> counterpartyRef = new("--counterparty", "Filter by counterparty name or id");
     Option<string?> text = new("--text", "Filter by identifier text");
     Option<int?> page = new("--page", "Page number");
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
-    Command cmd = new("list", "List counterparty identifiers") { counterpartyId, text, page, pageSize };
+    Command cmd = new("list", "List counterparty identifiers") { counterpartyRef, text, page, pageSize };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+      string? cpRef = ctx.ParseResult.GetValueForOption(counterpartyRef);
+      Guid? counterpartyId = cpRef is null ? null : await app.Resolver.ResolveCounterpartyAsync(cpRef, ct);
+
       PaginatedListOfCounterpartyIdentifiersGetListResponse result =
         await app.CounterpartyIdentifiers.GetListAsync(
-          ctx.ParseResult.GetValueForOption(counterpartyId),
+          counterpartyId,
           ctx.ParseResult.GetValueForOption(text),
           ctx.ParseResult.GetValueForOption(page),
           ctx.ParseResult.GetValueForOption(pageSize),
-          ctx.GetCancellationToken());
+          ct);
       OutputFormatter.Write(result.Items, app.Output);
       if (app.Output == OutputFormat.Table)
       {
@@ -62,19 +66,19 @@ internal static class CounterpartyIdentifiersCommand
 
   private static Command CreateCommand(CliContextFactory factory)
   {
-    Option<Guid> counterpartyId = new("--counterparty", "Counterparty id") { IsRequired = true };
+    Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
     Option<string> text = new("--text", "Identifier text (e.g. IBAN)") { IsRequired = true };
-    Command cmd = new("create", "Create a counterparty identifier") { counterpartyId, text };
+    Command cmd = new("create", "Create a counterparty identifier") { counterpartyRef, text };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
       CounterpartyIdentifiersCreateRequest request = new()
       {
-        CounterpartyId = ctx.ParseResult.GetValueForOption(counterpartyId),
+        CounterpartyId = await app.Resolver.ResolveCounterpartyAsync(ctx.ParseResult.GetValueForOption(counterpartyRef)!, ct),
         IdentifierText = ctx.ParseResult.GetValueForOption(text)!,
       };
-      CounterpartyIdentifiersCreateResponse result = await app.CounterpartyIdentifiers.CreateAsync(
-        request, ctx.GetCancellationToken());
+      CounterpartyIdentifiersCreateResponse result = await app.CounterpartyIdentifiers.CreateAsync(request, ct);
       OutputFormatter.Write(result, app.Output);
     });
     return cmd;
@@ -83,21 +87,22 @@ internal static class CounterpartyIdentifiersCommand
   private static Command UpdateCommand(CliContextFactory factory)
   {
     Argument<Guid> id = new("id", "Identifier id");
-    Option<Guid> counterpartyId = new("--counterparty", "Counterparty id") { IsRequired = true };
+    Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
     Option<string> text = new("--text", "Identifier text") { IsRequired = true };
-    Command cmd = new("update", "Update a counterparty identifier") { id, counterpartyId, text };
+    Command cmd = new("update", "Update a counterparty identifier") { id, counterpartyRef, text };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
       CounterpartyIdentifiersUpdateRequest request = new()
       {
-        CounterpartyId = ctx.ParseResult.GetValueForOption(counterpartyId),
+        CounterpartyId = await app.Resolver.ResolveCounterpartyAsync(ctx.ParseResult.GetValueForOption(counterpartyRef)!, ct),
         IdentifierText = ctx.ParseResult.GetValueForOption(text)!,
       };
       await app.CounterpartyIdentifiers.UpdateAsync(
         ctx.ParseResult.GetValueForArgument(id),
         request,
-        ctx.GetCancellationToken());
+        ct);
       Console.WriteLine("updated.");
     });
     return cmd;

@@ -167,16 +167,19 @@ internal sealed class CliContextFactory
       BaseAddress = new Uri(baseUrl),
     };
 
+    AccountsClient accounts = new(apiClient);
+    CounterpartiesClient counterparties = new(apiClient);
     return new CliContext(
       auth,
       store,
       flow,
       apiClient,
       output,
-      new AccountsClient(apiClient),
-      new CounterpartiesClient(apiClient),
+      accounts,
+      counterparties,
       new CounterpartyIdentifiersClient(apiClient),
-      new TransactionsClient(apiClient));
+      new TransactionsClient(apiClient),
+      new ReferenceResolver(accounts, counterparties));
   }
 
   private static IConfiguration BuildConfiguration()
@@ -207,4 +210,5 @@ internal sealed record CliContext(
   AccountsClient Accounts,
   CounterpartiesClient Counterparties,
   CounterpartyIdentifiersClient CounterpartyIdentifiers,
-  TransactionsClient Transactions);
+  TransactionsClient Transactions,
+  ReferenceResolver Resolver);
