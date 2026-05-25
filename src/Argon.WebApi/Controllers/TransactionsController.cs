@@ -1,4 +1,5 @@
 ﻿using Argon.Application.Common.Models;
+using Argon.Application.Transactions.CategorizeRow;
 using Argon.Application.Transactions.Create;
 using Argon.Application.Transactions.Delete;
 using Argon.Application.Transactions.Get;
@@ -75,6 +76,33 @@ public class TransactionsController(
   public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] TransactionsUpdateRequest request)
   {
     request.Id = id;
+
+    await mediator.Send(request);
+
+    return NoContent();
+  }
+
+  /// <summary>
+  ///   Assigns an account to a single row of a Transaction without resending the rest
+  ///   of the transaction. Intended for the import-review reconciliation flow.
+  /// </summary>
+  /// <param name="id">The id of the Transaction</param>
+  /// <param name="rowId">The id of the TransactionRow to update</param>
+  /// <param name="request">The categorization payload (account id)</param>
+  /// <response code="204">The row was categorized successfully</response>
+  /// <response code="400">The supplied request did not pass validation checks</response>
+  /// <response code="404">The Transaction or TransactionRow could not be found</response>
+  [HttpPatch("{id:guid}/rows/{rowId:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult> CategorizeRow(
+    [FromRoute] Guid id,
+    [FromRoute] Guid rowId,
+    [FromBody] TransactionsCategorizeRowRequest request)
+  {
+    request.TransactionId = id;
+    request.RowId = rowId;
 
     await mediator.Send(request);
 

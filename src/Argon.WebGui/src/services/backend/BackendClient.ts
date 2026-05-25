@@ -1985,6 +1985,84 @@ export class TransactionsClient extends ServiceBase {
         }
         return Promise.resolve<FileResponse>(null as any);
     }
+
+    /**
+     * Assigns an account to a single row of a Transaction without resending the rest
+    of the transaction. Intended for the import-review reconciliation flow.
+     * @param id The id of the Transaction
+     * @param rowId The id of the TransactionRow to update
+     * @param request The categorization payload (account id)
+     * @return The row was categorized successfully
+     */
+    categorizeRow(id: string, rowId: string, request: TransactionsCategorizeRowRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/Transactions/{id}/rows/{rowId}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (rowId === undefined || rowId === null)
+            throw new Error("The parameter 'rowId' must be defined.");
+        url_ = url_.replace("{rowId}", encodeURIComponent("" + rowId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PATCH",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processCategorizeRow(_response));
+        });
+    }
+
+    protected processCategorizeRow(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied request did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("The Transaction or TransactionRow could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
 }
 
 /** The result of the Account entities get list */
@@ -4227,6 +4305,46 @@ export interface ITransactionRowsUpdateRequest {
     credit: number | null;
     /** The description of the transaction row */
     description: string | null;
+}
+
+/** The request to assign an account to a single transaction row without resending the rest of the transaction. Used by the import-review reconciliation flow. */
+export class TransactionsCategorizeRowRequest implements ITransactionsCategorizeRowRequest {
+    /** The id of the account to assign to the row */
+    accountId!: string;
+
+    constructor(data?: ITransactionsCategorizeRowRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): TransactionsCategorizeRowRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionsCategorizeRowRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        return data;
+    }
+}
+
+/** The request to assign an account to a single transaction row without resending the rest of the transaction. Used by the import-review reconciliation flow. */
+export interface ITransactionsCategorizeRowRequest {
+    /** The id of the account to assign to the row */
+    accountId: string;
 }
 
 export interface FileResponse {
