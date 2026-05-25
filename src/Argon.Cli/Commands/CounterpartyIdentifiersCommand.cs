@@ -14,6 +14,7 @@ internal static class CounterpartyIdentifiersCommand
     identifiers.AddCommand(GetCommand(factory));
     identifiers.AddCommand(CreateCommand(factory));
     identifiers.AddCommand(UpdateCommand(factory));
+    identifiers.AddCommand(ResolveCommand(factory));
     identifiers.AddCommand(DeleteCommand(factory));
     return identifiers;
   }
@@ -104,6 +105,29 @@ internal static class CounterpartyIdentifiersCommand
         request,
         ct);
       Console.WriteLine("updated.");
+    });
+    return cmd;
+  }
+
+  private static Command ResolveCommand(CliContextFactory factory)
+  {
+    Argument<string> rawText = new("raw-text", "The raw text to resolve (e.g. a snippet of a bank statement line)");
+
+    Command cmd = new("resolve", "Preview which counterparties the importer would match for a raw snippet") { rawText };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      CounterpartyIdentifiersResolveRequest request = new()
+      {
+        RawText = ctx.ParseResult.GetValueForArgument(rawText),
+      };
+
+      ICollection<CounterpartyIdentifiersResolveResponse> result =
+        await app.CounterpartyIdentifiers.ResolveAsync(request, ct);
+
+      OutputFormatter.Write(result, app.Output);
     });
     return cmd;
   }
