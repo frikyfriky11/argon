@@ -15,6 +15,8 @@ internal static class TransactionsCommand
     tx.AddCommand(GetCommand(factory));
     tx.AddCommand(CreateCommand(factory));
     tx.AddCommand(UpdateCommand(factory));
+    tx.AddCommand(CategorizeCommand(factory));
+    tx.AddCommand(SetCounterpartyCommand(factory));
     tx.AddCommand(DeleteCommand(factory));
     return tx;
   }
@@ -176,6 +178,102 @@ internal static class TransactionsCommand
       Console.WriteLine("updated.");
     });
     return cmd;
+  }
+
+  private static Command CategorizeCommand(CliContextFactory factory)
+  {
+    Argument<Guid> id = new("id", "Transaction id");
+    Option<int?> row = new("--row", "Row counter (1-based). If omitted, the unique row without an assigned account is used.");
+    Option<string> accountRef = new("--account", "Account name or id to assign to the row") { IsRequired = true };
+
+    Command cmd = new("categorize", "Assign an account to a single row of a transaction") { id, row, accountRef };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      Guid transactionId = ctx.ParseResult.GetValueForArgument(id);
+      int? rowCounter = ctx.ParseResult.GetValueForOption(row);
+
+      TransactionsGetResponse transaction = await app.Transactions.GetAsync(transactionId, ct);
+      Guid rowId = ResolveRowToCategorize(transaction, rowCounter);
+
+      TransactionsCategorizeRowRequest request = new()
+      {
+        AccountId = await app.Resolver.ResolveAccountAsync(ctx.ParseResult.GetValueForOption(accountRef)!, ct),
+      };
+
+      await app.Transactions.CategorizeRowAsync(transactionId, rowId, request, ct);
+      Console.WriteLine("categorized.");
+    });
+    return cmd;
+  }
+
+  private static Command SetCounterpartyCommand(CliContextFactory factory)
+  {
+    Argument<Guid> id = new("id", "Transaction id");
+    Argument<string> counterpartyRef = new("counterparty", "Counterparty name or id");
+
+    Command cmd = new("set-counterparty", "Reassign the counterparty of a transaction") { id, counterpartyRef };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      TransactionsSetCounterpartyRequest request = new()
+      {
+        CounterpartyId = await app.Resolver.ResolveCounterpartyAsync(
+          ctx.ParseResult.GetValueForArgument(counterpartyRef),
+          ct),
+      };
+
+      await app.Transactions.SetCounterpartyAsync(
+        ctx.ParseResult.GetValueForArgument(id),
+        request,
+        ct);
+      Console.WriteLine("counterparty updated.");
+    });
+    return cmd;
+  }
+
+  private static Guid ResolveRowToCategorize(TransactionsGetResponse transaction, int? rowCounter)
+  {
+    if (rowCounter is { } counter)
+    {
+      List<TransactionRowsGetResponse> byCounter = transaction.TransactionRows
+        .Where(r => r.RowCounter == counter)
+        .ToList();
+
+      if (byCounter.Count == 0)
+      {
+        throw new ArgumentException($"No row with counter {counter} on transaction {transaction.Id}.");
+      }
+
+      if (byCounter.Count > 1)
+      {
+        throw new ArgumentException($"Multiple rows with counter {counter} on transaction {transaction.Id} — ambiguous.");
+      }
+
+      return byCounter[0].Id;
+    }
+
+    List<TransactionRowsGetResponse> pending = transaction.TransactionRows
+      .Where(r => r.AccountId is null)
+      .ToList();
+
+    if (pending.Count == 0)
+    {
+      throw new ArgumentException(
+        $"Transaction {transaction.Id} has no row awaiting categorization. Pass --row to pick one explicitly.");
+    }
+
+    if (pending.Count > 1)
+    {
+      throw new ArgumentException(
+        $"Transaction {transaction.Id} has {pending.Count} rows without an account. Pass --row <counter> to disambiguate.");
+    }
+
+    return pending[0].Id;
   }
 
   private static Command DeleteCommand(CliContextFactory factory)
