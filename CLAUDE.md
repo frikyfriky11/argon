@@ -110,6 +110,10 @@ When backend API contracts change, rebuild the WebApi project — this triggers 
 
 Authentication is handled by **Authentik** (self-hosted IdP). The frontend uses OIDC via `react-oidc-context`. The API validates JWT Bearer tokens issued by Authentik. Any new client (CLI, worker service) should register as an OAuth 2.0 application in Authentik — no stored credentials, no `.env` token hacks.
 
+## Dev secrets
+
+`Argon.WebApi` has a `<UserSecretsId>` in its csproj and the default ASP.NET builder loads .NET user-secrets automatically when the environment is `Development`. Real values for `Auth:Authority`, `Auth:ClientId`, and any local connection-string overrides belong in user-secrets, not in `appsettings.json`. The root `README.md` lists the `dotnet user-secrets set …` commands.
+
 ## Git commits
 
 This repository uses **Conventional Commits** (`<type>(<scope>): <subject>`). Common types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`. The scope is the affected area in kebab-case (e.g. `parsers`, `cli`, `webapi`, `webgui`). Examples from the history:
