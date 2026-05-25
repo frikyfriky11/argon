@@ -1,5 +1,6 @@
 using Argon.Application.BankStatements.Parse;
 using Argon.Application.BankStatements.Parse.Parsers;
+using Argon.Application.Counterparties.Common;
 using Moq;
 
 namespace Argon.Application.Tests.BankStatements.Parse;
@@ -18,7 +19,10 @@ public class BankStatementsParseHandlerTests
     _mockParsersFactory = new Mock<IParsersFactory>();
     _mockParser = new Mock<IParser>();
 
-    _sut = new BankStatementsParseHandler(_mockParsersFactory.Object, _dbContext);
+    _sut = new BankStatementsParseHandler(
+      _mockParsersFactory.Object,
+      _dbContext,
+      new CounterpartyResolver(_dbContext));
   }
 
   [Test]

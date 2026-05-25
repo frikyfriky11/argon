@@ -1,9 +1,12 @@
-﻿namespace Argon.Application.BankStatements.Parse;
+﻿using Argon.Application.Counterparties.Common;
+
+namespace Argon.Application.BankStatements.Parse;
 
 [UsedImplicitly]
 public class BankStatementsParseHandler(
   IParsersFactory parsersFactory,
-  IApplicationDbContext dbContext
+  IApplicationDbContext dbContext,
+  ICounterpartyResolver counterpartyResolver
 ) : IRequestHandler<BankStatementsParseRequest, BankStatementsParseResponse>
 {
   public async Task<BankStatementsParseResponse> Handle(BankStatementsParseRequest request,
@@ -37,27 +40,9 @@ public class BankStatementsParseHandler(
       }
 
       // try to find a counterparty
-      List<Guid> counterpartiesByIdentifier = item.CounterpartyName is not null
-        ? await dbContext
-          .CounterpartyIdentifiers
-          .AsNoTracking()
-          .Where(counterpartyIdentifier => counterpartyIdentifier.IdentifierText.ToLower().Contains(item.CounterpartyName.ToLower())
-                                           || item.CounterpartyName.ToLower().Contains(counterpartyIdentifier.IdentifierText.ToLower()))
-          .Select(counterpartyIdentifier => counterpartyIdentifier.CounterpartyId)
-          .ToListAsync(cancellationToken)
-        : [];
-
-      List<Guid> counterpartiesByName = item.CounterpartyName is not null
-        ? await dbContext
-          .Counterparties
-          .AsNoTracking()
-          .Where(counterparty => counterparty.Name.ToLower().Contains(item.CounterpartyName.ToLower())
-                                 || item.CounterpartyName.ToLower().Contains(counterparty.Name.ToLower()))
-          .Select(counterparty => counterparty.Id)
-          .ToListAsync(cancellationToken)
-        : [];
-
-      List<Guid> counterparties = counterpartiesByIdentifier.Concat(counterpartiesByName).Distinct().ToList();
+      List<Guid> counterparties = (await counterpartyResolver.ResolveAsync(item.CounterpartyName, cancellationToken))
+        .Select(r => r.Id)
+        .ToList();
 
       Guid? counterpartyId;
 
