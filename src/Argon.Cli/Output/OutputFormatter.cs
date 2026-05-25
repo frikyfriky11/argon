@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using System.Text.Json.Nodes;
 
 namespace Argon.Cli.Output;
 
@@ -33,7 +34,62 @@ public static class OutputFormatter
 
   private static void WriteJson(object? value, TextWriter writer)
   {
-    writer.WriteLine(JsonSerializer.Serialize(value, JsonOptions));
+    JsonNode? node = JsonSerializer.SerializeToNode(value, JsonOptions);
+    FlattenRawImportData(node);
+    writer.WriteLine(node?.ToJsonString(JsonOptions) ?? "null");
+  }
+
+  /// <summary>
+  ///   Walks the JSON tree and, for any object containing a non-null `rawImportData` string,
+  ///   parses that string and copies its fields onto the parent so callers can read
+  ///   `amount`, `accountingDate`, etc. directly without an inner-JSON parse step.
+  ///   The original `rawImportData` string is preserved for fidelity. Existing fields
+  ///   on the parent are not overwritten.
+  /// </summary>
+  private static void FlattenRawImportData(JsonNode? node)
+  {
+    switch (node)
+    {
+      case JsonArray array:
+        foreach (JsonNode? child in array)
+        {
+          FlattenRawImportData(child);
+        }
+        break;
+
+      case JsonObject obj:
+        if (obj["rawImportData"] is JsonValue value
+            && value.TryGetValue(out string? raw)
+            && !string.IsNullOrWhiteSpace(raw))
+        {
+          try
+          {
+            JsonNode? parsed = JsonNode.Parse(raw);
+            if (parsed is JsonObject parsedObj)
+            {
+              foreach (KeyValuePair<string, JsonNode?> kvp in parsedObj.ToList())
+              {
+                string key = JsonNamingPolicy.CamelCase.ConvertName(kvp.Key);
+                if (!obj.ContainsKey(key))
+                {
+                  parsedObj.Remove(kvp.Key);
+                  obj[key] = kvp.Value;
+                }
+              }
+            }
+          }
+          catch (JsonException)
+          {
+            // leave rawImportData alone if it isn't valid json
+          }
+        }
+
+        foreach (KeyValuePair<string, JsonNode?> kvp in obj.ToList())
+        {
+          FlattenRawImportData(kvp.Value);
+        }
+        break;
+    }
   }
 
   private static IReadOnlyList<object> AsRowList(object? value)
