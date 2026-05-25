@@ -1,6 +1,6 @@
 # Argon
 
-Personal finance management app. See [`CLAUDE.md`](CLAUDE.md) for architecture.
+Personal finance management app. See [`CLAUDE.md`](CLAUDE.md) for architecture and [`src/Argon.Cli/README.md`](src/Argon.Cli/README.md) for the CLI.
 
 ## Dev database
 
@@ -27,6 +27,17 @@ dotnet user-secrets --project src/Argon.WebApi remove "Key:Name"
 ```
 
 Files land at `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json` (Linux/macOS) or `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json` (Windows). The `UserSecretsId` value is set in the project's csproj.
+
+### CLI
+
+Loaded unconditionally on every invocation (the CLI has no environment concept), via an explicit `AddUserSecrets` call in `Program.cs`. The `UserSecretsId` is `argon-cli`:
+
+```bash
+dotnet user-secrets --project src/Argon.Cli set "Auth:Authority" "https://auth.example.com/application/o/argon/"
+dotnet user-secrets --project src/Argon.Cli set "Auth:ClientId" "<your-client-id>"
+```
+
+Same store regardless of whether you run via `dotnet run --project src/Argon.Cli` or the installed global `argon` tool.
 
 ## Restoring a backup
 

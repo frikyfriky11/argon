@@ -112,7 +112,11 @@ Authentication is handled by **Authentik** (self-hosted IdP). The frontend uses 
 
 ## Dev secrets
 
-`Argon.WebApi` has a `<UserSecretsId>` in its csproj and the default ASP.NET builder loads .NET user-secrets automatically when the environment is `Development`. Real values for `Auth:Authority`, `Auth:ClientId`, and any local connection-string overrides belong in user-secrets, not in `appsettings.json`. The root `README.md` lists the `dotnet user-secrets set …` commands.
+`Argon.WebApi` has a `<UserSecretsId>` in its csproj and the default ASP.NET builder loads .NET user-secrets automatically when the environment is `Development`. `Argon.Cli` also has a `<UserSecretsId>` (`argon-cli`) and calls `AddUserSecrets(typeof(Program).Assembly, optional: true)` in `Program.cs` to load them on every invocation. Real values for `Auth:Authority`, `Auth:ClientId`, and any local connection-string overrides belong in user-secrets, not in `appsettings.json`. The root `README.md` lists the `dotnet user-secrets set …` commands for each project.
+
+## CLI
+
+`src/Argon.Cli/` is a .NET 8 command-line client (`argon`) that wraps the WebApi. It is a pure REST consumer with its own NSwag-generated client (`src/Argon.Cli/Generated/BackendClient.cs`, regenerated on every WebApi Debug build via the same `nswag.json`) and signs users in via the OAuth 2.0 device-code flow against Authentik. v1 surface covers Accounts, Counterparties, CounterpartyIdentifiers, and Transactions. See `src/Argon.Cli/README.md` for the local-dev workflow (`dotnet run --project src/Argon.Cli -- ...`) and configuration details.
 
 ## Git commits
 
