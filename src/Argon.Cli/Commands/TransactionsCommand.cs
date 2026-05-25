@@ -17,6 +17,7 @@ internal static class TransactionsCommand
     tx.AddCommand(UpdateCommand(factory));
     tx.AddCommand(CategorizeCommand(factory));
     tx.AddCommand(SetCounterpartyCommand(factory));
+    tx.AddCommand(HistoryCommand(factory));
     tx.AddCommand(DeleteCommand(factory));
     return tx;
   }
@@ -274,6 +275,29 @@ internal static class TransactionsCommand
     }
 
     return pending[0].Id;
+  }
+
+  private static Command HistoryCommand(CliContextFactory factory)
+  {
+    Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
+
+    Command cmd = new("history", "Show the frequency table of accounts a counterparty has been posted against")
+      { counterpartyRef };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      Guid counterpartyId = await app.Resolver.ResolveCounterpartyAsync(
+        ctx.ParseResult.GetValueForOption(counterpartyRef)!,
+        ct);
+
+      ICollection<CounterpartiesAccountHistoryResponse> result =
+        await app.Counterparties.AccountHistoryAsync(counterpartyId, ct);
+
+      OutputFormatter.Write(result, app.Output);
+    });
+    return cmd;
   }
 
   private static Command DeleteCommand(CliContextFactory factory)
