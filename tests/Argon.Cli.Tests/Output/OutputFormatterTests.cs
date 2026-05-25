@@ -111,4 +111,56 @@ public class OutputFormatterTests
     node["id"]!.GetValue<int>().Should().Be(1);
     node["name"]!.GetValue<string>().Should().Be("x");
   }
+
+  [Test]
+  public void WriteJson_ShouldAddAccountTypeName_NextToNumericAccountType()
+  {
+    object payload = new
+    {
+      id = Guid.NewGuid(),
+      name = "Sparkasse",
+      accountType = 0,
+    };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Json, writer);
+
+    JsonNode node = JsonNode.Parse(writer.ToString())!;
+    node["accountType"]!.GetValue<int>().Should().Be(0,
+      "the numeric value is kept so existing consumers keep working");
+    node["accountTypeName"]!.GetValue<string>().Should().Be("Cash");
+  }
+
+  [Test]
+  public void WriteJson_ShouldAddAccountTypeName_InsideArrayItems()
+  {
+    object[] payload =
+    {
+      new { id = Guid.NewGuid(), accountType = 1 },
+      new { id = Guid.NewGuid(), accountType = 2 },
+    };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Json, writer);
+
+    JsonArray array = JsonNode.Parse(writer.ToString())!.AsArray();
+    array[0]!["accountTypeName"]!.GetValue<string>().Should().Be("Expense");
+    array[1]!["accountTypeName"]!.GetValue<string>().Should().Be("Revenue");
+  }
+
+  [Test]
+  public void WriteJson_ShouldLeaveAccountTypeAlone_WhenValueIsUnknown()
+  {
+    object payload = new { id = Guid.NewGuid(), accountType = 99 };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Json, writer);
+
+    JsonNode node = JsonNode.Parse(writer.ToString())!;
+    node["accountType"]!.GetValue<int>().Should().Be(99);
+    node["accountTypeName"].Should().BeNull();
+  }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using System.Text.Json.Nodes;
+using Argon.Cli.Generated;
 
 namespace Argon.Cli.Output;
 
@@ -35,61 +36,88 @@ public static class OutputFormatter
   private static void WriteJson(object? value, TextWriter writer)
   {
     JsonNode? node = JsonSerializer.SerializeToNode(value, JsonOptions);
-    FlattenRawImportData(node);
+    PostProcess(node);
     writer.WriteLine(node?.ToJsonString(JsonOptions) ?? "null");
   }
 
-  /// <summary>
-  ///   Walks the JSON tree and, for any object containing a non-null `rawImportData` string,
-  ///   parses that string and copies its fields onto the parent so callers can read
-  ///   `amount`, `accountingDate`, etc. directly without an inner-JSON parse step.
-  ///   The original `rawImportData` string is preserved for fidelity. Existing fields
-  ///   on the parent are not overwritten.
-  /// </summary>
-  private static void FlattenRawImportData(JsonNode? node)
+  private static void PostProcess(JsonNode? node)
   {
     switch (node)
     {
       case JsonArray array:
         foreach (JsonNode? child in array)
         {
-          FlattenRawImportData(child);
+          PostProcess(child);
         }
         break;
 
       case JsonObject obj:
-        if (obj["rawImportData"] is JsonValue value
-            && value.TryGetValue(out string? raw)
-            && !string.IsNullOrWhiteSpace(raw))
-        {
-          try
-          {
-            JsonNode? parsed = JsonNode.Parse(raw);
-            if (parsed is JsonObject parsedObj)
-            {
-              foreach (KeyValuePair<string, JsonNode?> kvp in parsedObj.ToList())
-              {
-                string key = JsonNamingPolicy.CamelCase.ConvertName(kvp.Key);
-                if (!obj.ContainsKey(key))
-                {
-                  parsedObj.Remove(kvp.Key);
-                  obj[key] = kvp.Value;
-                }
-              }
-            }
-          }
-          catch (JsonException)
-          {
-            // leave rawImportData alone if it isn't valid json
-          }
-        }
-
+        FlattenRawImportData(obj);
+        AddAccountTypeName(obj);
         foreach (KeyValuePair<string, JsonNode?> kvp in obj.ToList())
         {
-          FlattenRawImportData(kvp.Value);
+          PostProcess(kvp.Value);
         }
         break;
     }
+  }
+
+  /// <summary>
+  ///   For any object containing a non-null `rawImportData` string, parses that string
+  ///   and copies its fields onto the parent so callers can read `amount`,
+  ///   `accountingDate`, etc. directly without an inner-JSON parse step. The original
+  ///   `rawImportData` string is preserved for fidelity, pre-existing top-level fields
+  ///   take precedence on conflict, and inner PascalCase keys are converted to camelCase.
+  /// </summary>
+  private static void FlattenRawImportData(JsonObject obj)
+  {
+    if (obj["rawImportData"] is not JsonValue value
+        || !value.TryGetValue(out string? raw)
+        || string.IsNullOrWhiteSpace(raw))
+    {
+      return;
+    }
+
+    try
+    {
+      JsonNode? parsed = JsonNode.Parse(raw);
+      if (parsed is not JsonObject parsedObj)
+      {
+        return;
+      }
+
+      foreach (KeyValuePair<string, JsonNode?> kvp in parsedObj.ToList())
+      {
+        string key = JsonNamingPolicy.CamelCase.ConvertName(kvp.Key);
+        if (!obj.ContainsKey(key))
+        {
+          parsedObj.Remove(kvp.Key);
+          obj[key] = kvp.Value;
+        }
+      }
+    }
+    catch (JsonException)
+    {
+      // leave rawImportData alone if it isn't valid json
+    }
+  }
+
+  /// <summary>
+  ///   For any object carrying a numeric `accountType`, add a sibling
+  ///   `accountTypeName` containing the enum string (`Cash`, `Expense`, ...). The
+  ///   numeric value is kept untouched so existing tooling that reads it keeps working.
+  /// </summary>
+  private static void AddAccountTypeName(JsonObject obj)
+  {
+    if (obj["accountType"] is not JsonValue value
+        || !value.TryGetValue(out int intValue)
+        || !Enum.IsDefined(typeof(AccountType), intValue)
+        || obj.ContainsKey("accountTypeName"))
+    {
+      return;
+    }
+
+    obj["accountTypeName"] = ((AccountType)intValue).ToString();
   }
 
   private static IReadOnlyList<object> AsRowList(object? value)
