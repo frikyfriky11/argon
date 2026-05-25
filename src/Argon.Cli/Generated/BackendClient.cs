@@ -2513,6 +2513,17 @@ namespace Argon.Cli.Generated
         /// <exception cref="ApiException">A server side error occurred.</exception>
         System.Threading.Tasks.Task<FileResponse> DeleteAsync(System.Guid id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <summary>
+        /// Matches a free-form raw text against existing counterparties using the same
+        /// <br/>substring rules the bank-statement importer relies on. Useful for previewing
+        /// <br/>what the importer would resolve a raw description to before running it.
+        /// </summary>
+        /// <param name="request">The raw text to resolve</param>
+        /// <returns>The list of matching counterparties (may be empty)</returns>
+        /// <exception cref="ApiException">A server side error occurred.</exception>
+        System.Threading.Tasks.Task<System.Collections.Generic.ICollection<CounterpartyIdentifiersResolveResponse>> ResolveAsync(CounterpartyIdentifiersResolveRequest request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -2980,6 +2991,90 @@ namespace Argon.Cli.Generated
                             var fileResponse_ = new FileResponse(status_, headers_, responseStream_, null, response_);
                             disposeClient_ = false; disposeResponse_ = false; // response and client are disposed by FileResponse
                             return fileResponse_;
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <summary>
+        /// Matches a free-form raw text against existing counterparties using the same
+        /// <br/>substring rules the bank-statement importer relies on. Useful for previewing
+        /// <br/>what the importer would resolve a raw description to before running it.
+        /// </summary>
+        /// <param name="request">The raw text to resolve</param>
+        /// <returns>The list of matching counterparties (may be empty)</returns>
+        /// <exception cref="ApiException">A server side error occurred.</exception>
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<CounterpartyIdentifiersResolveResponse>> ResolveAsync(CounterpartyIdentifiersResolveRequest request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        {
+            if (request == null)
+                throw new System.ArgumentNullException("request");
+
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(request, JsonSerializerSettings);
+                    var content_ = new System.Net.Http.ByteArrayContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                
+                    // Operation Path: "CounterpartyIdentifiers/resolve"
+                    urlBuilder_.Append("CounterpartyIdentifiers/resolve");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<CounterpartyIdentifiersResolveResponse>>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
                         }
                         else
                         {
@@ -4981,6 +5076,56 @@ namespace Argon.Cli.Generated
 
         [System.Text.Json.Serialization.JsonPropertyName("identifierText")]
         public string IdentifierText { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CounterpartyIdentifiersResolveResponse
+    {
+        /// <summary>
+        /// The matched counterparty id
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("counterpartyId")]
+        public System.Guid CounterpartyId { get; set; }
+
+        /// <summary>
+        /// The matched counterparty name
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("counterpartyName")]
+        public string CounterpartyName { get; set; }
+
+        /// <summary>
+        /// True if any of the counterparty's identifiers matched the raw text
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("matchedByIdentifier")]
+        public bool MatchedByIdentifier { get; set; }
+
+        /// <summary>
+        /// True if the counterparty's name itself matched the raw text
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("matchedByName")]
+        public bool MatchedByName { get; set; }
+
+    }
+
+    /// <summary>
+    /// The request to match a free-form raw text against existing counterparties using
+    /// <br/>the same substring rules the bank-statement importer relies on.
+    /// <br/>            
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CounterpartyIdentifiersResolveRequest
+    {
+        /// <summary>
+        /// The raw text to resolve (typically a snippet from a bank line)
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("rawText")]
+        public string RawText { get; set; }
 
     }
 

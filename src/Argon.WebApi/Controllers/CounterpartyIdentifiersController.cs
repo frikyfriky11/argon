@@ -3,6 +3,7 @@ using Argon.Application.CounterpartyIdentifiers.Create;
 using Argon.Application.CounterpartyIdentifiers.Delete;
 using Argon.Application.CounterpartyIdentifiers.Get;
 using Argon.Application.CounterpartyIdentifiers.GetList;
+using Argon.Application.CounterpartyIdentifiers.Resolve;
 using Argon.Application.CounterpartyIdentifiers.Update;
 
 namespace Argon.WebApi.Controllers;
@@ -79,6 +80,22 @@ public class CounterpartyIdentifiersController(
     await mediator.Send(request);
 
     return NoContent();
+  }
+
+  /// <summary>
+  ///   Matches a free-form raw text against existing counterparties using the same
+  ///   substring rules the bank-statement importer relies on. Useful for previewing
+  ///   what the importer would resolve a raw description to before running it.
+  /// </summary>
+  /// <param name="request">The raw text to resolve</param>
+  /// <returns>A list of matching counterparties with the match source flags</returns>
+  /// <response code="200">The list of matching counterparties (may be empty)</response>
+  [HttpPost("resolve")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  public async Task<ActionResult<List<CounterpartyIdentifiersResolveResponse>>> Resolve(
+    [FromBody] CounterpartyIdentifiersResolveRequest request)
+  {
+    return await mediator.Send(request);
   }
 
   /// <summary>

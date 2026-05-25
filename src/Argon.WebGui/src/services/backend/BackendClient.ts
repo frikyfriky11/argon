@@ -1698,6 +1698,74 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
         }
         return Promise.resolve<FileResponse>(null as any);
     }
+
+    /**
+     * Matches a free-form raw text against existing counterparties using the same
+    substring rules the bank-statement importer relies on. Useful for previewing
+    what the importer would resolve a raw description to before running it.
+     * @param request The raw text to resolve
+     * @return The list of matching counterparties (may be empty)
+     */
+    resolve(request: CounterpartyIdentifiersResolveRequest, cancelToken?: CancelToken): Promise<CounterpartyIdentifiersResolveResponse[]> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers/resolve";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processResolve(_response));
+        });
+    }
+
+    protected processResolve(response: AxiosResponse): Promise<CounterpartyIdentifiersResolveResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CounterpartyIdentifiersResolveResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<CounterpartyIdentifiersResolveResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartyIdentifiersResolveResponse[]>(null as any);
+    }
 }
 
 export class TransactionsClient extends ServiceBase {
@@ -3961,6 +4029,102 @@ export interface ICounterpartyIdentifiersUpdateRequest {
     counterpartyId: string;
     /** The actual text of the counterpartyIdentifier */
     identifierText: string;
+}
+
+export class CounterpartyIdentifiersResolveResponse implements ICounterpartyIdentifiersResolveResponse {
+    /** The matched counterparty id */
+    counterpartyId!: string;
+    /** The matched counterparty name */
+    counterpartyName!: string;
+    /** True if any of the counterparty's identifiers matched the raw text */
+    matchedByIdentifier!: boolean;
+    /** True if the counterparty's name itself matched the raw text */
+    matchedByName!: boolean;
+
+    constructor(data?: ICounterpartyIdentifiersResolveResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
+            this.matchedByIdentifier = _data["matchedByIdentifier"] !== undefined ? _data["matchedByIdentifier"] : <any>null;
+            this.matchedByName = _data["matchedByName"] !== undefined ? _data["matchedByName"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersResolveResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersResolveResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
+        data["matchedByIdentifier"] = this.matchedByIdentifier !== undefined ? this.matchedByIdentifier : <any>null;
+        data["matchedByName"] = this.matchedByName !== undefined ? this.matchedByName : <any>null;
+        return data;
+    }
+}
+
+export interface ICounterpartyIdentifiersResolveResponse {
+    /** The matched counterparty id */
+    counterpartyId: string;
+    /** The matched counterparty name */
+    counterpartyName: string;
+    /** True if any of the counterparty's identifiers matched the raw text */
+    matchedByIdentifier: boolean;
+    /** True if the counterparty's name itself matched the raw text */
+    matchedByName: boolean;
+}
+
+/** The request to match a free-form raw text against existing counterparties using the same substring rules the bank-statement importer relies on. */
+export class CounterpartyIdentifiersResolveRequest implements ICounterpartyIdentifiersResolveRequest {
+    /** The raw text to resolve (typically a snippet from a bank line) */
+    rawText!: string;
+
+    constructor(data?: ICounterpartyIdentifiersResolveRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rawText = _data["rawText"] !== undefined ? _data["rawText"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersResolveRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersResolveRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rawText"] = this.rawText !== undefined ? this.rawText : <any>null;
+        return data;
+    }
+}
+
+/** The request to match a free-form raw text against existing counterparties using the same substring rules the bank-statement importer relies on. */
+export interface ICounterpartyIdentifiersResolveRequest {
+    /** The raw text to resolve (typically a snippet from a bank line) */
+    rawText: string;
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
