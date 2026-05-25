@@ -25,11 +25,15 @@ internal static class TransactionsCommand
     Option<Guid[]> counterpartyIds = new("--counterparty", "Filter by counterparty id (repeatable)") { AllowMultipleArgumentsPerToken = true };
     Option<DateTimeOffset?> from = new("--from", "Date from (inclusive)");
     Option<DateTimeOffset?> to = new("--to", "Date to (inclusive)");
+    Option<TransactionStatus?> status = new(
+      "--status",
+      parseArgument: r => ParseStatus(r.Tokens[0].Value),
+      description: "Filter by status: pending, confirmed, duplicate");
     Option<int?> page = new("--page", "Page number");
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
 
     Command cmd = new("list", "List transactions")
-      { accountIds, counterpartyIds, from, to, page, pageSize };
+      { accountIds, counterpartyIds, from, to, status, page, pageSize };
 
     cmd.SetHandler(async ctx =>
     {
@@ -42,6 +46,7 @@ internal static class TransactionsCommand
         counterpartyIds: counterparties is { Length: > 0 } ? counterparties : null,
         dateFrom: ctx.ParseResult.GetValueForOption(from),
         dateTo: ctx.ParseResult.GetValueForOption(to),
+        status: ctx.ParseResult.GetValueForOption(status),
         pageNumber: ctx.ParseResult.GetValueForOption(page),
         pageSize: ctx.ParseResult.GetValueForOption(pageSize),
         cancellationToken: ctx.GetCancellationToken());
@@ -241,4 +246,12 @@ internal static class TransactionsCommand
 
     return decimal.Parse(raw, CultureInfo.InvariantCulture);
   }
+
+  private static TransactionStatus ParseStatus(string raw) => raw.ToLowerInvariant() switch
+  {
+    "pending" or "pendingimportreview" or "pending-import-review" => TransactionStatus.PendingImportReview,
+    "confirmed" => TransactionStatus.Confirmed,
+    "duplicate" or "potentialduplicate" or "potential-duplicate" => TransactionStatus.PotentialDuplicate,
+    _ => throw new ArgumentException($"Unknown status '{raw}'. Expected: pending, confirmed, duplicate."),
+  };
 }
