@@ -1272,6 +1272,80 @@ export class CounterpartiesClient extends ServiceBase {
         }
         return Promise.resolve<FileResponse>(null as any);
     }
+
+    /**
+     * Gets the frequency table of accounts a counterparty has historically been
+    posted against. Used during reconciliation to see which expense/revenue
+    account this counterparty typically maps to.
+     * @param id The id of the Counterparty
+     * @return The frequency table
+     */
+    accountHistory(id: string, cancelToken?: CancelToken): Promise<CounterpartiesAccountHistoryResponse[]> {
+        let url_ = this.baseUrl + "/Counterparties/{id}/account-history";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processAccountHistory(_response));
+        });
+    }
+
+    protected processAccountHistory(response: AxiosResponse): Promise<CounterpartiesAccountHistoryResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CounterpartiesAccountHistoryResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<CounterpartiesAccountHistoryResponse[]>(result200);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Counterparty with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartiesAccountHistoryResponse[]>(null as any);
+    }
 }
 
 export class CounterpartyIdentifiersClient extends ServiceBase {
@@ -3500,6 +3574,64 @@ export class CounterpartiesUpdateRequest implements ICounterpartiesUpdateRequest
 export interface ICounterpartiesUpdateRequest {
     /** The name of the counterparty */
     name: string;
+}
+
+/** One entry in the account-frequency table for a counterparty. */
+export class CounterpartiesAccountHistoryResponse implements ICounterpartiesAccountHistoryResponse {
+    /** The id of the account */
+    accountId!: string;
+    /** The name of the account */
+    accountName!: string;
+    /** The type of the account */
+    accountType!: AccountType;
+    /** How many transaction rows tagged this counterparty are posted on this account */
+    count!: number;
+
+    constructor(data?: ICounterpartiesAccountHistoryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
+            this.count = _data["count"] !== undefined ? _data["count"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesAccountHistoryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesAccountHistoryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
+        data["count"] = this.count !== undefined ? this.count : <any>null;
+        return data;
+    }
+}
+
+/** One entry in the account-frequency table for a counterparty. */
+export interface ICounterpartiesAccountHistoryResponse {
+    /** The id of the account */
+    accountId: string;
+    /** The name of the account */
+    accountName: string;
+    /** The type of the account */
+    accountType: AccountType;
+    /** How many transaction rows tagged this counterparty are posted on this account */
+    count: number;
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */

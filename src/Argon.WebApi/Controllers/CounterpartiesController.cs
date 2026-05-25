@@ -1,4 +1,5 @@
 ﻿using Argon.Application.Common.Models;
+using Argon.Application.Counterparties.AccountHistory;
 using Argon.Application.Counterparties.Create;
 using Argon.Application.Counterparties.Delete;
 using Argon.Application.Counterparties.Get;
@@ -79,6 +80,24 @@ public class CounterpartiesController(
     await mediator.Send(request);
 
     return NoContent();
+  }
+
+  /// <summary>
+  ///   Gets the frequency table of accounts a counterparty has historically been
+  ///   posted against. Used during reconciliation to see which expense/revenue
+  ///   account this counterparty typically maps to.
+  /// </summary>
+  /// <param name="id">The id of the Counterparty</param>
+  /// <returns>A list of (account, count) pairs ordered by descending count</returns>
+  /// <response code="200">The frequency table</response>
+  /// <response code="404">A Counterparty with the specified id could not be found</response>
+  [HttpGet("{id:guid}/account-history")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult<List<CounterpartiesAccountHistoryResponse>>> AccountHistory([FromRoute] Guid id)
+  {
+    CounterpartiesAccountHistoryRequest request = new(id);
+    return await mediator.Send(request);
   }
 
   /// <summary>
