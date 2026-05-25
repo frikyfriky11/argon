@@ -4,6 +4,7 @@ using Argon.Application.Transactions.Create;
 using Argon.Application.Transactions.Delete;
 using Argon.Application.Transactions.Get;
 using Argon.Application.Transactions.GetList;
+using Argon.Application.Transactions.SetCounterparty;
 using Argon.Application.Transactions.Update;
 
 namespace Argon.WebApi.Controllers;
@@ -76,6 +77,30 @@ public class TransactionsController(
   public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] TransactionsUpdateRequest request)
   {
     request.Id = id;
+
+    await mediator.Send(request);
+
+    return NoContent();
+  }
+
+  /// <summary>
+  ///   Reassigns the counterparty of a Transaction without resending the rest of the
+  ///   transaction. Used when the importer auto-matched the wrong counterparty.
+  /// </summary>
+  /// <param name="id">The id of the Transaction</param>
+  /// <param name="request">The new counterparty id</param>
+  /// <response code="204">The counterparty was updated successfully</response>
+  /// <response code="400">The supplied request did not pass validation checks</response>
+  /// <response code="404">The Transaction could not be found</response>
+  [HttpPatch("{id:guid}/counterparty")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult> SetCounterparty(
+    [FromRoute] Guid id,
+    [FromBody] TransactionsSetCounterpartyRequest request)
+  {
+    request.TransactionId = id;
 
     await mediator.Send(request);
 

@@ -1987,6 +1987,80 @@ export class TransactionsClient extends ServiceBase {
     }
 
     /**
+     * Reassigns the counterparty of a Transaction without resending the rest of the
+    transaction. Used when the importer auto-matched the wrong counterparty.
+     * @param id The id of the Transaction
+     * @param request The new counterparty id
+     * @return The counterparty was updated successfully
+     */
+    setCounterparty(id: string, request: TransactionsSetCounterpartyRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/Transactions/{id}/counterparty";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PATCH",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processSetCounterparty(_response));
+        });
+    }
+
+    protected processSetCounterparty(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied request did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("The Transaction could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
      * Assigns an account to a single row of a Transaction without resending the rest
     of the transaction. Intended for the import-review reconciliation flow.
      * @param id The id of the Transaction
@@ -4305,6 +4379,46 @@ export interface ITransactionRowsUpdateRequest {
     credit: number | null;
     /** The description of the transaction row */
     description: string | null;
+}
+
+/** The request to reassign the counterparty of a Transaction without resending the rest of the transaction. Used when the parser auto-matched the wrong counterparty. */
+export class TransactionsSetCounterpartyRequest implements ITransactionsSetCounterpartyRequest {
+    /** The id of the counterparty to assign to the transaction */
+    counterpartyId!: string;
+
+    constructor(data?: ITransactionsSetCounterpartyRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): TransactionsSetCounterpartyRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionsSetCounterpartyRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        return data;
+    }
+}
+
+/** The request to reassign the counterparty of a Transaction without resending the rest of the transaction. Used when the parser auto-matched the wrong counterparty. */
+export interface ITransactionsSetCounterpartyRequest {
+    /** The id of the counterparty to assign to the transaction */
+    counterpartyId: string;
 }
 
 /** The request to assign an account to a single transaction row without resending the rest of the transaction. Used by the import-review reconciliation flow. */
