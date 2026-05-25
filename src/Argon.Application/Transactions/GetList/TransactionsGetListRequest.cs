@@ -9,6 +9,7 @@ namespace Argon.Application.Transactions.GetList;
 /// <param name="CounterpartyIds">The counterparty ids used in the transaction</param>
 /// <param name="DateFrom">The start date to use in the search of the transaction</param>
 /// <param name="DateTo">The end date to use in the search of the transaction</param>
+/// <param name="Status">Filter by transaction status</param>
 /// <param name="PageNumber">The page number (defaults to 1)</param>
 /// <param name="PageSize">The page size (defaults to 25)</param>
 [PublicAPI]
@@ -17,6 +18,7 @@ public record TransactionsGetListRequest(
   List<Guid>? CounterpartyIds,
   DateTimeOffset? DateFrom,
   DateTimeOffset? DateTo,
+  TransactionStatus? Status = null,
   int PageNumber = 1,
   int PageSize = 25
 ) : PaginatedListRequest(PageNumber, PageSize),

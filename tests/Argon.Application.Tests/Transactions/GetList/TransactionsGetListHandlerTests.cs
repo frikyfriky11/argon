@@ -135,7 +135,7 @@ public class TransactionsGetListHandlerTests
     await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, null, null, null, 1, 2);
+    TransactionsGetListRequest request = new(null, null, null, null, PageNumber: 1, PageSize: 2);
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
@@ -214,5 +214,26 @@ public class TransactionsGetListHandlerTests
 
     // assert
     CheckResults(result, transactions, 2, 1, 2, [2, 1]);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedStatus_WithStatusFilter()
+  {
+    // arrange
+    List<Transaction> transactions = CreateTestTransactions();
+    transactions[0].Status = TransactionStatus.PendingImportReview;
+    transactions[1].Status = TransactionStatus.Confirmed;
+    transactions[2].Status = TransactionStatus.PendingImportReview;
+
+    await _dbContext.Transactions.AddRangeAsync(transactions);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, Status: TransactionStatus.PendingImportReview);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    CheckResults(result, transactions, 2, 1, 2, [3, 1]);
   }
 }

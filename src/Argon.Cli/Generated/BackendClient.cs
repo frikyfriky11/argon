@@ -3019,10 +3019,11 @@ namespace Argon.Cli.Generated
         /// <param name="counterpartyIds">The counterparty ids used in the transaction</param>
         /// <param name="dateFrom">The start date to use in the search of the transaction</param>
         /// <param name="dateTo">The end date to use in the search of the transaction</param>
+        /// <param name="status">Filter by transaction status</param>
         /// <param name="pageNumber">The number of the page to retrieve from the data source</param>
         /// <param name="pageSize">The number of items in the page that must be retrieved from the data source</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -3103,10 +3104,11 @@ namespace Argon.Cli.Generated
         /// <param name="counterpartyIds">The counterparty ids used in the transaction</param>
         /// <param name="dateFrom">The start date to use in the search of the transaction</param>
         /// <param name="dateTo">The end date to use in the search of the transaction</param>
+        /// <param name="status">Filter by transaction status</param>
         /// <param name="pageNumber">The number of the page to retrieve from the data source</param>
         /// <param name="pageSize">The number of items in the page that must be retrieved from the data source</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -3137,6 +3139,10 @@ namespace Argon.Cli.Generated
                     if (dateTo != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("DateTo")).Append('=').Append(System.Uri.EscapeDataString(dateTo.Value.ToString("s", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (status != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("Status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(status, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     if (pageNumber != null)
                     {

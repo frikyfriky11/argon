@@ -1647,10 +1647,11 @@ export class TransactionsClient extends ServiceBase {
      * @param counterpartyIds (optional) The counterparty ids used in the transaction
      * @param dateFrom (optional) The start date to use in the search of the transaction
      * @param dateTo (optional) The end date to use in the search of the transaction
+     * @param status (optional) Filter by transaction status
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
@@ -1660,6 +1661,8 @@ export class TransactionsClient extends ServiceBase {
             url_ += "DateFrom=" + encodeURIComponent(dateFrom ? "" + dateFrom.toString() : "") + "&";
         if (dateTo !== undefined && dateTo !== null)
             url_ += "DateTo=" + encodeURIComponent(dateTo ? "" + dateTo.toString() : "") + "&";
+        if (status !== undefined && status !== null)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)

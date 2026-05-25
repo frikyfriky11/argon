@@ -38,13 +38,13 @@ internal static class TransactionsCommand
       Guid[]? counterparties = ctx.ParseResult.GetValueForOption(counterpartyIds);
 
       PaginatedListOfTransactionsGetListResponse result = await app.Transactions.GetListAsync(
-        accounts is { Length: > 0 } ? accounts : null,
-        counterparties is { Length: > 0 } ? counterparties : null,
-        ctx.ParseResult.GetValueForOption(from),
-        ctx.ParseResult.GetValueForOption(to),
-        ctx.ParseResult.GetValueForOption(page),
-        ctx.ParseResult.GetValueForOption(pageSize),
-        ctx.GetCancellationToken());
+        accountIds: accounts is { Length: > 0 } ? accounts : null,
+        counterpartyIds: counterparties is { Length: > 0 } ? counterparties : null,
+        dateFrom: ctx.ParseResult.GetValueForOption(from),
+        dateTo: ctx.ParseResult.GetValueForOption(to),
+        pageNumber: ctx.ParseResult.GetValueForOption(page),
+        pageSize: ctx.ParseResult.GetValueForOption(pageSize),
+        cancellationToken: ctx.GetCancellationToken());
 
       OutputFormatter.Write(result.Items, app.Output);
       if (app.Output == OutputFormat.Table)

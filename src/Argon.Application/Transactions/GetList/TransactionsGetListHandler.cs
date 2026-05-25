@@ -17,6 +17,7 @@ public class TransactionsGetListHandler(
       .Where(transaction => request.CounterpartyIds == null || request.CounterpartyIds.Count == 0 || transaction.CounterpartyId != null && request.CounterpartyIds.Contains(transaction.CounterpartyId.Value))
       .Where(transaction => request.DateFrom == null || transaction.Date >= DateOnly.FromDateTime(request.DateFrom.Value.Date))
       .Where(transaction => request.DateTo == null || transaction.Date <= DateOnly.FromDateTime(request.DateTo.Value.Date))
+      .Where(transaction => request.Status == null || transaction.Status == request.Status.Value)
       .OrderByDescending(transaction => transaction.Date)
       .ThenByDescending(transaction => transaction.Created)
       .ThenByDescending(transaction => transaction.Id)
