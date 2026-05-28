@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json.Nodes;
 using Argon.Cli.Generated;
@@ -230,9 +231,9 @@ public static class OutputFormatter
     DateOnly d => d.ToString("yyyy-MM-dd"),
     DateTimeOffset dto => dto.ToString("u"),
     DateTime dt => dt.ToString("u"),
-    decimal m => m.ToString("0.##"),
-    double d => d.ToString("0.##"),
-    float f => f.ToString("0.##"),
+    decimal m => m.ToString("0.##", CultureInfo.InvariantCulture),
+    double d => d.ToString("0.##", CultureInfo.InvariantCulture),
+    float f => f.ToString("0.##", CultureInfo.InvariantCulture),
     bool b => b ? "true" : "false",
     _ => value.ToString() ?? "",
   };

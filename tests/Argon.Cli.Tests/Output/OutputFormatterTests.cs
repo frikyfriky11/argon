@@ -1,9 +1,11 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Argon.Cli.Output;
 
 namespace Argon.Cli.Tests.Output;
 
+[NonParallelizable]
 public class OutputFormatterTests
 {
   [Test]
@@ -332,36 +334,47 @@ public class OutputFormatterTests
   public void Render_ShouldFormatAllScalarTypes_ViaPredictableInvariantFormats()
   {
     // Exercises Render through the CSV path; CSV emits raw Render output (no padding)
-    // so we can assert on exact strings.
-    DateTimeOffset dto = new(2024, 3, 14, 9, 30, 0, TimeSpan.Zero);
-    DateTime dt = new(2024, 3, 14, 9, 30, 0, DateTimeKind.Utc);
-    object payload = new[]
+    // so we can assert on exact strings. The thread is pinned to it-IT (comma decimal
+    // separator) for the duration of the test so a regression to CurrentCulture
+    // formatting would surface as commas inside numeric CSV cells.
+    CultureInfo previous = CultureInfo.CurrentCulture;
+    CultureInfo.CurrentCulture = new CultureInfo("it-IT");
+    try
     {
-      new
+      DateTimeOffset dto = new(2024, 3, 14, 9, 30, 0, TimeSpan.Zero);
+      DateTime dt = new(2024, 3, 14, 9, 30, 0, DateTimeKind.Utc);
+      object payload = new[]
       {
-        d = new DateOnly(2024, 3, 14),
-        dto,
-        dt,
-        m = 12.5m,
-        f = 1.5f,
-        dbl = 2.75d,
-        bTrue = true,
-        bFalse = false,
-      },
-    };
+        new
+        {
+          d = new DateOnly(2024, 3, 14),
+          dto,
+          dt,
+          m = 12.5m,
+          f = 1.5f,
+          dbl = 2.75d,
+          bTrue = true,
+          bFalse = false,
+        },
+      };
 
-    using StringWriter writer = new();
+      using StringWriter writer = new();
 
-    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+      OutputFormatter.Write(payload, OutputFormat.Csv, writer);
 
-    string body = writer.ToString();
-    body.Should().Contain("2024-03-14", "DateOnly uses yyyy-MM-dd");
-    body.Should().Contain("2024-03-14 09:30:00Z", "DateTimeOffset uses the 'u' format");
-    body.Should().Contain("12.5", "decimal trims trailing zeros via 0.##");
-    body.Should().Contain("1.5", "float uses 0.##");
-    body.Should().Contain("2.75", "double uses 0.##");
-    body.Should().Contain(",true,", "bool true → \"true\"");
-    body.Should().Contain(",false", "bool false → \"false\"");
+      string body = writer.ToString();
+      body.Should().Contain("2024-03-14", "DateOnly uses yyyy-MM-dd");
+      body.Should().Contain("2024-03-14 09:30:00Z", "DateTimeOffset uses the 'u' format");
+      body.Should().Contain(",12.5,", "decimal trims trailing zeros via 0.## and stays dot-separated under it-IT");
+      body.Should().Contain(",1.5,", "float uses 0.## under InvariantCulture");
+      body.Should().Contain(",2.75,", "double uses 0.## under InvariantCulture");
+      body.Should().Contain(",true,", "bool true → \"true\"");
+      body.Should().Contain(",false", "bool false → \"false\"");
+    }
+    finally
+    {
+      CultureInfo.CurrentCulture = previous;
+    }
   }
 
   [Test]
