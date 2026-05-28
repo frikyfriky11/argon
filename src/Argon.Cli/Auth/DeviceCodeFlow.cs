@@ -6,11 +6,26 @@ public sealed class DeviceCodeFlow
 {
   private readonly HttpClient _http;
   private readonly AuthOptions _options;
+  private readonly Action<string> _browserLauncher;
+  private readonly Func<TimeSpan, CancellationToken, Task> _delay;
 
   public DeviceCodeFlow(HttpClient http, AuthOptions options)
+    : this(http, options, browserLauncher: null, delay: null)
+  {
+  }
+
+  // Test seam: tests inject a no-op browser launcher and a zero-delay function so the
+  // polling loop runs synchronously without spawning a browser process.
+  internal DeviceCodeFlow(
+    HttpClient http,
+    AuthOptions options,
+    Action<string>? browserLauncher,
+    Func<TimeSpan, CancellationToken, Task>? delay)
   {
     _http = http;
     _options = options;
+    _browserLauncher = browserLauncher ?? TryOpenBrowser;
+    _delay = delay ?? Task.Delay;
   }
 
   public async Task<TokenSet> LoginAsync(CancellationToken ct)
@@ -28,7 +43,7 @@ public sealed class DeviceCodeFlow
       Console.WriteLine();
     }
 
-    TryOpenBrowser(device.VerificationUriComplete ?? device.VerificationUri);
+    _browserLauncher(device.VerificationUriComplete ?? device.VerificationUri);
 
     Console.WriteLine("Waiting for authorization...");
     return await PollForTokenAsync(device, ct);
@@ -84,7 +99,7 @@ public sealed class DeviceCodeFlow
 
     while (DateTimeOffset.UtcNow < deadline)
     {
-      await Task.Delay(interval, ct);
+      await _delay(interval, ct);
 
       Dictionary<string, string> form = new()
       {
