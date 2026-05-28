@@ -92,10 +92,10 @@ public class LoginCommandTests
     // act
     CliInvocationResult result = await _harness.InvokeAsync("whoami");
 
-    // assert
+    // assert — match the whole "signed in as" line so we cannot pass on
+    // "signed in as: stefano@example.com" via substring.
     result.ExitCode.Should().Be(0);
-    result.StdOut.Should().Contain("signed in as: stefano");
-    result.StdOut.Should().NotContain("stefano@example.com",
+    result.StdOut.Should().MatchRegex(@"(?m)^signed in as: stefano\s*$",
       "preferred_username wins over email when both are present");
   }
 

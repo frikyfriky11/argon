@@ -88,8 +88,8 @@ public class DeviceCodeFlowTests
     tokens.AccessToken.Should().Be("ok");
     requestedDelays.Should().HaveCount(2,
       "the polling loop delayed twice: before the slow_down response and before the success");
-    requestedDelays[1].Should().BeGreaterThan(requestedDelays[0],
-      "slow_down bumps the polling interval up by 5 seconds before the next attempt");
+    requestedDelays[1].Should().Be(requestedDelays[0] + TimeSpan.FromSeconds(5),
+      "the RFC8628 slow_down response bumps the polling interval up by exactly 5 seconds");
   }
 
   [Test]

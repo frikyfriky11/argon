@@ -412,10 +412,10 @@ public class TransactionsCommandTests
     // assert
     result.ExitCode.Should().Be(0);
     result.StdOut.Trim().Should().Be("categorized.");
-    CapturedRequest put = _harness.Handler.Requests[1];
-    put.Method.Should().Be(HttpMethod.Patch);
-    put.Uri.AbsolutePath.Should().Be($"/Transactions/{txId}/rows/{pendingRowId}");
-    JsonDocument body = JsonDocument.Parse(put.Body!);
+    CapturedRequest patch = _harness.Handler.Requests[1];
+    patch.Method.Should().Be(HttpMethod.Patch);
+    patch.Uri.AbsolutePath.Should().Be($"/Transactions/{txId}/rows/{pendingRowId}");
+    JsonDocument body = JsonDocument.Parse(patch.Body!);
     body.RootElement.GetProperty("accountId").GetGuid().Should().Be(accId);
   }
 

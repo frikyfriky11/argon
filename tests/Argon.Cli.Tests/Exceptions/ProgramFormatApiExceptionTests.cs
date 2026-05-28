@@ -4,11 +4,14 @@ namespace Argon.Cli.Tests.Exceptions;
 
 public class ProgramFormatApiExceptionTests
 {
+  private static readonly IReadOnlyDictionary<string, IEnumerable<string>> EmptyHeaders =
+    new Dictionary<string, IEnumerable<string>>();
+
   [Test]
   public void FormatApiException_ShouldUseInnerMessageWithStatus_WhenResponseBodyIsEmpty()
   {
     // arrange
-    ApiException ex = new("upstream said no", 502, response: "", headers: null!, innerException: null!);
+    ApiException ex = new("upstream said no", 502, response: "", headers: EmptyHeaders, innerException: null!);
 
     // act
     string formatted = Argon.Cli.Program.FormatApiException(ex);
@@ -31,7 +34,7 @@ public class ProgramFormatApiExceptionTests
         }
       }
       """;
-    ApiException ex = new("validation", 400, body, headers: null!, innerException: null!);
+    ApiException ex = new("validation", 400, body, headers: EmptyHeaders, innerException: null!);
 
     // act
     string formatted = Argon.Cli.Program.FormatApiException(ex);
@@ -55,7 +58,7 @@ public class ProgramFormatApiExceptionTests
         "status": 404
       }
       """;
-    ApiException ex = new("not found", 404, body, headers: null!, innerException: null!);
+    ApiException ex = new("not found", 404, body, headers: EmptyHeaders, innerException: null!);
 
     // act
     string formatted = Argon.Cli.Program.FormatApiException(ex);
@@ -68,7 +71,7 @@ public class ProgramFormatApiExceptionTests
   public void FormatApiException_ShouldFallBackToTheRawResponse_WhenItIsNotValidJson()
   {
     // arrange
-    ApiException ex = new("oops", 500, "<html>uh oh</html>", headers: null!, innerException: null!);
+    ApiException ex = new("oops", 500, "<html>uh oh</html>", headers: EmptyHeaders, innerException: null!);
 
     // act
     string formatted = Argon.Cli.Program.FormatApiException(ex);
@@ -82,7 +85,7 @@ public class ProgramFormatApiExceptionTests
   {
     // arrange
     string body = """{"foo": "bar"}""";
-    ApiException ex = new("oops", 500, body, headers: null!, innerException: null!);
+    ApiException ex = new("oops", 500, body, headers: EmptyHeaders, innerException: null!);
 
     // act
     string formatted = Argon.Cli.Program.FormatApiException(ex);
@@ -95,7 +98,7 @@ public class ProgramFormatApiExceptionTests
   public void FormatApiException_ShouldUseRawResponseString_WhenResponseIsWhitespace()
   {
     // arrange
-    ApiException ex = new("nope", 504, "   \n  ", headers: null!, innerException: null!);
+    ApiException ex = new("nope", 504, "   \n  ", headers: EmptyHeaders, innerException: null!);
 
     // act
     string formatted = Argon.Cli.Program.FormatApiException(ex);
