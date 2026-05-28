@@ -38,6 +38,9 @@ Obj/
 *.VisualState.xml
 TestResult.xml
 
+# ReportGenerator output
+coverage-report/
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/

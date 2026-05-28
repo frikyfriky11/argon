@@ -211,12 +211,27 @@ public class AccountsCommandTests
 - Pure-logic tests (validators, `ReferenceResolver`, `Program.FormatApiException`) skip the harness and instantiate the SUT directly.
 - New CLI code that touches HTTP, the file system, or the clock should be designed with an injectable seam (see `DeviceCodeFlow`'s internal ctor for the pattern).
 
-**Coverage** — Generated assemblies (`Argon.Cli.Generated.*`) and EF migrations are excluded via `coverlet.runsettings` at the repo root:
+**Coverage** — Generated assemblies (`Argon.Cli.Generated.*`) and EF migrations are excluded via `coverlet.runsettings` at the repo root. The XPlat Code Coverage collector ships with the .NET SDK; the HTML/text report needs `dotnet-reportgenerator-globaltool`, which is a one-time install:
 
 ```bash
-dotnet test --settings coverlet.runsettings --collect:"XPlat Code Coverage"
-reportgenerator -reports:"**/TestResults/**/coverage.cobertura.xml" -targetdir:coverage-report
+dotnet tool install -g dotnet-reportgenerator-globaltool   # once per machine
 ```
+
+Then, from the repo root:
+
+```bash
+# 1. Run every test project and collect Cobertura XML under each tests/**/TestResults/<guid>/.
+dotnet test --settings coverlet.runsettings --collect:"XPlat Code Coverage"
+
+# 2. Roll the per-run XML files up into a browsable report + a one-page summary.
+reportgenerator -reports:"**/TestResults/**/coverage.cobertura.xml" \
+                -targetdir:coverage-report \
+                -reporttypes:"Html;TextSummary"
+```
+
+The summary lands at `coverage-report/Summary.txt` (good for a quick glance); the HTML root is `coverage-report/index.html`. Both `TestResults/` and `coverage-report/` are gitignored.
+
+To scope coverage to a single project, swap the `dotnet test` line for e.g. `dotnet test tests/Argon.Cli.Tests/Argon.Cli.Tests.csproj --settings coverlet.runsettings --collect:"XPlat Code Coverage"`; the report glob still resolves correctly because each run writes a fresh `TestResults/<guid>/` directory. To re-generate the report against a clean slate, delete the per-project `TestResults/` directories first — `reportgenerator` merges *every* matching XML it finds, including stale ones from previous runs.
 
 ## Git commits
 
