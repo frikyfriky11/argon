@@ -36,7 +36,7 @@ public static class Program
     context.ExitCode = 1;
   }
 
-  private static string FormatApiException(ApiException ex)
+  internal static string FormatApiException(ApiException ex)
   {
     if (string.IsNullOrWhiteSpace(ex.Response))
     {
@@ -108,7 +108,7 @@ public static class Program
   }
 }
 
-internal sealed class CliContextFactory
+internal class CliContextFactory
 {
   public Option<string?> BaseUrlOption { get; }
   public Option<string?> AuthorityOption { get; }
@@ -127,7 +127,7 @@ internal sealed class CliContextFactory
     OutputOption = output;
   }
 
-  public CliContext Build(InvocationContext context)
+  public virtual CliContext Build(InvocationContext context)
   {
     string? cliBaseUrl = context.ParseResult.GetValueForOption(BaseUrlOption);
     string? cliAuthority = context.ParseResult.GetValueForOption(AuthorityOption);

@@ -38,4 +38,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Argon.Cli.Tests" />
+  </ItemGroup>
+
 </Project>
