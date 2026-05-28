@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -261,20 +262,31 @@ public class TransactionsCommandTests
   [Test]
   public async Task Create_ShouldParseDecimalsUsingInvariantCulture_RegardlessOfHostLocale()
   {
-    // arrange
-    Guid cpId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    Guid accId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-    _harness.Handler.EnqueueJson(new TransactionsCreateResponse { Id = Guid.NewGuid() });
+    // arrange — pin the host to it-IT (comma decimal separator) so that a regression
+    // to decimal.Parse(raw) without an explicit culture would FormatException on the
+    // dotted input below.
+    CultureInfo previous = CultureInfo.CurrentCulture;
+    CultureInfo.CurrentCulture = new CultureInfo("it-IT");
+    try
+    {
+      Guid cpId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+      Guid accId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+      _harness.Handler.EnqueueJson(new TransactionsCreateResponse { Id = Guid.NewGuid() });
 
-    // act
-    CliInvocationResult result = await _harness.InvokeAsync(
-      $"tx create --date 2024-03-14 --counterparty {cpId} -r {accId}:1234.56:0");
+      // act
+      CliInvocationResult result = await _harness.InvokeAsync(
+        $"tx create --date 2024-03-14 --counterparty {cpId} -r {accId}:1234.56:0");
 
-    // assert
-    result.ExitCode.Should().Be(0);
-    JsonDocument body = JsonDocument.Parse(_harness.Handler.Requests[0].Body!);
-    body.RootElement.GetProperty("transactionRows")[0]
-      .GetProperty("debit").GetDecimal().Should().Be(1234.56m);
+      // assert
+      result.ExitCode.Should().Be(0);
+      JsonDocument body = JsonDocument.Parse(_harness.Handler.Requests[0].Body!);
+      body.RootElement.GetProperty("transactionRows")[0]
+        .GetProperty("debit").GetDecimal().Should().Be(1234.56m);
+    }
+    finally
+    {
+      CultureInfo.CurrentCulture = previous;
+    }
   }
 
   [Test]
