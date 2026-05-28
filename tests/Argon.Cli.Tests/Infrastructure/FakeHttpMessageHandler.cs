@@ -48,7 +48,8 @@ internal sealed class FakeHttpMessageHandler : HttpMessageHandler
     Requests.Add(new CapturedRequest(
       request.Method,
       request.RequestUri ?? new Uri("about:blank"),
-      body));
+      body,
+      request.Headers.Authorization?.ToString()));
 
     if (_responders.Count == 0)
     {
@@ -60,4 +61,8 @@ internal sealed class FakeHttpMessageHandler : HttpMessageHandler
   }
 }
 
-internal sealed record CapturedRequest(HttpMethod Method, Uri Uri, string? Body);
+internal sealed record CapturedRequest(
+  HttpMethod Method,
+  Uri Uri,
+  string? Body,
+  string? AuthorizationHeader);
