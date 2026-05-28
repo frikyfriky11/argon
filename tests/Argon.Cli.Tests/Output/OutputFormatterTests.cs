@@ -222,7 +222,7 @@ public class OutputFormatterTests
 
     OutputFormatter.Write(payload, OutputFormat.Csv, writer);
 
-    string[] lines = writer.ToString().TrimEnd().Split('\n');
+    string[] lines = writer.ToString().TrimEnd().Split(Environment.NewLine);
     lines.Should().HaveCount(2);
     lines[0].Should().Be("id,name");
     lines[1].Should().Be("1,Cash");
@@ -242,7 +242,7 @@ public class OutputFormatterTests
 
     OutputFormatter.Write(payload, OutputFormat.Csv, writer);
 
-    string[] lines = writer.ToString().TrimEnd().Split('\n');
+    string[] lines = writer.ToString().TrimEnd().Split(Environment.NewLine);
     lines.Should().HaveCount(4, "1 header + 3 data rows");
     lines[0].Should().Be("id,name");
     lines[1].Should().Be("1,Cash");
@@ -389,7 +389,7 @@ public class OutputFormatterTests
 
     OutputFormatter.Write(payload, OutputFormat.Csv, writer);
 
-    string[] lines = writer.ToString().TrimEnd().Split('\n');
+    string[] lines = writer.ToString().TrimEnd().Split(Environment.NewLine);
     lines[1].Should().Be("1,",
       "a null cell renders as the empty string between the comma and the line end");
   }
