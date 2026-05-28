@@ -30,6 +30,10 @@ public static class Program
       _ => ex.Message,
     };
     context.Console.Error.Write($"error: {message}{Environment.NewLine}");
+    // System.CommandLine v2 beta4 does not apply the UseExceptionHandler
+    // errorExitCode when a custom handler runs — set it explicitly so scripts
+    // wrapping the CLI see a non-zero exit on failure.
+    context.ExitCode = 1;
   }
 
   private static string FormatApiException(ApiException ex)

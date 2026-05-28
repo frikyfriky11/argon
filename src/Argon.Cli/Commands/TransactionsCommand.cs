@@ -30,7 +30,16 @@ internal static class TransactionsCommand
     Option<DateTimeOffset?> to = new("--to", "Date to (inclusive)");
     Option<TransactionStatus?> status = new(
       "--status",
-      parseArgument: r => ParseStatus(r.Tokens[0].Value),
+      parseArgument: r =>
+      {
+        if (TryParseStatus(r.Tokens[0].Value, out TransactionStatus parsed))
+        {
+          return parsed;
+        }
+
+        r.ErrorMessage = $"Unknown status '{r.Tokens[0].Value}'. Expected: pending, confirmed, duplicate.";
+        return default;
+      },
       description: "Filter by status: pending, confirmed, duplicate");
     Option<int?> page = new("--page", "Page number");
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
@@ -396,11 +405,26 @@ internal static class TransactionsCommand
     return decimal.Parse(raw, CultureInfo.InvariantCulture);
   }
 
-  private static TransactionStatus ParseStatus(string raw) => raw.ToLowerInvariant() switch
+  private static bool TryParseStatus(string raw, out TransactionStatus status)
   {
-    "pending" or "pendingimportreview" or "pending-import-review" => TransactionStatus.PendingImportReview,
-    "confirmed" => TransactionStatus.Confirmed,
-    "duplicate" or "potentialduplicate" or "potential-duplicate" => TransactionStatus.PotentialDuplicate,
-    _ => throw new ArgumentException($"Unknown status '{raw}'. Expected: pending, confirmed, duplicate."),
-  };
+    switch (raw.ToLowerInvariant())
+    {
+      case "pending":
+      case "pendingimportreview":
+      case "pending-import-review":
+        status = TransactionStatus.PendingImportReview;
+        return true;
+      case "confirmed":
+        status = TransactionStatus.Confirmed;
+        return true;
+      case "duplicate":
+      case "potentialduplicate":
+      case "potential-duplicate":
+        status = TransactionStatus.PotentialDuplicate;
+        return true;
+      default:
+        status = default;
+        return false;
+    }
+  }
 }
