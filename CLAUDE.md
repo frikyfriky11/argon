@@ -142,6 +142,82 @@ Authentication is handled by **Authentik** (self-hosted IdP). The frontend uses 
 
 `src/Argon.Cli/` is a .NET 8 command-line client (`argon`) that wraps the WebApi. It is a pure REST consumer with its own NSwag-generated client (`src/Argon.Cli/Generated/BackendClient.cs`, regenerated on every WebApi Debug build via the same `nswag.json`) and signs users in via the OAuth 2.0 device-code flow against Authentik. v1 surface covers Accounts, Counterparties, CounterpartyIdentifiers, and Transactions. See `src/Argon.Cli/README.md` for the local-dev workflow (`dotnet run --project src/Argon.Cli -- ...`) and configuration details.
 
+## Tests
+
+**Stack** — NUnit + FluentAssertions across both test projects. Application tests also use Moq for non-DB collaborators and `Microsoft.EntityFrameworkCore.InMemory` for the DbContext. CLI tests pull in `coverlet.collector` and rely on hand-written test doubles (no Moq used so far). Two-space indent throughout, matching `src/`.
+
+**Layout** — `tests/<Project>.Tests/<Feature>/<Action>/<ClassName>Tests.cs` mirrors the production tree (e.g. `tests/Argon.Application.Tests/Accounts/GetList/AccountsGetListHandlerTests.cs`). Cross-cutting tests (`ReferenceResolverTests`, `OutputFormatterTests`) sit at a sensible top-level folder for their concern.
+
+**File template**:
+
+```csharp
+public class AccountsGetListHandlerTests
+{
+  [SetUp]
+  public void SetUp()
+  {
+    _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
+    _sut = new AccountsGetListHandler(_dbContext);
+  }
+
+  private IApplicationDbContext _dbContext = null!;
+  private AccountsGetListHandler _sut = null!;
+
+  [Test]
+  public async Task Handle_ShouldReturnAllAccounts_OrderedByName()
+  {
+    // arrange
+    ...
+    // act
+    List<AccountsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+    // assert
+    result.Should().HaveCount(3);
+    result[0].Name.Should().Be("Cash");
+  }
+}
+```
+
+- Test method names are `MethodUnderTest_ShouldOutcome_WhenCondition` (or `_Where…` / past-tense for completed state). The first segment matches the SUT method or scenario being tested.
+- AAA blocks are always present and separated by `// arrange`, `// act`, `// assert` comments — even when a block is one line. Trivial setups can omit the `// arrange` comment.
+- `_sut` and `_dbContext` are the canonical field names. `null!` placates the nullable analyzer for `[SetUp]`-initialised fields.
+- Prefer `[TestCase(...)]` for tabular variants over copy-paste.
+
+**Application layer** — Use the real EF Core InMemory provider through `DatabaseTestHelpers.GetInMemoryDbContext()`. Seed with `_dbContext.SaveChangesAsync(CancellationToken.None)`. Do **not** mock `IApplicationDbContext` — the test project ships InMemory EF for exactly this reason, so handler tests exercise actual query translation. Validator tests live alongside handler tests in the same feature folder (`AccountsCreateValidatorTests.cs`).
+
+**CLI layer** — Drive end-to-end through `CliTestHarness` in `tests/Argon.Cli.Tests/Infrastructure/`:
+
+```csharp
+[NonParallelizable]
+public class AccountsCommandTests
+{
+  [SetUp] public void SetUp() => _harness = new CliTestHarness();
+  [TearDown] public void TearDown() => _harness.Dispose();
+  private CliTestHarness _harness = null!;
+
+  [Test]
+  public async Task List_ShouldCallGetAccounts()
+  {
+    _harness.Handler.EnqueueJson(new[] { new AccountsGetListResponse { ... } });
+    CliInvocationResult result = await _harness.InvokeAsync("accounts list");
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.AbsolutePath.Should().Be("/Accounts");
+  }
+}
+```
+
+- `[NonParallelizable]` is mandatory on any test that goes through the harness: it redirects `Console.Out`/`Console.Error`, which is process-global state.
+- `FakeHttpMessageHandler.EnqueueJson` / `EnqueueEmpty` / `EnqueueRaw` queue responses in the order the production code will issue them. Reference resolution (`--counterparty Foo`) triggers an extra GET, so queue the resolver responses **before** the actual call.
+- Assert on `CapturedRequest` (Method / Uri / Body / AuthorizationHeader) to verify the wire shape.
+- Pure-logic tests (validators, `ReferenceResolver`, `Program.FormatApiException`) skip the harness and instantiate the SUT directly.
+- New CLI code that touches HTTP, the file system, or the clock should be designed with an injectable seam (see `DeviceCodeFlow`'s internal ctor for the pattern).
+
+**Coverage** — Generated assemblies (`Argon.Cli.Generated.*`) and EF migrations are excluded via `coverlet.runsettings` at the repo root:
+
+```bash
+dotnet test --settings coverlet.runsettings --collect:"XPlat Code Coverage"
+reportgenerator -reports:"**/TestResults/**/coverage.cobertura.xml" -targetdir:coverage-report
+```
+
 ## Git commits
 
 This repository uses **Conventional Commits** (`<type>(<scope>): <subject>`). Common types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`. The scope is the affected area in kebab-case (e.g. `parsers`, `cli`, `webapi`, `webgui`). Examples from the history:
