@@ -65,6 +65,34 @@ public class DeviceCodeFlowTests
   }
 
   [Test]
+  public async Task LoginAsync_ShouldRetryWithIncreasedInterval_WhenTokenEndpointReturnsSlowDown()
+  {
+    // arrange — server asks us to back off once, then accepts
+    List<TimeSpan> requestedDelays = new();
+    DeviceCodeFlow sut = new(
+      _http, _options,
+      browserLauncher: _ => { },
+      delay: (interval, _) =>
+      {
+        requestedDelays.Add(interval);
+        return Task.CompletedTask;
+      });
+    EnqueueDeviceCode(intervalSeconds: 1);
+    EnqueueTokenError("slow_down", HttpStatusCode.BadRequest);
+    EnqueueTokenSuccess(accessToken: "ok");
+
+    // act
+    TokenSet tokens = await sut.LoginAsync(CancellationToken.None);
+
+    // assert
+    tokens.AccessToken.Should().Be("ok");
+    requestedDelays.Should().HaveCount(2,
+      "the polling loop delayed twice: before the slow_down response and before the success");
+    requestedDelays[1].Should().BeGreaterThan(requestedDelays[0],
+      "slow_down bumps the polling interval up by 5 seconds before the next attempt");
+  }
+
+  [Test]
   public async Task LoginAsync_ShouldKeepPolling_WhileTokenEndpointReturnsAuthorizationPending()
   {
     // arrange

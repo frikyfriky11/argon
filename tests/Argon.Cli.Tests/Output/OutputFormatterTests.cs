@@ -208,4 +208,176 @@ public class OutputFormatterTests
     node["accountTypeName"].Should().BeNull(
       "non-integer or out-of-range `type` fields stay untouched so we don't falsely tag unrelated objects");
   }
+
+  // ----- CSV output -----
+
+  [Test]
+  public void WriteCsv_ShouldEmitHeaderAndRow_ForASingleObject()
+  {
+    object payload = new { id = 1, name = "Cash" };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    string[] lines = writer.ToString().TrimEnd().Split('\n');
+    lines.Should().HaveCount(2);
+    lines[0].Should().Be("id,name");
+    lines[1].Should().Be("1,Cash");
+  }
+
+  [Test]
+  public void WriteCsv_ShouldEmitOneRowPerItem_ForACollection()
+  {
+    object payload = new[]
+    {
+      new { id = 1, name = "Cash" },
+      new { id = 2, name = "Groceries" },
+      new { id = 3, name = "Salary" },
+    };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    string[] lines = writer.ToString().TrimEnd().Split('\n');
+    lines.Should().HaveCount(4, "1 header + 3 data rows");
+    lines[0].Should().Be("id,name");
+    lines[1].Should().Be("1,Cash");
+    lines[2].Should().Be("2,Groceries");
+    lines[3].Should().Be("3,Salary");
+  }
+
+  [Test]
+  public void WriteCsv_ShouldEmitNothing_ForAnEmptyCollection()
+  {
+    object payload = Array.Empty<object>();
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    writer.ToString().Should().BeEmpty(
+      "no header is emitted when there are no rows — there's no first row to reflect on");
+  }
+
+  [Test]
+  public void WriteCsv_ShouldQuoteAndEscape_ValuesContainingSpecialCharacters()
+  {
+    object payload = new[]
+    {
+      new { id = 1, description = "Lidl, Bozen" },
+      new { id = 2, description = "She said \"hi\"" },
+      new { id = 3, description = "line one\nline two" },
+      new { id = 4, description = "carriage\rreturn" },
+    };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    string body = writer.ToString();
+    body.Should().Contain("\"Lidl, Bozen\"", "commas force quoting");
+    body.Should().Contain("\"She said \"\"hi\"\"\"", "internal double-quotes are escaped by doubling");
+    body.Should().Contain("\"line one\nline two\"", "newlines force quoting");
+    body.Should().Contain("\"carriage\rreturn\"", "carriage returns force quoting");
+  }
+
+  [Test]
+  public void WriteCsv_ShouldNotQuote_ValuesWithoutSpecialCharacters()
+  {
+    object payload = new { id = 1, name = "PlainText" };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    writer.ToString().Should().NotContain("\"",
+      "values that contain none of [, \" \\n \\r] are emitted verbatim");
+  }
+
+  // ----- WriteTable edges -----
+
+  [Test]
+  public void WriteTable_ShouldPrintNoResultsMarker_ForAnEmptyCollection()
+  {
+    object payload = Array.Empty<object>();
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Table, writer);
+
+    writer.ToString().Trim().Should().Be("(no results)");
+  }
+
+  [Test]
+  public void WriteTable_ShouldFallBackToJson_WhenTheFirstRowHasNoScalarProperties()
+  {
+    // arrays + nested objects aren't scalar, so the table renderer has no columns to draw
+    object payload = new { children = new[] { 1, 2, 3 } };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Table, writer);
+
+    string output = writer.ToString().Trim();
+    output.Should().StartWith("{").And.EndWith("}");
+    JsonNode node = JsonNode.Parse(output)!;
+    node["children"]!.AsArray().Count.Should().Be(3);
+  }
+
+  // ----- Render scalar types -----
+
+  [Test]
+  public void Render_ShouldFormatAllScalarTypes_ViaPredictableInvariantFormats()
+  {
+    // Exercises Render through the CSV path; CSV emits raw Render output (no padding)
+    // so we can assert on exact strings.
+    DateTimeOffset dto = new(2024, 3, 14, 9, 30, 0, TimeSpan.Zero);
+    DateTime dt = new(2024, 3, 14, 9, 30, 0, DateTimeKind.Utc);
+    object payload = new[]
+    {
+      new
+      {
+        d = new DateOnly(2024, 3, 14),
+        dto,
+        dt,
+        m = 12.5m,
+        f = 1.5f,
+        dbl = 2.75d,
+        bTrue = true,
+        bFalse = false,
+      },
+    };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    string body = writer.ToString();
+    body.Should().Contain("2024-03-14", "DateOnly uses yyyy-MM-dd");
+    body.Should().Contain("2024-03-14 09:30:00Z", "DateTimeOffset uses the 'u' format");
+    body.Should().Contain("12.5", "decimal trims trailing zeros via 0.##");
+    body.Should().Contain("1.5", "float uses 0.##");
+    body.Should().Contain("2.75", "double uses 0.##");
+    body.Should().Contain(",true,", "bool true → \"true\"");
+    body.Should().Contain(",false", "bool false → \"false\"");
+  }
+
+  [Test]
+  public void Render_ShouldEmitEmptyString_ForNullScalarValues()
+  {
+    object payload = new[]
+    {
+      new { id = 1, optional = (string?)null },
+    };
+
+    using StringWriter writer = new();
+
+    OutputFormatter.Write(payload, OutputFormat.Csv, writer);
+
+    string[] lines = writer.ToString().TrimEnd().Split('\n');
+    lines[1].Should().Be("1,",
+      "a null cell renders as the empty string between the comma and the line end");
+  }
 }
