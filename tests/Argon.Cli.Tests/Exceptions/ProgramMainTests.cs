@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Argon.Cli.Tests.Exceptions;
 
 [NonParallelizable]
@@ -13,15 +15,16 @@ public class ProgramMainTests
 
     // assert
     exitCode.Should().Be(0);
-    stdout.Should().ContainAll(
-      "accounts",
-      "counterparties",
-      "counterparty-identifiers",
-      "transactions",
-      "login",
-      "logout",
-      "whoami");
-    stdout.Should().ContainAll("cp", "cpi", "tx");
+    AssertListsEntry(stdout, "accounts");
+    AssertListsEntry(stdout, "counterparties");
+    AssertListsEntry(stdout, "counterparty-identifiers");
+    AssertListsEntry(stdout, "transactions");
+    AssertListsEntry(stdout, "login");
+    AssertListsEntry(stdout, "logout");
+    AssertListsEntry(stdout, "whoami");
+    AssertAliasOf(stdout, "counterparties", "cp");
+    AssertAliasOf(stdout, "counterparty-identifiers", "cpi");
+    AssertAliasOf(stdout, "transactions", "tx");
   }
 
   [Test]
@@ -32,7 +35,11 @@ public class ProgramMainTests
 
     // assert
     exitCode.Should().Be(0);
-    stdout.Should().ContainAll("--base-url", "--authority", "--client-id", "--output", "-o");
+    AssertListsEntry(stdout, "--base-url");
+    AssertListsEntry(stdout, "--authority");
+    AssertListsEntry(stdout, "--client-id");
+    Regex.IsMatch(stdout, @"(?m)^\s+-o,\s*--output\b").Should().BeTrue(
+      "the --output option should advertise its -o short form on the same line");
   }
 
   // ----- subcommand help -----
@@ -45,7 +52,10 @@ public class ProgramMainTests
 
     // assert
     exitCode.Should().Be(0);
-    stdout.Should().ContainAll("list", "get", "create", "update", "delete", "favourite");
+    foreach (string name in new[] { "list", "get", "create", "update", "delete", "favourite" })
+    {
+      AssertListsEntry(stdout, name);
+    }
   }
 
   [Test]
@@ -56,8 +66,13 @@ public class ProgramMainTests
 
     // assert
     exitCode.Should().Be(0);
-    stdout.Should().ContainAll(
-      "list", "get", "create", "update", "categorize", "set-counterparty", "history", "delete");
+    foreach (string name in new[]
+             {
+               "list", "get", "create", "update", "categorize", "set-counterparty", "history", "delete",
+             })
+    {
+      AssertListsEntry(stdout, name);
+    }
   }
 
   [Test]
@@ -68,7 +83,24 @@ public class ProgramMainTests
 
     // assert
     exitCode.Should().Be(0);
-    stdout.Should().Contain("resolve");
+    AssertListsEntry(stdout, "resolve");
+  }
+
+  private static void AssertListsEntry(string output, string name)
+  {
+    // System.CommandLine renders each command/option as a line indented by whitespace
+    // with the entry name as its leading token, e.g. "  --base-url <base-url>   ...".
+    // Matching the leading-token shape avoids false positives from the same string
+    // appearing inside a sibling's description.
+    Regex.IsMatch(output, $@"(?m)^\s+{Regex.Escape(name)}\b").Should().BeTrue(
+      $"the help output should list an entry whose first token is '{name}'");
+  }
+
+  private static void AssertAliasOf(string output, string canonical, string alias)
+  {
+    // Aliased commands render as "  canonical, alias  <description>".
+    Regex.IsMatch(output, $@"(?m)^\s+{Regex.Escape(canonical)},\s*{Regex.Escape(alias)}\b").Should().BeTrue(
+      $"the help output should advertise '{alias}' as an alias of '{canonical}' on the same line");
   }
 
   // ----- error path -----
