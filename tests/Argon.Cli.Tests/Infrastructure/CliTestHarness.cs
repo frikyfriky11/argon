@@ -24,6 +24,9 @@ internal sealed class CliTestHarness : IDisposable
   public CounterpartyIdentifiersClient CounterpartyIdentifiers { get; }
   public TransactionsClient Transactions { get; }
   public ReferenceResolver Resolver { get; }
+  public TokenStore TokenStore { get; }
+
+  private readonly string _credentialsDirectory;
 
   public CliTestHarness(string baseUrl = "http://test.local/")
   {
@@ -34,6 +37,8 @@ internal sealed class CliTestHarness : IDisposable
     CounterpartyIdentifiers = new CounterpartyIdentifiersClient(HttpClient);
     Transactions = new TransactionsClient(HttpClient);
     Resolver = new ReferenceResolver(Accounts, Counterparties);
+    _credentialsDirectory = Path.Combine(Path.GetTempPath(), "argon-cli-test-" + Guid.NewGuid().ToString("N"));
+    TokenStore = new TokenStore(Path.Combine(_credentialsDirectory, "credentials.json"));
   }
 
   public Task<CliInvocationResult> InvokeAsync(string commandLine)
@@ -105,6 +110,17 @@ internal sealed class CliTestHarness : IDisposable
   {
     HttpClient.Dispose();
     Handler.Dispose();
+    try
+    {
+      if (Directory.Exists(_credentialsDirectory))
+      {
+        Directory.Delete(_credentialsDirectory, recursive: true);
+      }
+    }
+    catch
+    {
+      // best-effort cleanup
+    }
   }
 }
 
@@ -126,12 +142,11 @@ internal sealed class StubCliContextFactory : CliContextFactory
   public override CliContext Build(InvocationContext context)
   {
     AuthOptions auth = new() { Authority = "test", ClientId = "test" };
-    TokenStore tokenStore = new();
     DeviceCodeFlow flow = new(_harness.HttpClient, auth);
     OutputFormat output = context.ParseResult.GetValueForOption(OutputOption);
     return new CliContext(
       auth,
-      tokenStore,
+      _harness.TokenStore,
       flow,
       _harness.HttpClient,
       output,

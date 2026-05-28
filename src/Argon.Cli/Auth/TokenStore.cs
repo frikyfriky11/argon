@@ -9,7 +9,21 @@ public sealed class TokenStore
 
   public string CredentialsPath { get; }
 
-  public TokenStore()
+  public TokenStore() : this(DefaultCredentialsPath())
+  {
+  }
+
+  public TokenStore(string credentialsPath)
+  {
+    CredentialsPath = credentialsPath;
+    string? directory = Path.GetDirectoryName(credentialsPath);
+    if (!string.IsNullOrEmpty(directory))
+    {
+      Directory.CreateDirectory(directory);
+    }
+  }
+
+  private static string DefaultCredentialsPath()
   {
     string baseDir = OperatingSystem.IsWindows()
       ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
@@ -17,9 +31,7 @@ public sealed class TokenStore
         Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
           ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config"));
 
-    string dir = Path.Combine(baseDir, "argon-cli");
-    Directory.CreateDirectory(dir);
-    CredentialsPath = Path.Combine(dir, "credentials.json");
+    return Path.Combine(baseDir, "argon-cli", "credentials.json");
   }
 
   public TokenSet? Load()

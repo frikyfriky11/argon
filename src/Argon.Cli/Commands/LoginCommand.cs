@@ -17,16 +17,18 @@ internal static class LoginCommand
     });
 
     Command logout = new("logout", "Remove locally stored credentials");
-    logout.SetHandler(_ =>
+    logout.SetHandler(ctx =>
     {
-      new TokenStore().Clear();
+      CliContext app = factory.Build(ctx);
+      app.TokenStore.Clear();
       Console.WriteLine("Signed out.");
     });
 
     Command whoami = new("whoami", "Show the identity of the currently signed-in user");
     whoami.SetHandler(ctx =>
     {
-      TokenSet? tokens = new TokenStore().Load();
+      CliContext app = factory.Build(ctx);
+      TokenSet? tokens = app.TokenStore.Load();
       if (tokens is null)
       {
         Console.Error.WriteLine("Not signed in. Run `argon login`.");
