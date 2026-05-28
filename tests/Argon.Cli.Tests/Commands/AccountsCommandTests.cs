@@ -81,6 +81,8 @@ public class AccountsCommandTests
     doc.RootElement[0].GetProperty("id").GetGuid().Should().Be(id);
     doc.RootElement[0].GetProperty("name").GetString().Should().Be("Cash");
     doc.RootElement[0].GetProperty("type").GetInt32().Should().Be((int)AccountType.Cash);
+    doc.RootElement[0].GetProperty("accountTypeName").GetString().Should().Be("Cash",
+      "OutputFormatter annotates the numeric `type` on account responses with the enum name");
   }
 
   [Test]

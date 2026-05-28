@@ -103,21 +103,38 @@ public static class OutputFormatter
   }
 
   /// <summary>
-  ///   For any object carrying a numeric `accountType`, add a sibling
-  ///   `accountTypeName` containing the enum string (`Cash`, `Expense`, ...). The
-  ///   numeric value is kept untouched so existing tooling that reads it keeps working.
+  ///   For any object carrying a numeric account-type field, add a sibling
+  ///   `accountTypeName` with the enum string (`Cash`, `Expense`, ...). The numeric value
+  ///   is left in place. Two field shapes are recognised: `accountType` (used inside
+  ///   transaction rows and bank-statement rawImportData) and `type` (used on the
+  ///   `accounts list` and `accounts get` API responses).
   /// </summary>
   private static void AddAccountTypeName(JsonObject obj)
   {
-    if (obj["accountType"] is not JsonValue value
-        || !value.TryGetValue(out int intValue)
-        || !Enum.IsDefined(typeof(AccountType), intValue)
-        || obj.ContainsKey("accountTypeName"))
+    if (obj.ContainsKey("accountTypeName"))
     {
       return;
     }
 
-    obj["accountTypeName"] = ((AccountType)intValue).ToString();
+    if (TryReadAccountTypeInt(obj["accountType"], out int intValue)
+        || TryReadAccountTypeInt(obj["type"], out intValue))
+    {
+      obj["accountTypeName"] = ((AccountType)intValue).ToString();
+    }
+  }
+
+  private static bool TryReadAccountTypeInt(JsonNode? node, out int value)
+  {
+    if (node is JsonValue jsonValue
+        && jsonValue.TryGetValue(out int intValue)
+        && Enum.IsDefined(typeof(AccountType), intValue))
+    {
+      value = intValue;
+      return true;
+    }
+
+    value = 0;
+    return false;
   }
 
   private static IReadOnlyList<object> AsRowList(object? value)
