@@ -3,7 +3,7 @@ namespace Argon.Application.Accounts.Update;
 [UsedImplicitly]
 public class AccountsUpdateValidator : AbstractValidator<AccountsUpdateRequest>
 {
-  public AccountsUpdateValidator(IApplicationDbContext dbContext)
+  public AccountsUpdateValidator()
   {
     RuleFor(request => request.Name)
       .NotEmpty()

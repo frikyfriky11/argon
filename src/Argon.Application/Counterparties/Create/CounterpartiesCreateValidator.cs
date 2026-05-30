@@ -3,7 +3,7 @@ namespace Argon.Application.Counterparties.Create;
 [UsedImplicitly]
 public class CounterpartiesCreateValidator : AbstractValidator<CounterpartiesCreateRequest>
 {
-  public CounterpartiesCreateValidator(IApplicationDbContext dbContext)
+  public CounterpartiesCreateValidator()
   {
     RuleFor(request => request.Name)
       .NotEmpty()

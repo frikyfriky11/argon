@@ -5,16 +5,12 @@ namespace Argon.Application.Tests.Counterparties.Create;
 
 public class CounterpartiesCreateValidatorTests
 {
-  private IApplicationDbContext _dbContext = null!;
-
   private CounterpartiesCreateValidator _sut = null!;
 
   [SetUp]
   public void SetUp()
   {
-    _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
-
-    _sut = new CounterpartiesCreateValidator(_dbContext);
+    _sut = new CounterpartiesCreateValidator();
   }
 
   [Test]

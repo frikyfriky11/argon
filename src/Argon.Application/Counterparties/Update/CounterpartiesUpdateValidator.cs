@@ -3,7 +3,7 @@ namespace Argon.Application.Counterparties.Update;
 [UsedImplicitly]
 public class CounterpartiesUpdateValidator : AbstractValidator<CounterpartiesUpdateRequest>
 {
-  public CounterpartiesUpdateValidator(IApplicationDbContext dbContext)
+  public CounterpartiesUpdateValidator()
   {
     RuleFor(request => request.Name)
       .NotEmpty()

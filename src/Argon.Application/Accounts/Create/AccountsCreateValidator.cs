@@ -3,7 +3,7 @@ namespace Argon.Application.Accounts.Create;
 [UsedImplicitly]
 public class AccountsCreateValidator : AbstractValidator<AccountsCreateRequest>
 {
-  public AccountsCreateValidator(IApplicationDbContext dbContext)
+  public AccountsCreateValidator()
   {
     RuleFor(request => request.Name)
       .NotEmpty()

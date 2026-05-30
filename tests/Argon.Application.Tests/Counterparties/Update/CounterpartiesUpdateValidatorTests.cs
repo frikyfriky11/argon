@@ -5,16 +5,12 @@ namespace Argon.Application.Tests.Counterparties.Update;
 
 public class CounterpartiesUpdateValidatorTests
 {
-  private IApplicationDbContext _dbContext = null!;
-
   private CounterpartiesUpdateValidator _sut = null!;
 
   [SetUp]
   public void SetUp()
   {
-    _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
-
-    _sut = new CounterpartiesUpdateValidator(_dbContext);
+    _sut = new CounterpartiesUpdateValidator();
   }
 
   [Test]

@@ -8,13 +8,10 @@ public class AccountsCreateValidatorTests
   [SetUp]
   public void SetUp()
   {
-    _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
-
-    _sut = new AccountsCreateValidator(_dbContext);
+    _sut = new AccountsCreateValidator();
   }
 
   private AccountsCreateValidator _sut = null!;
-  private IApplicationDbContext _dbContext = null!;
 
   [Test]
   public async Task Validator_ShouldReturnZeroErrors_WhenObjectIsValid()
