@@ -35,7 +35,7 @@ public class TransactionsGetHandler(
 
     if (result is null)
     {
-      throw new NotFoundException();
+      throw new NotFoundException(nameof(Transaction), request.Id);
     }
 
     return result;

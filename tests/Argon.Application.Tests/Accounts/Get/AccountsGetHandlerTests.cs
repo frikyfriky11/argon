@@ -41,12 +41,14 @@ public class AccountsGetHandlerTests
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {
     // arrange
-    AccountsGetRequest request = new(Guid.NewGuid());
+    Guid id = Guid.NewGuid();
+    AccountsGetRequest request = new(id);
 
     // act
     Func<Task<AccountsGetResponse>> act = async () => await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    await act.Should().ThrowAsync<NotFoundException>();
+    await act.Should().ThrowAsync<NotFoundException>()
+      .WithMessage($"*Account*{id}*");
   }
 }

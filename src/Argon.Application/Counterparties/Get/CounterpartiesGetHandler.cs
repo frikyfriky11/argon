@@ -19,7 +19,7 @@ public class CounterpartiesGetHandler(
 
     if (result is null)
     {
-      throw new NotFoundException();
+      throw new NotFoundException(nameof(Counterparty), request.Id);
     }
 
     return result;

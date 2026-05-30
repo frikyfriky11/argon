@@ -22,7 +22,7 @@ public class AccountsGetHandler(
 
     if (result is null)
     {
-      throw new NotFoundException();
+      throw new NotFoundException(nameof(Account), request.Id);
     }
 
     return result;

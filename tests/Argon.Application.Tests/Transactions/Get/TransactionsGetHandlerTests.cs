@@ -82,12 +82,14 @@ public class TransactionsGetHandlerTests
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {
     // arrange
-    TransactionsGetRequest request = new(Guid.NewGuid());
+    Guid id = Guid.NewGuid();
+    TransactionsGetRequest request = new(id);
 
     // act
     Func<Task<TransactionsGetResponse>> act = async () => await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    await act.Should().ThrowAsync<NotFoundException>();
+    await act.Should().ThrowAsync<NotFoundException>()
+      .WithMessage($"*Transaction*{id}*");
   }
 }
