@@ -5,12 +5,16 @@ namespace Argon.Application.Tests.Counterparties.Create;
 
 public class CounterpartiesCreateValidatorTests
 {
+  private IApplicationDbContext _dbContext = null!;
+
   private CounterpartiesCreateValidator _sut = null!;
 
   [SetUp]
   public void SetUp()
   {
-    _sut = new CounterpartiesCreateValidator();
+    _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
+
+    _sut = new CounterpartiesCreateValidator(_dbContext);
   }
 
   [Test]
@@ -42,6 +46,19 @@ public class CounterpartiesCreateValidatorTests
       string.Empty
     );
 
+    await _sut.ShouldFailOnProperty(request, nameof(request.Name));
+  }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenNameAlreadyExistsCaseInsensitively()
+  {
+    // arrange
+    await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Amazon" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartiesCreateRequest request = new("amazon");
+
+    // act + assert
     await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }
 }

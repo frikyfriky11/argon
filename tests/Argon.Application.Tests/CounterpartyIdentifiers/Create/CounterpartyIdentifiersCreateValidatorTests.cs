@@ -65,4 +65,18 @@ public class CounterpartyIdentifiersCreateValidatorTests
 
     await _sut.ShouldFailOnProperty(request, nameof(request.CounterpartyId));
   }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenIdentifierTextAlreadyExistsCaseInsensitively()
+  {
+    // arrange
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "test counterparty" });
+    await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier { Counterparty = counterparty.Entity, IdentifierText = "EXISTING" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartyIdentifiersCreateRequest request = new(counterparty.Entity.Id, "existing");
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.IdentifierText));
+  }
 }

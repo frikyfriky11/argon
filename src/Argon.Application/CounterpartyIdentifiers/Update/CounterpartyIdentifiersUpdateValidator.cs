@@ -10,7 +10,11 @@ public class CounterpartyIdentifiersUpdateValidator : AbstractValidator<Counterp
       .WithMessage("The counterparty id {PropertyValue} does not exist");
 
     RuleFor(request => request.IdentifierText)
+      .Cascade(CascadeMode.Stop)
       .NotEmpty()
-      .MaximumLength(250);
+      .MaximumLength(250)
+      .MustAsync(async (request, text, cancellationToken) =>
+        !await dbContext.CounterpartyIdentifiers.AnyAsync(identifier => identifier.Id != request.Id && identifier.IdentifierText.ToLower() == text.ToLower(), cancellationToken))
+      .WithMessage("A counterparty identifier with text '{PropertyValue}' already exists");
   }
 }

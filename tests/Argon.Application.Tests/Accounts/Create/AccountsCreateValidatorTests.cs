@@ -8,10 +8,13 @@ public class AccountsCreateValidatorTests
   [SetUp]
   public void SetUp()
   {
-    _sut = new AccountsCreateValidator();
+    _dbContext = DatabaseTestHelpers.GetInMemoryDbContext();
+
+    _sut = new AccountsCreateValidator(_dbContext);
   }
 
   private AccountsCreateValidator _sut = null!;
+  private IApplicationDbContext _dbContext = null!;
 
   [Test]
   public async Task Validator_ShouldReturnZeroErrors_WhenObjectIsValid()
@@ -57,5 +60,18 @@ public class AccountsCreateValidatorTests
     );
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Type));
+  }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenNameAlreadyExistsCaseInsensitively()
+  {
+    // arrange
+    await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries", Type = AccountType.Expense });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    AccountsCreateRequest request = new("groceries", AccountType.Expense);
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }
 }
