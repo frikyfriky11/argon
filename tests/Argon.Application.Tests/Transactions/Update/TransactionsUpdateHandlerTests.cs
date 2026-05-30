@@ -189,6 +189,49 @@ public class TransactionsUpdateHandlerTests
     addedRow.AccountId.Should().Be(accountCash.Entity.Id);
   }
 
+  [TestCase(TransactionStatus.PendingImportReview)]
+  [TestCase(TransactionStatus.PotentialDuplicate)]
+  public async Task Handle_ShouldConfirmAndClearDuplicateLink_WhenUpdatingAnUnconfirmedTransaction(TransactionStatus startStatus)
+  {
+    // arrange
+    EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
+    EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Market" });
+
+    TransactionRow debitRow = new() { RowCounter = 1, Account = accountGroceries.Entity, Debit = 100.00m, Credit = null, Description = "debit" };
+    TransactionRow creditRow = new() { RowCounter = 2, Account = accountBank.Entity, Debit = null, Credit = 100.00m, Description = "credit" };
+
+    EntityEntry<Transaction> existingTransaction = await _dbContext.Transactions.AddAsync(new Transaction
+    {
+      Date = new DateOnly(2023, 04, 05),
+      Counterparty = counterparty.Entity,
+      Status = startStatus,
+      PotentialDuplicateOfTransactionId = Guid.NewGuid(),
+      TransactionRows = new List<TransactionRow> { debitRow, creditRow },
+    });
+
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    List<TransactionRowsUpdateRequest> rowList = new()
+    {
+      new TransactionRowsUpdateRequest(debitRow.Id, 1, accountGroceries.Entity.Id, 100.00m, null, "debit"),
+      new TransactionRowsUpdateRequest(creditRow.Id, 2, accountBank.Entity.Id, null, 100.00m, "credit"),
+    };
+
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), counterparty.Entity.Id, rowList) { Id = existingTransaction.Entity.Id };
+
+    // act
+    await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    Transaction? dbTransaction = await _dbContext
+      .Transactions
+      .FirstOrDefaultAsync(x => x.Id == existingTransaction.Entity.Id);
+
+    dbTransaction!.Status.Should().Be(TransactionStatus.Confirmed);
+    dbTransaction.PotentialDuplicateOfTransactionId.Should().BeNull();
+  }
+
   [Test]
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {

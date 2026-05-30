@@ -62,10 +62,13 @@ public class TransactionsGetHandlerTests
     result.Id.Should().Be(transaction.Id);
     result.Date.Should().Be(transaction.Date);
     result.CounterpartyId.Should().Be(transaction.CounterpartyId);
-    
+    result.CounterpartyName.Should().Be("Market");
+
     result.TransactionRows[0].Id.Should().Be(row1.Id);
     result.TransactionRows[0].RowCounter.Should().Be(row1.RowCounter);
     result.TransactionRows[0].AccountId.Should().Be(row1.AccountId);
+    result.TransactionRows[0].AccountName.Should().Be("Groceries");
+    result.TransactionRows[0].AccountType.Should().Be(accountGroceries.Entity.Type);
     result.TransactionRows[0].Debit.Should().Be(row1.Debit);
     result.TransactionRows[0].Credit.Should().Be(row1.Credit);
     result.TransactionRows[0].Description.Should().Be(row1.Description);
