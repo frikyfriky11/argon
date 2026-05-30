@@ -101,6 +101,95 @@ public class TransactionsUpdateHandlerTests
   }
 
   [Test]
+  public async Task Handle_ShouldRemoveRows_WhenRequestOmitsAnExistingRow()
+  {
+    // arrange
+    EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
+    EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Account> accountCash = await _dbContext.Accounts.AddAsync(new Account { Name = "Cash" });
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Market" });
+
+    TransactionRow rowToKeepDebit = new() { RowCounter = 1, Account = accountGroceries.Entity, Debit = 100.00m, Credit = null, Description = "keep debit" };
+    TransactionRow rowToKeepCredit = new() { RowCounter = 2, Account = accountBank.Entity, Debit = null, Credit = 60.00m, Description = "keep credit" };
+    TransactionRow rowToRemove = new() { RowCounter = 3, Account = accountCash.Entity, Debit = null, Credit = 40.00m, Description = "remove me" };
+
+    EntityEntry<Transaction> existingTransaction = await _dbContext.Transactions.AddAsync(new Transaction
+    {
+      Date = new DateOnly(2023, 04, 05),
+      Counterparty = counterparty.Entity,
+      TransactionRows = new List<TransactionRow> { rowToKeepDebit, rowToKeepCredit, rowToRemove },
+    });
+
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    List<TransactionRowsUpdateRequest> rowList = new()
+    {
+      new TransactionRowsUpdateRequest(rowToKeepDebit.Id, 1, accountGroceries.Entity.Id, 100.00m, null, "keep debit"),
+      new TransactionRowsUpdateRequest(rowToKeepCredit.Id, 2, accountBank.Entity.Id, null, 100.00m, "keep credit"),
+    };
+
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), counterparty.Entity.Id, rowList) { Id = existingTransaction.Entity.Id };
+
+    // act
+    await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    Transaction? dbTransaction = await _dbContext
+      .Transactions
+      .Include(transaction => transaction.TransactionRows)
+      .FirstOrDefaultAsync(x => x.Id == existingTransaction.Entity.Id);
+
+    dbTransaction!.TransactionRows.Should().HaveCount(2);
+    dbTransaction.TransactionRows.Select(r => r.Id).Should().NotContain(rowToRemove.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldAddRows_WhenRequestContainsANewRow()
+  {
+    // arrange
+    EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
+    EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Account> accountCash = await _dbContext.Accounts.AddAsync(new Account { Name = "Cash" });
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Market" });
+
+    TransactionRow existingDebit = new() { RowCounter = 1, Account = accountGroceries.Entity, Debit = 100.00m, Credit = null, Description = "debit" };
+    TransactionRow existingCredit = new() { RowCounter = 2, Account = accountBank.Entity, Debit = null, Credit = 100.00m, Description = "credit" };
+
+    EntityEntry<Transaction> existingTransaction = await _dbContext.Transactions.AddAsync(new Transaction
+    {
+      Date = new DateOnly(2023, 04, 05),
+      Counterparty = counterparty.Entity,
+      TransactionRows = new List<TransactionRow> { existingDebit, existingCredit },
+    });
+
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    List<TransactionRowsUpdateRequest> rowList = new()
+    {
+      new TransactionRowsUpdateRequest(existingDebit.Id, 1, accountGroceries.Entity.Id, 150.00m, null, "debit"),
+      new TransactionRowsUpdateRequest(existingCredit.Id, 2, accountBank.Entity.Id, null, 100.00m, "credit"),
+      new TransactionRowsUpdateRequest(null, 3, accountCash.Entity.Id, null, 50.00m, "new row"),
+    };
+
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 06), counterparty.Entity.Id, rowList) { Id = existingTransaction.Entity.Id };
+
+    // act
+    await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    Transaction? dbTransaction = await _dbContext
+      .Transactions
+      .Include(transaction => transaction.TransactionRows)
+      .FirstOrDefaultAsync(x => x.Id == existingTransaction.Entity.Id);
+
+    dbTransaction!.TransactionRows.Should().HaveCount(3);
+    TransactionRow addedRow = dbTransaction.TransactionRows.Single(r => r.Description == "new row");
+    addedRow.Id.Should().NotBe(Guid.Empty);
+    addedRow.Credit.Should().Be(50.00m);
+    addedRow.AccountId.Should().Be(accountCash.Entity.Id);
+  }
+
+  [Test]
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {
     // arrange
