@@ -2,6 +2,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { Button, Grid, Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { MuiFileInput } from "mui-file-input";
+import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 
@@ -30,6 +31,8 @@ export default function Form({ onSubmit, isSaving }: FormProps) {
         new BankStatementParsersGetListRequest(),
       ),
   });
+
+  const [file, setFile] = useState<File | null>(null);
 
   const form = useForm<IBankStatementsParseRequest>({
     defaultValues: {
@@ -89,10 +92,15 @@ export default function Form({ onSubmit, isSaving }: FormProps) {
         <Grid container spacing={2}>
           <Grid item sm={6} xs={12}>
             <MuiFileInput
-              onChange={(file) => {
-                if (file) {
-                  form.setValue("inputFileName", file.name);
-                  void fileToBase64(file).then((base64String) => {
+              fullWidth
+              label="File"
+              placeholder="Seleziona un file"
+              value={file}
+              onChange={(newFile) => {
+                setFile(newFile);
+                if (newFile) {
+                  form.setValue("inputFileName", newFile.name);
+                  void fileToBase64(newFile).then((base64String) => {
                     form.setValue(
                       "inputFileContents",
                       base64String.split(",")[1],
@@ -104,18 +112,6 @@ export default function Form({ onSubmit, isSaving }: FormProps) {
                 }
               }}
             />
-            {/*<InputText*/}
-            {/*  field={"inputFileName"}*/}
-            {/*  fullWidth*/}
-            {/*  label="Nome"*/}
-            {/*  options={{*/}
-            {/*    required: "Il nome del conto è obbligatorio",*/}
-            {/*    maxLength: {*/}
-            {/*      value: 50,*/}
-            {/*      message: "Il nome del conto non può superare i 50 caratteri",*/}
-            {/*    },*/}
-            {/*  }}*/}
-            {/*/>*/}
           </Grid>
           <Grid item sm={6} xs={12}>
             <InputCombobox
