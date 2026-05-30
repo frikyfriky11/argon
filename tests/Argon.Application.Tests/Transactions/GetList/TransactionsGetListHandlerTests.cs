@@ -106,10 +106,16 @@ public class TransactionsGetListHandlerTests
       resultItem.Id.Should().Be(expectedItem.Id);
       resultItem.Date.Should().Be(expectedItem.Date);
       resultItem.CounterpartyId.Should().Be(expectedItem.CounterpartyId);
+      resultItem.CounterpartyName.Should().Be(expectedItem.Counterparty?.Name ?? string.Empty);
+      resultItem.Status.Should().Be(expectedItem.Status);
+      resultItem.RawImportData.Should().Be(expectedItem.RawImportData);
+      resultItem.PotentialDuplicateOfTransactionId.Should().Be(expectedItem.PotentialDuplicateOfTransactionId);
       resultItem.TransactionRows.Should().HaveCount(expectedItem.TransactionRows.Count);
       resultItem.TransactionRows[0].RowCounter.Should().Be(expectedItem.TransactionRows.First().RowCounter);
       resultItem.TransactionRows[0].Description.Should().Be(expectedItem.TransactionRows.First().Description);
       resultItem.TransactionRows[0].AccountId.Should().Be(expectedItem.TransactionRows.First().AccountId);
+      resultItem.TransactionRows[0].AccountName.Should().Be(expectedItem.TransactionRows.First().Account?.Name);
+      resultItem.TransactionRows[0].AccountType.Should().Be(expectedItem.TransactionRows.First().Account?.Type);
       resultItem.TransactionRows[0].Debit.Should().Be(expectedItem.TransactionRows.First().Debit);
       resultItem.TransactionRows[0].Credit.Should().Be(expectedItem.TransactionRows.First().Credit);
       resultItem.TransactionRows[1].RowCounter.Should().Be(expectedItem.TransactionRows.Last().RowCounter);
@@ -235,5 +241,59 @@ public class TransactionsGetListHandlerTests
 
     // assert
     CheckResults(result, transactions, 2, 1, 2, [3, 1]);
+  }
+
+  [Test]
+  public async Task Handle_ShouldReturnSecondPage_WithPreviousPageFlagSet()
+  {
+    // arrange
+    List<Transaction> transactions = CreateTestTransactions();
+
+    await _dbContext.Transactions.AddRangeAsync(transactions);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, PageNumber: 2, PageSize: 2);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(transactions[0].Id); // oldest transaction, last in date-desc order
+    result.PageNumber.Should().Be(2);
+    result.HasPreviousPage.Should().BeTrue();
+    result.HasNextPage.Should().BeFalse();
+  }
+
+  [Test]
+  public async Task Handle_ShouldProjectEmptyCounterpartyName_WhenTransactionHasNoCounterparty()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Transaction transaction = new()
+    {
+      Counterparty = null,
+      Date = new DateOnly(2024, 9, 12),
+      Status = TransactionStatus.PendingImportReview,
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50 },
+      },
+    };
+
+    await _dbContext.Transactions.AddAsync(transaction);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].CounterpartyId.Should().BeNull();
+    result.Items[0].CounterpartyName.Should().BeEmpty();
   }
 }
