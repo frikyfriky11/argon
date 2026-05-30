@@ -44,7 +44,12 @@ public class CounterpartyResolver(IApplicationDbContext dbContext) : ICounterpar
 
     foreach (Guid id in remainingIdentifierIds)
     {
-      result.Add(new CounterpartyResolution(id, identifierNames[id], true, false));
+      // Skip identifiers whose counterparty row no longer exists (orphaned identifier);
+      // indexing identifierNames[id] would otherwise throw KeyNotFoundException.
+      if (identifierNames.TryGetValue(id, out string? name))
+      {
+        result.Add(new CounterpartyResolution(id, name, true, false));
+      }
     }
 
     return result;

@@ -59,6 +59,48 @@ public class CounterpartyResolverTests
   }
 
   [Test]
+  public async Task ResolveAsync_ShouldMatchByIdentifierOnly_WhenNameIsNotASubstring()
+  {
+    EntityEntry<Counterparty> acme = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "ACME Corp" });
+    await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier
+    {
+      Counterparty = acme.Entity,
+      IdentifierText = "DE89370400440532013000",
+    });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    List<CounterpartyResolution> matches = await _sut.ResolveAsync(
+      "SEPA DD DE89370400440532013000 REF 42",
+      CancellationToken.None);
+
+    matches.Should().ContainSingle(r => r.Id == acme.Entity.Id);
+    CounterpartyResolution match = matches.Single(r => r.Id == acme.Entity.Id);
+    match.MatchedByIdentifier.Should().BeTrue();
+    match.MatchedByName.Should().BeFalse("the counterparty name is not a substring of the raw text");
+    match.Name.Should().Be("ACME Corp");
+  }
+
+  [Test]
+  public async Task ResolveAsync_ShouldSkipOrphanedIdentifiers_WithoutThrowing()
+  {
+    // arrange: an identifier whose counterparty row does not exist
+    await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier
+    {
+      CounterpartyId = Guid.NewGuid(),
+      IdentifierText = "ORPHANED",
+    });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    // act
+    Func<Task<List<CounterpartyResolution>>> act = async () =>
+      await _sut.ResolveAsync("PAYMENT ORPHANED REF", CancellationToken.None);
+
+    // assert
+    List<CounterpartyResolution> matches = (await act.Should().NotThrowAsync()).Subject;
+    matches.Should().BeEmpty();
+  }
+
+  [Test]
   public async Task ResolveAsync_ShouldDedupe_WhenSameCounterpartyMatchesByBothPaths()
   {
     EntityEntry<Counterparty> cp = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Eurospar" });
