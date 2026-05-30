@@ -59,4 +59,15 @@ public class AziendaSanitariaEmolumentLineParserTests
     // Assert
     result.Should().BeTrue();
   }
+
+  [TestCase("EMOLUMENTI dr. schaer ag")]
+  [TestCase("MOVIMENTO NON RICONOSCIUTO 123")]
+  public void CanParse_ShouldReturnFalse_GivenUnrelatedInput(string rawDescription)
+  {
+    // Act
+    bool result = _sut.CanParse(rawDescription);
+
+    // Assert
+    result.Should().BeFalse();
+  }
 }

@@ -136,4 +136,14 @@ public class DebitCardPaymentLineParserTests
       "416363******3171"
     );
   }
+
+  [TestCase("MOVIMENTO NON RICONOSCIUTO 123")]
+  public void CanParse_ShouldReturnFalse_GivenUnrelatedInput(string rawDescription)
+  {
+    // Act
+    bool result = _sut.CanParse(rawDescription);
+
+    // Assert
+    result.Should().BeFalse();
+  }
 }
