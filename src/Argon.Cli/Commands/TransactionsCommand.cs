@@ -213,8 +213,9 @@ internal static class TransactionsCommand
     Argument<Guid> id = new("id", "Transaction id");
     Option<int?> row = new("--row", "Row counter (1-based). If omitted, the unique row without an assigned account is used.");
     Option<string> accountRef = new("--account", "Account name or id to assign to the row") { IsRequired = true };
+    Option<string?> description = new(new[] { "--description", "-d" }, "Optional description to set on the categorized row.");
 
-    Command cmd = new("categorize", "Assign an account to a single row of a transaction") { id, row, accountRef };
+    Command cmd = new("categorize", "Assign an account to a single row of a transaction") { id, row, accountRef, description };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
@@ -229,6 +230,7 @@ internal static class TransactionsCommand
       TransactionsCategorizeRowRequest request = new()
       {
         AccountId = await app.Resolver.ResolveAccountAsync(ctx.ParseResult.GetValueForOption(accountRef)!, ct),
+        Description = ctx.ParseResult.GetValueForOption(description),
       };
 
       await app.Transactions.CategorizeRowAsync(transactionId, rowId, request, ct);

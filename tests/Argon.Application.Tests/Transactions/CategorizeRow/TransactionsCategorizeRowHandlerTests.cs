@@ -135,6 +135,72 @@ public class TransactionsCategorizeRowHandlerTests
   }
 
   [Test]
+  public async Task Handle_ShouldSetRowDescription_WhenDescriptionIsSupplied()
+  {
+    // arrange
+    EntityEntry<Account> bankAccount = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Account> groceriesAccount = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
+    TransactionRow filledRow = new() { RowCounter = 1, Account = bankAccount.Entity, Credit = 50m };
+    TransactionRow pendingRow = new() { RowCounter = 2, Account = null, AccountId = null, Debit = 50m };
+    EntityEntry<Transaction> transaction = await _dbContext.Transactions.AddAsync(new Transaction
+    {
+      Date = new DateOnly(2024, 1, 1),
+      Status = TransactionStatus.PendingImportReview,
+      TransactionRows = new List<TransactionRow> { filledRow, pendingRow },
+    });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsCategorizeRowRequest request = new(groceriesAccount.Entity.Id, "Sale lavastoviglie")
+    {
+      TransactionId = transaction.Entity.Id,
+      RowId = pendingRow.Id,
+    };
+
+    // act
+    await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    Transaction? saved = await _dbContext.Transactions
+      .Include(t => t.TransactionRows)
+      .FirstOrDefaultAsync(t => t.Id == transaction.Entity.Id);
+    TransactionRow savedRow = saved!.TransactionRows.Single(r => r.Id == pendingRow.Id);
+    savedRow.AccountId.Should().Be(groceriesAccount.Entity.Id);
+    savedRow.Description.Should().Be("Sale lavastoviglie");
+  }
+
+  [Test]
+  public async Task Handle_ShouldLeaveExistingDescriptionUntouched_WhenDescriptionIsNull()
+  {
+    // arrange
+    EntityEntry<Account> bankAccount = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    EntityEntry<Account> groceriesAccount = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
+    TransactionRow filledRow = new() { RowCounter = 1, Account = bankAccount.Entity, Credit = 50m };
+    TransactionRow pendingRow = new() { RowCounter = 2, Account = null, AccountId = null, Debit = 50m, Description = "original" };
+    EntityEntry<Transaction> transaction = await _dbContext.Transactions.AddAsync(new Transaction
+    {
+      Date = new DateOnly(2024, 1, 1),
+      Status = TransactionStatus.PendingImportReview,
+      TransactionRows = new List<TransactionRow> { filledRow, pendingRow },
+    });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsCategorizeRowRequest request = new(groceriesAccount.Entity.Id)
+    {
+      TransactionId = transaction.Entity.Id,
+      RowId = pendingRow.Id,
+    };
+
+    // act
+    await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    Transaction? saved = await _dbContext.Transactions
+      .Include(t => t.TransactionRows)
+      .FirstOrDefaultAsync(t => t.Id == transaction.Entity.Id);
+    saved!.TransactionRows.Single(r => r.Id == pendingRow.Id).Description.Should().Be("original");
+  }
+
+  [Test]
   public async Task Handle_ShouldThrowNotFound_WhenTransactionDoesNotExist()
   {
     TransactionsCategorizeRowRequest request = new(Guid.NewGuid())

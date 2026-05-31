@@ -4739,6 +4739,10 @@ export interface ITransactionsSetCounterpartyRequest {
 export class TransactionsCategorizeRowRequest implements ITransactionsCategorizeRowRequest {
     /** The id of the account to assign to the row */
     accountId!: string;
+    /** Optional description to set on the row being categorized. When null the row's
+existing description is left untouched; pass an empty string to clear it.
+             */
+    description!: string | null;
 
     constructor(data?: ITransactionsCategorizeRowRequest) {
         if (data) {
@@ -4752,6 +4756,7 @@ export class TransactionsCategorizeRowRequest implements ITransactionsCategorize
     init(_data?: any) {
         if (_data) {
             this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
         }
     }
 
@@ -4765,6 +4770,7 @@ export class TransactionsCategorizeRowRequest implements ITransactionsCategorize
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["description"] = this.description !== undefined ? this.description : <any>null;
         return data;
     }
 }
@@ -4773,6 +4779,10 @@ export class TransactionsCategorizeRowRequest implements ITransactionsCategorize
 export interface ITransactionsCategorizeRowRequest {
     /** The id of the account to assign to the row */
     accountId: string;
+    /** Optional description to set on the row being categorized. When null the row's
+existing description is left untouched; pass an empty string to clear it.
+             */
+    description: string | null;
 }
 
 export interface FileResponse {

@@ -279,9 +279,10 @@ For the much more common case of "the importer left one row blank and I just nee
 ```bash
 argon tx categorize <tx-id> --account "Alimentari"
 argon tx categorize <tx-id> --row 2 --account "Skoda Fabia - Benzina"
+argon tx categorize <tx-id> --account "Prodotti per la pulizia della casa" -d "Sale lavastoviglie"
 ```
 
-The CLI fetches the transaction, picks the unique row without an assigned account, and patches just that row. The transaction auto-confirms once every row has an account. Use `--row <counter>` (the 1-based `rowCounter` shown in `tx get`) when there are multiple blank rows or you want to overwrite a specific one.
+The CLI fetches the transaction, picks the unique row without an assigned account, and patches just that row. The transaction auto-confirms once every row has an account. Use `--row <counter>` (the 1-based `rowCounter` shown in `tx get`) when there are multiple blank rows or you want to overwrite a specific one. `--description`/`-d` sets the label on the row being categorized in the same call — no need to fall back to `tx update` just to add a description. Omitting it leaves any existing description untouched; pass `-d ""` to clear it.
 
 ### `tx set-counterparty` — fix the counterparty on a transaction
 

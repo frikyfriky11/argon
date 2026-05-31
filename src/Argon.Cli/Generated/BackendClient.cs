@@ -5520,6 +5520,15 @@ namespace Argon.Cli.Generated
         [System.Text.Json.Serialization.JsonPropertyName("accountId")]
         public System.Guid AccountId { get; set; }
 
+        /// <summary>
+        /// Optional description to set on the row being categorized. When null the row's
+        /// <br/>existing description is left untouched; pass an empty string to clear it.
+        /// <br/>            
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("description")]
+        public string Description { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]

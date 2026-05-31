@@ -26,6 +26,11 @@ public class TransactionsCategorizeRowHandler(
 
     row.AccountId = request.AccountId;
 
+    if (request.Description is not null)
+    {
+      row.Description = request.Description;
+    }
+
     if (transaction.Status == TransactionStatus.PendingImportReview
         && transaction.TransactionRows.All(r => r.AccountId != null))
     {

@@ -573,6 +573,63 @@ public class TransactionsCommandTests
   }
 
   [Test]
+  public async Task Categorize_ShouldSendDescription_WhenDescriptionFlagIsPassed()
+  {
+    // arrange
+    Guid txId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+    Guid pendingRowId = Guid.Parse("12121212-1212-1212-1212-121212121212");
+    Guid accId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2024, 3, 14), CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = Guid.NewGuid(), Credit = 1.16m },
+        new TransactionRowsGetResponse { Id = pendingRowId, RowCounter = 2, AccountId = null, Debit = 1.16m },
+      },
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx categorize {txId} --account {accId} --description \"Sale lavastoviglie\"");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    CapturedRequest patch = _harness.Handler.Requests[1];
+    JsonDocument body = JsonDocument.Parse(patch.Body!);
+    body.RootElement.GetProperty("accountId").GetGuid().Should().Be(accId);
+    body.RootElement.GetProperty("description").GetString().Should().Be("Sale lavastoviglie");
+  }
+
+  [Test]
+  public async Task Categorize_ShouldOmitDescription_WhenFlagNotPassed()
+  {
+    // arrange
+    Guid txId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+    Guid pendingRowId = Guid.Parse("12121212-1212-1212-1212-121212121212");
+    Guid accId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2024, 3, 14), CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = Guid.NewGuid(), Credit = 1.16m },
+        new TransactionRowsGetResponse { Id = pendingRowId, RowCounter = 2, AccountId = null, Debit = 1.16m },
+      },
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"tx categorize {txId} --account {accId}");
+
+    // assert — null description is dropped by WhenWritingNull, so the row keeps its existing text
+    result.ExitCode.Should().Be(0);
+    JsonDocument body = JsonDocument.Parse(_harness.Handler.Requests[1].Body!);
+    AssertNullOrAbsent(body.RootElement, "description", "an omitted --description must not be serialised");
+  }
+
+  [Test]
   public async Task Categorize_ShouldUseTheRowMatchingTheGivenCounter_WhenRowFlagIsPassed()
   {
     // arrange
