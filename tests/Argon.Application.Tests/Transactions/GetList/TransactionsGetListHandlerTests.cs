@@ -424,6 +424,121 @@ public class TransactionsGetListHandlerTests
   }
 
   [Test]
+  public async Task Handle_ShouldFilterByAccountingDate_FallingBackToDate_WhenDateFieldIsAccountingDate()
+  {
+    // arrange
+    Account groceries = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bank = new() { Id = _bankAccountId, Name = "Bank" };
+
+    // booked in November but value-dated in October (the boundary case)
+    Transaction bookedInNovember = new()
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 10 },
+        new() { RowCounter = 2, Account = bank, Credit = 10 },
+      },
+    };
+    Transaction octoberTx = new()
+    {
+      Date = new DateOnly(2025, 10, 15),
+      AccountingDate = new DateOnly(2025, 10, 15),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 20 },
+        new() { RowCounter = 2, Account = bank, Credit = 20 },
+      },
+    };
+    // manual entry, no accounting date — must fall back to its Date (November)
+    Transaction manualNovember = new()
+    {
+      Date = new DateOnly(2025, 11, 5),
+      AccountingDate = null,
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 30 },
+        new() { RowCounter = 2, Account = bank, Credit = 30 },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(bookedInNovember, octoberTx, manualNovember);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(
+      null, null,
+      new DateTimeOffset(2025, 11, 1, 0, 0, 0, TimeSpan.Zero),
+      new DateTimeOffset(2025, 11, 30, 0, 0, 0, TimeSpan.Zero),
+      DateField: TransactionDateField.AccountingDate);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert — the Nov-booked (Oct value) tx and the manual Nov tx are in; the Oct tx is out
+    result.Items.Select(i => i.Id).Should().BeEquivalentTo(new[] { bookedInNovember.Id, manualNovember.Id });
+  }
+
+  [Test]
+  public async Task Handle_ShouldFilterByCurrencyDate_WhenDateFieldIsDate()
+  {
+    // arrange — same boundary tx; with the default Date field it falls in October, not November
+    Account groceries = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bank = new() { Id = _bankAccountId, Name = "Bank" };
+    Transaction bookedInNovember = new()
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 10 },
+        new() { RowCounter = 2, Account = bank, Credit = 10 },
+      },
+    };
+    await _dbContext.Transactions.AddAsync(bookedInNovember);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(
+      null, null,
+      new DateTimeOffset(2025, 11, 1, 0, 0, 0, TimeSpan.Zero),
+      new DateTimeOffset(2025, 11, 30, 0, 0, 0, TimeSpan.Zero),
+      DateField: TransactionDateField.Date);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert — invisible under the currency-date filter (this is the bug accountingDate fixes)
+    result.Items.Should().BeEmpty();
+  }
+
+  [Test]
+  public async Task Handle_ShouldProjectAccountingDate()
+  {
+    // arrange
+    Account groceries = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bank = new() { Id = _bankAccountId, Name = "Bank" };
+    Transaction transaction = new()
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 10 },
+        new() { RowCounter = 2, Account = bank, Credit = 10 },
+      },
+    };
+    await _dbContext.Transactions.AddAsync(transaction);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result =
+      await _sut.Handle(new TransactionsGetListRequest(null, null, null, null), CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].AccountingDate.Should().Be(new DateOnly(2025, 11, 1));
+  }
+
+  [Test]
   public async Task Handle_ShouldProjectEmptyCounterpartyName_WhenTransactionHasNoCounterparty()
   {
     // arrange

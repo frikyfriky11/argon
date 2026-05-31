@@ -205,6 +205,72 @@ public class TransactionsCommandTests
   }
 
   [Test]
+  public async Task List_ShouldDefaultToAccountingDateField()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --month 2025-11");
+
+    // assert — DateField=1 is AccountingDate, the default
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.Query.Should().Contain($"DateField={(int)TransactionDateField.AccountingDate}");
+  }
+
+  [Test]
+  public async Task List_ShouldUseCurrencyDateField_WhenDateFieldDateIsRequested()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --month 2025-11 --date-field date");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.Query.Should().Contain($"DateField={(int)TransactionDateField.Date}");
+  }
+
+  [Test]
+  public async Task List_ShouldFail_WhenDateFieldIsUnknown()
+  {
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --date-field bogus");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("Unknown date field");
+    _harness.Handler.Requests.Should().BeEmpty();
+  }
+
+  [Test]
+  public async Task List_ShouldExposeAccountingDate_InJsonOutput()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(new PaginatedListOfTransactionsGetListResponse
+    {
+      Items = new[]
+      {
+        new TransactionsGetListResponse
+        {
+          Id = Guid.NewGuid(), Date = new DateOnly(2025, 10, 30), AccountingDate = new DateOnly(2025, 11, 1),
+          CounterpartyName = "Amazon", TransactionRows = Array.Empty<TransactionRowsGetListResponse>(),
+        },
+      },
+      PageNumber = 1, TotalPages = 1, TotalCount = 1,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("-o json tx list");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    JsonDocument doc = JsonDocument.Parse(result.StdOut);
+    doc.RootElement[0].GetProperty("accountingDate").GetString().Should().Be("2025-11-01");
+  }
+
+  [Test]
   public async Task List_ShouldExpandMonthToFirstAndLastDay_WhenMonthIsSupplied()
   {
     // arrange

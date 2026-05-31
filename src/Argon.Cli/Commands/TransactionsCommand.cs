@@ -47,11 +47,12 @@ internal static class TransactionsCommand
       description: "Filter by status: pending, confirmed, duplicate");
     Option<bool> linked = new("--linked", "Only transactions with a linked counterparty");
     Option<bool> unlinked = new("--unlinked", "Only transactions without a linked counterparty");
+    Option<TransactionDateField> dateField = BuildDateFieldOption();
     Option<int?> page = new("--page", "Page number");
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
 
     Command cmd = new("list", "List transactions")
-      { accountRefs, counterpartyRefs, from, to, month, status, linked, unlinked, page, pageSize };
+      { accountRefs, counterpartyRefs, from, to, month, status, linked, unlinked, dateField, page, pageSize };
 
     cmd.SetHandler(async ctx =>
     {
@@ -92,6 +93,7 @@ internal static class TransactionsCommand
         dateTo: dateTo,
         status: ctx.ParseResult.GetValueForOption(status),
         linked: linkedFilter,
+        dateField: ctx.ParseResult.GetValueForOption(dateField),
         pageNumber: ctx.ParseResult.GetValueForOption(page),
         pageSize: ctx.ParseResult.GetValueForOption(pageSize),
         cancellationToken: ct);
@@ -119,6 +121,7 @@ internal static class TransactionsCommand
       {
         Console.WriteLine($"Id            : {result.Id}");
         Console.WriteLine($"Date          : {result.Date:yyyy-MM-dd}");
+        Console.WriteLine($"Accounting    : {(result.AccountingDate is { } accountingDate ? accountingDate.ToString("yyyy-MM-dd") : "-")}");
         Console.WriteLine($"Counterparty  : {result.CounterpartyName} ({result.CounterpartyId})");
         Console.WriteLine($"Status        : {result.Status}");
         if (result.PotentialDuplicateOfTransactionId is { } duplicateOf)
@@ -148,10 +151,11 @@ internal static class TransactionsCommand
     Option<DateTimeOffset?> from = new("--from", "Date from (inclusive)");
     Option<DateTimeOffset?> to = new("--to", "Date to (inclusive)");
     Option<string?> month = new("--month", "Filter by month: yyyy-MM, 'current', or 'last'. Cannot be combined with --from/--to.");
+    Option<TransactionDateField> dateField = BuildDateFieldOption();
     Option<int?> pageSize = new("--page-size", "Page size (default -1, i.e. every match)");
 
     Command cmd = new("find", "Find transactions having a row whose debit or credit matches an amount")
-      { amount, tolerance, from, to, month, pageSize };
+      { amount, tolerance, from, to, month, dateField, pageSize };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
@@ -179,6 +183,7 @@ internal static class TransactionsCommand
         linked: null,
         rowAmount: ctx.ParseResult.GetValueForOption(amount),
         rowAmountTolerance: ctx.ParseResult.GetValueForOption(tolerance),
+        dateField: ctx.ParseResult.GetValueForOption(dateField),
         pageNumber: null,
         pageSize: ctx.ParseResult.GetValueForOption(pageSize) ?? -1,
         cancellationToken: ct);
@@ -823,6 +828,41 @@ internal static class TransactionsCommand
     }
 
     return decimal.Parse(raw, CultureInfo.InvariantCulture);
+  }
+
+  /// <summary>
+  ///   Builds the shared --date-field option. Defaults to AccountingDate (the booking date,
+  ///   i.e. "what's on the statement") so month/from/to mean the same thing as the bank does.
+  /// </summary>
+  internal static Option<TransactionDateField> BuildDateFieldOption() =>
+    new(
+      new[] { "--date-field" },
+      parseArgument: ParseDateField,
+      isDefault: true,
+      description: "Which date --from/--to/--month filter on: 'accounting' (booking date, default) or 'date' (currency/value date).");
+
+  private static TransactionDateField ParseDateField(System.CommandLine.Parsing.ArgumentResult result)
+  {
+    if (result.Tokens.Count == 0)
+    {
+      return TransactionDateField.AccountingDate;
+    }
+
+    switch (result.Tokens[0].Value.ToLowerInvariant())
+    {
+      case "accounting":
+      case "accountingdate":
+      case "accounting-date":
+        return TransactionDateField.AccountingDate;
+      case "date":
+      case "currency":
+      case "value":
+      case "valuta":
+        return TransactionDateField.Date;
+      default:
+        result.ErrorMessage = $"Unknown date field '{result.Tokens[0].Value}'. Expected: accounting, date.";
+        return default;
+    }
   }
 
   private static bool TryParseStatus(string raw, out TransactionStatus status)

@@ -25,6 +25,7 @@ public class BankStatementGetHandler(
             new TransactionsGetListResponse(
               transaction.Id,
               transaction.Date,
+              transaction.AccountingDate,
               transaction.CounterpartyId,
               transaction.Counterparty != null ? transaction.Counterparty.Name : string.Empty,
               transaction.TransactionRows.Select(row =>

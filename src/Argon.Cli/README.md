@@ -251,6 +251,8 @@ argon tx list --page-size -1 -o json | jq '.[] | .amount'
 
 `--account` and `--counterparty` are repeatable for "any of these". `--from` and `--to` are inclusive. `--month` (`yyyy-MM`, `current`, or `last`) is shorthand that expands to an inclusive `--from`/`--to` range and cannot be combined with them. `--status` is the most useful filter during a reconciliation pass — `pending` is everything the importer left for a human to categorise. `--unlinked`/`--linked` filter on whether a counterparty is attached (server-side) — `--unlinked` is the counterparty-hygiene scan in one flag.
 
+**Date field.** A parsed bank line has two dates: the **accounting (booking) date** — when it hit the statement — and the **currency (value) date**, stored as the transaction's `date`. `--from`/`--to`/`--month` filter on the **accounting date by default** (so "November" means what's on the November statement, the same set the bank shows), falling back to `date` for manual entries that have no accounting date. Pass `--date-field date` to filter on the currency/value date instead. Each transaction now carries both `date` and `accountingDate` in the output. (`tx find` and `reconcile` share the same `--date-field` default.)
+
 ### Reading
 
 ```bash

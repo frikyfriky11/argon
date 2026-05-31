@@ -5,6 +5,9 @@ public class BankStatementItem
   // the transaction date (e.g., CurrencyDate)
   public DateOnly Date { get; set; }
 
+  // the accounting (booking) date, when present
+  public DateOnly? AccountingDate { get; set; }
+
   // the transaction amount
   public decimal Amount { get; set; }
   

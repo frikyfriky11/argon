@@ -3221,10 +3221,11 @@ namespace Argon.Cli.Generated
         /// <param name="linked">When true returns only transactions with a linked counterparty, when false only those without; null returns both</param>
         /// <param name="rowAmount">When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)</param>
         /// <param name="rowAmountTolerance">The +/- tolerance applied to RowAmount (defaults to 0 = exact match)</param>
+        /// <param name="dateField">Which date field DateFrom/DateTo filter on (defaults to the currency Date; AccountingDate uses the booking date, falling back to Date)</param>
         /// <param name="pageNumber">The number of the page to retrieve from the data source</param>
         /// <param name="pageSize">The number of items in the page that must be retrieved from the data source</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, decimal? rowAmount = null, decimal? rowAmountTolerance = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, decimal? rowAmount = null, decimal? rowAmountTolerance = null, TransactionDateField? dateField = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -3332,10 +3333,11 @@ namespace Argon.Cli.Generated
         /// <param name="linked">When true returns only transactions with a linked counterparty, when false only those without; null returns both</param>
         /// <param name="rowAmount">When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)</param>
         /// <param name="rowAmountTolerance">The +/- tolerance applied to RowAmount (defaults to 0 = exact match)</param>
+        /// <param name="dateField">Which date field DateFrom/DateTo filter on (defaults to the currency Date; AccountingDate uses the booking date, falling back to Date)</param>
         /// <param name="pageNumber">The number of the page to retrieve from the data source</param>
         /// <param name="pageSize">The number of items in the page that must be retrieved from the data source</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, decimal? rowAmount = null, decimal? rowAmountTolerance = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, decimal? rowAmount = null, decimal? rowAmountTolerance = null, TransactionDateField? dateField = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -3382,6 +3384,10 @@ namespace Argon.Cli.Generated
                     if (rowAmountTolerance != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("RowAmountTolerance")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(rowAmountTolerance, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (dateField != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("DateField")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(dateField, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     if (pageNumber != null)
                     {
@@ -4448,11 +4454,18 @@ namespace Argon.Cli.Generated
         public System.Guid Id { get; set; }
 
         /// <summary>
-        /// The date of the transaction
+        /// The date of the transaction (currency/value date)
         /// </summary>
 
         [System.Text.Json.Serialization.JsonPropertyName("date")]
         public System.DateOnly Date { get; set; }
+
+        /// <summary>
+        /// The accounting (booking) date, or null for manual entries
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("accountingDate")]
+        public System.DateOnly? AccountingDate { get; set; }
 
         /// <summary>
         /// The id of the counterparty of the transaction
@@ -5234,6 +5247,20 @@ namespace Argon.Cli.Generated
     }
 
     /// <summary>
+    /// Selects which date field the transactions list filters (and is interpreted) on.
+    /// <br/>            
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum TransactionDateField
+    {
+
+        Date = 0,
+
+        AccountingDate = 1,
+
+    }
+
+    /// <summary>
     /// The result of the get request of a Transaction entity
     /// <br/>            
     /// </summary>
@@ -5248,11 +5275,18 @@ namespace Argon.Cli.Generated
         public System.Guid Id { get; set; }
 
         /// <summary>
-        /// The date of the transaction
+        /// The date of the transaction (currency/value date)
         /// </summary>
 
         [System.Text.Json.Serialization.JsonPropertyName("date")]
         public System.DateOnly Date { get; set; }
+
+        /// <summary>
+        /// The accounting (booking) date, or null for manual entries
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("accountingDate")]
+        public System.DateOnly? AccountingDate { get; set; }
 
         /// <summary>
         /// The id of the counterparty of the transaction

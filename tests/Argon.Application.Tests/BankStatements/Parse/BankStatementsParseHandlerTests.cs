@@ -581,6 +581,29 @@ public class BankStatementsParseHandlerTests
   }
 
   [Test]
+  public async Task Handle_ShouldPersistAccountingDate_SeparateFromTheCurrencyDate()
+  {
+    // arrange
+    Account account = await SeedAccountAsync();
+    Guid parserId = SetupParser(new BankStatementItem
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      Amount = 100,
+      RawInput = "Raw line",
+      CounterpartyName = "Nobody",
+    });
+
+    // act
+    BankStatementsParseResponse response = await _sut.Handle(RequestFor(parserId, account.Id), CancellationToken.None);
+
+    // assert
+    Transaction imported = await _dbContext.Transactions.FirstAsync(t => t.BankStatementId == response.BankStatementId);
+    imported.Date.Should().Be(new DateOnly(2025, 10, 30));
+    imported.AccountingDate.Should().Be(new DateOnly(2025, 11, 1));
+  }
+
+  [Test]
   public async Task Handle_ShouldPersistRawImportData_FromTheSpecificParsedItem()
   {
     // arrange

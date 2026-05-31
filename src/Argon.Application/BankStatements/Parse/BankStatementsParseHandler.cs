@@ -78,6 +78,7 @@ public class BankStatementsParseHandler(
       Transaction newTransaction = new()
       {
         Date = item.Date,
+        AccountingDate = item.AccountingDate,
         CounterpartyId = counterpartyId,
         Status = match is not null ? TransactionStatus.PotentialDuplicate : TransactionStatus.PendingImportReview,
         RawImportData = JsonSerializer.Serialize(item.SpecificParsedItem),

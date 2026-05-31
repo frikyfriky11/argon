@@ -20,9 +20,10 @@ internal static class ReconcileCommand
     Option<DateTimeOffset?> to = new("--to", "Only check transactions up to this date (inclusive)");
     Option<string?> month = new("--month", "Restrict to a month: yyyy-MM, 'current', or 'last'. Cannot be combined with --from/--to.");
     Option<decimal> tolerance = new("--tolerance", () => DefaultTolerance, "Amount tolerance when comparing cash legs (default 0.005).");
+    Option<TransactionDateField> dateField = TransactionsCommand.BuildDateFieldOption();
 
     Command cmd = new("reconcile", "Check that an account's ledger balance and parsed cash legs agree with the bank")
-      { accountRef, expected, from, to, month, tolerance };
+      { accountRef, expected, from, to, month, tolerance, dateField };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
@@ -62,6 +63,7 @@ internal static class ReconcileCommand
         linked: null,
         rowAmount: null,
         rowAmountTolerance: null,
+        dateField: ctx.ParseResult.GetValueForOption(dateField),
         pageNumber: null,
         pageSize: -1,
         cancellationToken: ct);

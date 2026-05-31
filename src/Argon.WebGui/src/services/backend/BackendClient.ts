@@ -1793,10 +1793,11 @@ export class TransactionsClient extends ServiceBase {
      * @param linked (optional) When true returns only transactions with a linked counterparty, when false only those without; null returns both
      * @param rowAmount (optional) When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)
      * @param rowAmountTolerance (optional) The +/- tolerance applied to RowAmount (defaults to 0 = exact match)
+     * @param dateField (optional) Which date field DateFrom/DateTo filter on (defaults to the currency Date; AccountingDate uses the booking date, falling back to Date)
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, linked: boolean | null | undefined, rowAmount: number | null | undefined, rowAmountTolerance: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, linked: boolean | null | undefined, rowAmount: number | null | undefined, rowAmountTolerance: number | null | undefined, dateField: TransactionDateField | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
@@ -1814,6 +1815,10 @@ export class TransactionsClient extends ServiceBase {
             url_ += "RowAmount=" + encodeURIComponent("" + rowAmount) + "&";
         if (rowAmountTolerance !== undefined && rowAmountTolerance !== null)
             url_ += "RowAmountTolerance=" + encodeURIComponent("" + rowAmountTolerance) + "&";
+        if (dateField === null)
+            throw new Error("The parameter 'dateField' cannot be null.");
+        else if (dateField !== undefined)
+            url_ += "DateField=" + encodeURIComponent("" + dateField) + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)
@@ -2849,8 +2854,10 @@ export interface IBankStatementGetResponse {
 export class TransactionsGetListResponse implements ITransactionsGetListResponse {
     /** The id of the transaction */
     id!: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date!: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate!: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
     /** The name of the counterparty of the transaction */
@@ -2877,6 +2884,7 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
         if (_data) {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
+            this.accountingDate = _data["accountingDate"] ? DateTime.fromISO(_data["accountingDate"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
@@ -2904,6 +2912,7 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
+        data["accountingDate"] = this.accountingDate ? this.accountingDate.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
@@ -2922,8 +2931,10 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
 export interface ITransactionsGetListResponse {
     /** The id of the transaction */
     id: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
     /** The name of the counterparty of the transaction */
@@ -4253,12 +4264,20 @@ export interface IPaginatedListOfTransactionsGetListResponse {
     hasNextPage: boolean;
 }
 
+/** Selects which date field the transactions list filters (and is interpreted) on. */
+export enum TransactionDateField {
+    Date = 0,
+    AccountingDate = 1,
+}
+
 /** The result of the get request of a Transaction entity */
 export class TransactionsGetResponse implements ITransactionsGetResponse {
     /** The id of the transaction */
     id!: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date!: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate!: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
     /** The name of the counterparty of the transaction */
@@ -4285,6 +4304,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         if (_data) {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
+            this.accountingDate = _data["accountingDate"] ? DateTime.fromISO(_data["accountingDate"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
@@ -4312,6 +4332,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
+        data["accountingDate"] = this.accountingDate ? this.accountingDate.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
@@ -4330,8 +4351,10 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
 export interface ITransactionsGetResponse {
     /** The id of the transaction */
     id: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
     /** The name of the counterparty of the transaction */

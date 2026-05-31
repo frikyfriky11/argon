@@ -11,9 +11,15 @@ public class Transaction : BaseAuditableEntity
   public Guid Id { get; set; }
 
   /// <summary>
-  ///   The date of the transaction
+  ///   The date of the transaction. For parsed bank lines this is the currency (value) date.
   /// </summary>
   public DateOnly Date { get; set; }
+
+  /// <summary>
+  ///   The accounting (booking) date — when the bank registered the line on the statement.
+  ///   Populated for parsed transactions; null for manual entries that never touched the bank.
+  /// </summary>
+  public DateOnly? AccountingDate { get; set; }
 
   /// <summary>
   ///   The id of the counterparty of the transaction.

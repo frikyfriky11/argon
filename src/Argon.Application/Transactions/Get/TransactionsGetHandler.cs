@@ -14,6 +14,7 @@ public class TransactionsGetHandler(
       .Select(transaction => new TransactionsGetResponse(
         transaction.Id,
         transaction.Date,
+        transaction.AccountingDate,
         transaction.CounterpartyId,
         transaction.Counterparty != null ? transaction.Counterparty.Name : string.Empty,
         transaction.TransactionRows
