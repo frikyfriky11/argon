@@ -84,13 +84,16 @@ public static class Program
       () => OutputFormat.Table,
       "Output format: table|json|csv");
 
-    RootCommand root = new("Argon command-line client")
-    {
-      baseUrlOption,
-      authorityOption,
-      clientIdOption,
-      outputOption,
-    };
+    RootCommand root = new("Argon command-line client");
+
+    // Register as global (recursive) options so they are accepted both before and
+    // after the subcommand — `argon -o json tx list` and `argon tx list -o json`
+    // both parse. Plain (non-global) options are only recognised at the level they
+    // are declared, which is what used to make the trailing form error.
+    root.AddGlobalOption(baseUrlOption);
+    root.AddGlobalOption(authorityOption);
+    root.AddGlobalOption(clientIdOption);
+    root.AddGlobalOption(outputOption);
 
     CliContextFactory factory = new(baseUrlOption, authorityOption, clientIdOption, outputOption);
 

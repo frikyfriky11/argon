@@ -224,6 +224,34 @@ public class TransactionsCommandTests
     query.Should().Contain($"DateTo={expectedTo:yyyy-MM-dd}");
   }
 
+  [Test]
+  public async Task GlobalOutputOption_ShouldBeAccepted_AfterTheSubcommand()
+  {
+    // arrange — the trailing position used to error with "Unrecognized command or argument '-o'"
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list -o json");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdOut.Trim().Should().StartWith("[");
+  }
+
+  [Test]
+  public async Task GlobalOutputOption_ShouldStillBeAccepted_BeforeTheSubcommand()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("-o json tx list");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdOut.Trim().Should().StartWith("[");
+  }
+
   // ----- get -----
 
   [Test]

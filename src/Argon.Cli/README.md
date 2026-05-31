@@ -101,6 +101,8 @@ Secrets land at `~/.microsoft/usersecrets/argon-cli/secrets.json` (Linux/macOS) 
 
 Every command accepts `-o`/`--output` with `table` (default), `json`, or `csv`. `table` prints scalar columns of the response, `json` pretty-prints, and `csv` emits one row per record. Nested children (like transaction rows) only show up under `json` for the list endpoints — `argon tx get <id>` always shows the rows.
 
+`-o`/`--output` (and `--base-url`, `--authority`, `--client-id`) are **global options**: they work both before and after the subcommand, so `argon -o json tx list` and `argon tx list -o json` are equivalent.
+
 JSON output has two ergonomic touches that make life easier when piping into `jq`:
 
 - **`rawImportData` is flattened**. The original string is still there for fidelity, but every field inside it (`amount`, `accountingDate`, `currencyDate`, `rawDescription`, `counterpartyName`, parser-specific extras) is also lifted onto the surrounding transaction. So instead of `(.rawImportData | fromjson | .Amount)`, you can just write `.amount`. Pre-existing top-level fields take precedence on conflict.

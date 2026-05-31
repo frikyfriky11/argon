@@ -61,10 +61,11 @@ internal sealed class CliTestHarness : IDisposable
       this,
       baseUrlOption, authorityOption, clientIdOption, outputOption);
 
-    RootCommand root = new("argon test")
-    {
-      baseUrlOption, authorityOption, clientIdOption, outputOption,
-    };
+    RootCommand root = new("argon test");
+    root.AddGlobalOption(baseUrlOption);
+    root.AddGlobalOption(authorityOption);
+    root.AddGlobalOption(clientIdOption);
+    root.AddGlobalOption(outputOption);
 
     foreach (Command cmd in LoginCommand.Build(factory))
     {
