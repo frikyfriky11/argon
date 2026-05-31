@@ -10,6 +10,7 @@ namespace Argon.Application.Transactions.GetList;
 /// <param name="DateFrom">The start date to use in the search of the transaction</param>
 /// <param name="DateTo">The end date to use in the search of the transaction</param>
 /// <param name="Status">Filter by transaction status</param>
+/// <param name="Linked">When true returns only transactions with a linked counterparty, when false only those without; null returns both</param>
 /// <param name="PageNumber">The page number (defaults to 1)</param>
 /// <param name="PageSize">The page size (defaults to 25)</param>
 [PublicAPI]
@@ -19,6 +20,7 @@ public record TransactionsGetListRequest(
   DateTimeOffset? DateFrom,
   DateTimeOffset? DateTo,
   TransactionStatus? Status = null,
+  bool? Linked = null,
   int PageNumber = 1,
   int PageSize = 25
 ) : PaginatedListRequest(PageNumber, PageSize),

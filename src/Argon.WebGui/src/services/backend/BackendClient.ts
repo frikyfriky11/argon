@@ -1790,10 +1790,11 @@ export class TransactionsClient extends ServiceBase {
      * @param dateFrom (optional) The start date to use in the search of the transaction
      * @param dateTo (optional) The end date to use in the search of the transaction
      * @param status (optional) Filter by transaction status
+     * @param linked (optional) When true returns only transactions with a linked counterparty, when false only those without; null returns both
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, linked: boolean | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
@@ -1805,6 +1806,8 @@ export class TransactionsClient extends ServiceBase {
             url_ += "DateTo=" + encodeURIComponent(dateTo ? "" + dateTo.toString() : "") + "&";
         if (status !== undefined && status !== null)
             url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (linked !== undefined && linked !== null)
+            url_ += "Linked=" + encodeURIComponent("" + linked) + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)

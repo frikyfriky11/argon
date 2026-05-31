@@ -266,6 +266,88 @@ public class TransactionsGetListHandlerTests
   }
 
   [Test]
+  public async Task Handle_ShouldRetrieveOnlyUnlinkedTransactions_WhenLinkedIsFalse()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Counterparty market = new() { Id = _marketCounterpartyId, Name = "Market" };
+
+    Transaction linkedTx = new()
+    {
+      Counterparty = market,
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50 },
+      },
+    };
+    Transaction unlinkedTx = new()
+    {
+      Counterparty = null,
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 20 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 20 },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(linkedTx, unlinkedTx);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, Linked: false);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(unlinkedTx.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyLinkedTransactions_WhenLinkedIsTrue()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Counterparty market = new() { Id = _marketCounterpartyId, Name = "Market" };
+
+    Transaction linkedTx = new()
+    {
+      Counterparty = market,
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50 },
+      },
+    };
+    Transaction unlinkedTx = new()
+    {
+      Counterparty = null,
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 20 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 20 },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(linkedTx, unlinkedTx);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, Linked: true);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(linkedTx.Id);
+  }
+
+  [Test]
   public async Task Handle_ShouldProjectEmptyCounterpartyName_WhenTransactionHasNoCounterparty()
   {
     // arrange

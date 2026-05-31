@@ -44,11 +44,13 @@ internal static class TransactionsCommand
         return default;
       },
       description: "Filter by status: pending, confirmed, duplicate");
+    Option<bool> linked = new("--linked", "Only transactions with a linked counterparty");
+    Option<bool> unlinked = new("--unlinked", "Only transactions without a linked counterparty");
     Option<int?> page = new("--page", "Page number");
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
 
     Command cmd = new("list", "List transactions")
-      { accountRefs, counterpartyRefs, from, to, month, status, page, pageSize };
+      { accountRefs, counterpartyRefs, from, to, month, status, linked, unlinked, page, pageSize };
 
     cmd.SetHandler(async ctx =>
     {
@@ -73,12 +75,22 @@ internal static class TransactionsCommand
         (dateFrom, dateTo) = MonthToRange(monthInput);
       }
 
+      bool linkedFlag = ctx.ParseResult.GetValueForOption(linked);
+      bool unlinkedFlag = ctx.ParseResult.GetValueForOption(unlinked);
+      if (linkedFlag && unlinkedFlag)
+      {
+        throw new ArgumentException("--linked and --unlinked cannot be combined.");
+      }
+
+      bool? linkedFilter = linkedFlag ? true : unlinkedFlag ? false : null;
+
       PaginatedListOfTransactionsGetListResponse result = await app.Transactions.GetListAsync(
         accountIds: accountIds,
         counterpartyIds: counterpartyIds,
         dateFrom: dateFrom,
         dateTo: dateTo,
         status: ctx.ParseResult.GetValueForOption(status),
+        linked: linkedFilter,
         pageNumber: ctx.ParseResult.GetValueForOption(page),
         pageSize: ctx.ParseResult.GetValueForOption(pageSize),
         cancellationToken: ct);

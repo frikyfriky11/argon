@@ -151,6 +151,60 @@ public class TransactionsCommandTests
   }
 
   [Test]
+  public async Task List_ShouldSendLinkedTrue_WhenLinkedFlagIsPassed()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --linked");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.Query.Should().Contain("Linked=true");
+  }
+
+  [Test]
+  public async Task List_ShouldSendLinkedFalse_WhenUnlinkedFlagIsPassed()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --unlinked");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.Query.Should().Contain("Linked=false");
+  }
+
+  [Test]
+  public async Task List_ShouldNotSendLinked_WhenNeitherFlagIsPassed()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.Query.Should().NotContain("Linked");
+  }
+
+  [Test]
+  public async Task List_ShouldFail_WhenLinkedAndUnlinkedAreBothPassed()
+  {
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --linked --unlinked");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("--linked and --unlinked cannot be combined");
+    _harness.Handler.Requests.Should().BeEmpty();
+  }
+
+  [Test]
   public async Task List_ShouldExpandMonthToFirstAndLastDay_WhenMonthIsSupplied()
   {
     // arrange
