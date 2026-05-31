@@ -141,6 +141,8 @@ If a name matches more than one record the CLI errors out and prints the candida
 
 `list` commands that paginate (`tx list`, `cp list`, `cpi list`) accept `--page` and `--page-size`. Use `--page-size -1` to fetch everything in one call — handy when piping to JSON.
 
+When results are truncated (more rows exist beyond the page shown), the CLI says so: in table mode a `… N more not shown — use --page-size -1 for all` line follows the footer; in `-o json`/`-o csv` mode the same hint is written to **stderr**, so stdout stays a clean JSON/CSV payload for `| jq` while you still see that you're not looking at the full set. This is the cure for "I concluded it didn't exist, but it was just on page 2."
+
 ### Amount syntax in `--row`
 
 `-r` / `--row` takes a colon-separated tuple. The empty side uses `0`:

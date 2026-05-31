@@ -33,11 +33,9 @@ internal static class CounterpartiesCommand
         ctx.ParseResult.GetValueForOption(pageSize),
         ctx.GetCancellationToken());
       OutputFormatter.Write(result.Items, app.Output);
-      if (app.Output == OutputFormat.Table)
-      {
-        Console.WriteLine();
-        Console.WriteLine($"page {result.PageNumber}/{result.TotalPages}  ({result.TotalCount} total)");
-      }
+      PaginationFooter.Write(
+        app.Output, result.PageNumber, result.TotalPages, result.TotalCount,
+        result.Items?.Count ?? 0, result.HasNextPage);
     });
     return cmd;
   }

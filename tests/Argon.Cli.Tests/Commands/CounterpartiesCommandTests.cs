@@ -103,6 +103,47 @@ public class CounterpartiesCommandTests
   }
 
   [Test]
+  public async Task List_ShouldHintAtTruncation_OnStdOut_WhenTableResultsAreTruncated()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(new PaginatedListOfCounterpartiesGetListResponse
+    {
+      Items = new[] { new CounterpartiesGetListResponse { Id = Guid.NewGuid(), Name = "Amazon" } },
+      PageNumber = 1, TotalPages = 3, TotalCount = 42, HasNextPage = true,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("counterparties list");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdOut.Should().Contain("41 more not shown");
+    result.StdOut.Should().Contain("--page-size -1");
+  }
+
+  [Test]
+  public async Task List_ShouldHintAtTruncation_OnStdErr_WhenJsonResultsAreTruncated()
+  {
+    // arrange — the hint must go to stderr so stdout stays valid JSON for a `| jq` pipe
+    _harness.Handler.EnqueueJson(new PaginatedListOfCounterpartiesGetListResponse
+    {
+      Items = new[] { new CounterpartiesGetListResponse { Id = Guid.NewGuid(), Name = "Amazon" } },
+      PageNumber = 1, TotalPages = 3, TotalCount = 42, HasNextPage = true,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("-o json counterparties list");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdErr.Should().Contain("showing 1 of 42");
+    result.StdErr.Should().Contain("--page-size -1");
+    result.StdOut.Should().NotContain("more not shown");
+    // stdout must remain parseable JSON
+    JsonDocument.Parse(result.StdOut);
+  }
+
+  [Test]
   public async Task Get_ShouldCallGetCounterpartiesById_WithTheGuidArgument()
   {
     // arrange
