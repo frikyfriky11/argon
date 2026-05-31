@@ -4915,6 +4915,34 @@ namespace Argon.Cli.Generated
         [System.Text.Json.Serialization.JsonPropertyName("count")]
         public int Count { get; set; }
 
+        /// <summary>
+        /// The net amount (sum of debit minus credit) posted on this account for this counterparty
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("total")]
+        public decimal Total { get; set; }
+
+        /// <summary>
+        /// The average net amount per posting (Total divided by Count)
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("average")]
+        public decimal Average { get; set; }
+
+        /// <summary>
+        /// The most recent transaction date posted on this account for this counterparty
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("lastDate")]
+        public System.DateOnly LastDate { get; set; }
+
+        /// <summary>
+        /// The most frequent non-empty row description on this account for this counterparty, if any
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("mostCommonDescription")]
+        public string MostCommonDescription { get; set; }
+
     }
 
     /// <summary>

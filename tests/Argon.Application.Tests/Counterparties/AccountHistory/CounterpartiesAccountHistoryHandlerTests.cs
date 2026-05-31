@@ -77,6 +77,51 @@ public class CounterpartiesAccountHistoryHandlerTests
     result[1].Count.Should().Be(3);
     result[2].AccountName.Should().Be("Prodotti pulizia");
     result[2].Count.Should().Be(1);
+
+    // Alimentari: three €30 debits → net 90, average 30, last on the third day
+    result[1].Total.Should().Be(90m);
+    result[1].Average.Should().Be(30m);
+    result[1].LastDate.Should().Be(new DateOnly(2024, 1, 3));
+    // Sparkasse: four credits (30+30+30+10) → net -100, average -25
+    result[0].Total.Should().Be(-100m);
+    result[0].Average.Should().Be(-25m);
+    result[0].LastDate.Should().Be(new DateOnly(2024, 1, 10));
+  }
+
+  [Test]
+  public async Task Handle_ShouldReturnMostCommonNonEmptyDescription_PerAccount()
+  {
+    // arrange
+    EntityEntry<Account> bank = await _dbContext.Accounts.AddAsync(new Account { Name = "Sparkasse", Type = AccountType.Cash });
+    EntityEntry<Account> cleaning = await _dbContext.Accounts.AddAsync(new Account { Name = "Pulizia", Type = AccountType.Expense });
+    EntityEntry<Counterparty> amazon = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Amazon" });
+
+    string[] descriptions = { "Sale lavastoviglie", "Sale lavastoviglie", "Detersivo" };
+    foreach (string description in descriptions)
+    {
+      await _dbContext.Transactions.AddAsync(new Transaction
+      {
+        Date = new DateOnly(2024, 2, 1),
+        Counterparty = amazon.Entity,
+        Status = TransactionStatus.Confirmed,
+        TransactionRows = new List<TransactionRow>
+        {
+          new() { RowCounter = 1, Account = bank.Entity, Credit = 1m },
+          new() { RowCounter = 2, Account = cleaning.Entity, Debit = 1m, Description = description },
+        },
+      });
+    }
+
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    // act
+    List<CounterpartiesAccountHistoryResponse> result =
+      await _sut.Handle(new CounterpartiesAccountHistoryRequest(amazon.Entity.Id), CancellationToken.None);
+
+    // assert
+    CounterpartiesAccountHistoryResponse cleaningRow = result.Single(r => r.AccountName == "Pulizia");
+    cleaningRow.MostCommonDescription.Should().Be("Sale lavastoviglie");
+    result.Single(r => r.AccountName == "Sparkasse").MostCommonDescription.Should().BeNull();
   }
 
   [Test]

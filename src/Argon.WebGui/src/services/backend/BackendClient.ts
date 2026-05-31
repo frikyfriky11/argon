@@ -3663,6 +3663,14 @@ export class CounterpartiesAccountHistoryResponse implements ICounterpartiesAcco
     accountType!: AccountType;
     /** How many transaction rows tagged this counterparty are posted on this account */
     count!: number;
+    /** The net amount (sum of debit minus credit) posted on this account for this counterparty */
+    total!: number;
+    /** The average net amount per posting (Total divided by Count) */
+    average!: number;
+    /** The most recent transaction date posted on this account for this counterparty */
+    lastDate!: DateTime;
+    /** The most frequent non-empty row description on this account for this counterparty, if any */
+    mostCommonDescription!: string | null;
 
     constructor(data?: ICounterpartiesAccountHistoryResponse) {
         if (data) {
@@ -3679,6 +3687,10 @@ export class CounterpartiesAccountHistoryResponse implements ICounterpartiesAcco
             this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
             this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
             this.count = _data["count"] !== undefined ? _data["count"] : <any>null;
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+            this.average = _data["average"] !== undefined ? _data["average"] : <any>null;
+            this.lastDate = _data["lastDate"] ? DateTime.fromISO(_data["lastDate"].toString()) : <any>null;
+            this.mostCommonDescription = _data["mostCommonDescription"] !== undefined ? _data["mostCommonDescription"] : <any>null;
         }
     }
 
@@ -3695,6 +3707,10 @@ export class CounterpartiesAccountHistoryResponse implements ICounterpartiesAcco
         data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
         data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
         data["count"] = this.count !== undefined ? this.count : <any>null;
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        data["average"] = this.average !== undefined ? this.average : <any>null;
+        data["lastDate"] = this.lastDate ? this.lastDate.toFormat('yyyy-MM-dd') : <any>null;
+        data["mostCommonDescription"] = this.mostCommonDescription !== undefined ? this.mostCommonDescription : <any>null;
         return data;
     }
 }
@@ -3709,6 +3725,14 @@ export interface ICounterpartiesAccountHistoryResponse {
     accountType: AccountType;
     /** How many transaction rows tagged this counterparty are posted on this account */
     count: number;
+    /** The net amount (sum of debit minus credit) posted on this account for this counterparty */
+    total: number;
+    /** The average net amount per posting (Total divided by Count) */
+    average: number;
+    /** The most recent transaction date posted on this account for this counterparty */
+    lastDate: DateTime;
+    /** The most frequent non-empty row description on this account for this counterparty, if any */
+    mostCommonDescription: string | null;
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */

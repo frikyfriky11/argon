@@ -333,7 +333,7 @@ Useful when the importer's auto-match landed on the wrong counterparty (or none)
 
 ### `tx history --counterparty` — frequency table by account
 
-Answers "for this counterparty, which accounts has it historically been posted to, and how often?". Ordered by descending count.
+Answers "for this counterparty, which accounts has it historically been posted to, and how often?". Ordered by descending count. Each row also carries the net `Total`, the `Average` per posting, the `LastDate` it was used, and the `MostCommonDescription` seen on that account — so for a multi-account counterparty you can tell the buckets apart at a glance (e.g. the small Amazon → `Prodotti per la pulizia della casa` bucket is labelled `Sale lavastoviglie`) instead of running three follow-up queries.
 
 ```bash
 argon tx history --counterparty "Eurospar"
