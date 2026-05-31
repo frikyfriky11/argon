@@ -16,6 +16,7 @@ internal static class TransactionsCommand
     tx.AddCommand(CreateCommand(factory));
     tx.AddCommand(UpdateCommand(factory));
     tx.AddCommand(PatchCommand(factory));
+    tx.AddCommand(DuplicateCommand(factory));
     tx.AddCommand(CategorizeCommand(factory));
     tx.AddCommand(SetCounterpartyCommand(factory));
     tx.AddCommand(HistoryCommand(factory));
@@ -383,6 +384,92 @@ internal static class TransactionsCommand
 
     return DateOnly.Parse(result.Tokens[0].Value, CultureInfo.InvariantCulture);
   }
+
+  private static Command DuplicateCommand(CliContextFactory factory)
+  {
+    Argument<Guid> id = new("id", "Id of the transaction to clone");
+    Option<DateOnly> date = new("--date", parseArgument: r =>
+        DateOnly.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
+      description: "Date for the new transaction (yyyy-MM-dd)") { IsRequired = true };
+    Option<decimal?> amount = new("--amount", parseArgument: r =>
+        r.Tokens.Count == 0 ? null : decimal.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
+      description: "Scale every row so the transaction total becomes this amount. Defaults to cloning the original amounts.");
+    Option<string?> counterpartyRef = new("--counterparty", "Counterparty name or id for the clone. Defaults to the source transaction's counterparty.");
+
+    Command cmd = new("duplicate", "Create a new transaction by cloning the structure of an existing one") { id, date, amount, counterpartyRef };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      Guid sourceId = ctx.ParseResult.GetValueForArgument(id);
+      TransactionsGetResponse source = await app.Transactions.GetAsync(sourceId, ct);
+
+      string? cpRef = ctx.ParseResult.GetValueForOption(counterpartyRef);
+      Guid counterpartyId;
+      if (cpRef is not null)
+      {
+        counterpartyId = await app.Resolver.ResolveCounterpartyAsync(cpRef, ct);
+      }
+      else if (source.CounterpartyId is { } existingCp)
+      {
+        counterpartyId = existingCp;
+      }
+      else
+      {
+        throw new ArgumentException(
+          $"Source transaction {sourceId} has no counterparty; pass --counterparty for the clone.");
+      }
+
+      decimal? targetAmount = ctx.ParseResult.GetValueForOption(amount);
+      decimal factor = 1m;
+      if (targetAmount is { } target)
+      {
+        decimal sourceTotal = source.TransactionRows.Sum(r => r.Debit ?? 0);
+        if (sourceTotal == 0)
+        {
+          throw new ArgumentException(
+            $"Source transaction {sourceId} has a zero total, so --amount cannot scale it.");
+        }
+
+        factor = target / sourceTotal;
+      }
+
+      List<TransactionRowsCreateRequest> rows = new();
+      int counter = 1;
+      foreach (TransactionRowsGetResponse row in source.TransactionRows.OrderBy(r => r.RowCounter))
+      {
+        if (row.AccountId is not { } accountId)
+        {
+          throw new ArgumentException(
+            $"Source row {row.RowCounter} has no account and cannot be cloned. Categorize the source first.");
+        }
+
+        rows.Add(new TransactionRowsCreateRequest
+        {
+          RowCounter = counter++,
+          AccountId = accountId,
+          Debit = Scale(row.Debit, factor),
+          Credit = Scale(row.Credit, factor),
+          Description = row.Description,
+        });
+      }
+
+      TransactionsCreateRequest request = new()
+      {
+        Date = ctx.ParseResult.GetValueForOption(date),
+        CounterpartyId = counterpartyId,
+        TransactionRows = rows,
+      };
+
+      TransactionsCreateResponse result = await app.Transactions.CreateAsync(request, ct);
+      OutputFormatter.Write(result, app.Output);
+    });
+    return cmd;
+  }
+
+  private static decimal? Scale(decimal? value, decimal factor)
+    => value is { } v ? Math.Round(v * factor, 2, MidpointRounding.AwayFromZero) : null;
 
   private static Command CategorizeCommand(CliContextFactory factory)
   {

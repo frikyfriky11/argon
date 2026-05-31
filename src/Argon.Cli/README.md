@@ -292,6 +292,14 @@ argon tx patch <tx-id> \
 - `--date`/`--counterparty` are optional and default to the transaction's existing values, so a patch on an as-yet-unlinked transaction works without inventing a counterparty.
 - A parsed **Cash** (bank) row is treated as **read-only**: patch refuses to change its account/debit/credit and tells you so. Pass `--force` only if you genuinely mean to alter the parsed bank amount. Combined with the server-side balance check, this makes the silent "cash leg drifted by €X" class of error impossible via patch.
 
+### `tx duplicate` — clone an existing transaction
+
+For movements the parser can't ingest (cash withdrawals, recurring manual entries), clone a previous one instead of typing both rows from scratch. The rows, accounts, descriptions and counterparty are copied; `--date` sets the new date and the optional `--amount` rescales every row so the transaction total becomes that amount (proportionally — ideal for a fixed-shape cash-cash transfer). `--counterparty` overrides the copied counterparty.
+
+```bash
+argon tx duplicate <last-prelievo-id> --date 2026-06-08 --amount 50
+```
+
 ### `tx categorize` — fill in one row of a pending transaction
 
 ```bash

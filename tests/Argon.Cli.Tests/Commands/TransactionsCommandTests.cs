@@ -949,6 +949,97 @@ public class TransactionsCommandTests
     result.StdErr.Should().Contain("No row with counter 9");
   }
 
+  // ----- duplicate -----
+
+  [Test]
+  public async Task Duplicate_ShouldClonethRowsWithNewDate_WhenNoAmountGiven()
+  {
+    // arrange
+    Guid sourceId = Guid.Parse("a1a1a1a1-1111-1111-1111-111111111111");
+    Guid cpId = Guid.Parse("a1a1a1a1-2222-2222-2222-222222222222");
+    Guid walletAcc = Guid.Parse("a1a1a1a1-3333-3333-3333-333333333333");
+    Guid bankAcc = Guid.Parse("a1a1a1a1-4444-4444-4444-444444444444");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = sourceId, Date = new DateOnly(2025, 10, 1), CounterpartyId = cpId, CounterpartyName = "Sparkasse",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = walletAcc, AccountType = AccountType.Cash, Debit = 30m, Description = "Prelievo contanti" },
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 2, AccountId = bankAcc, AccountType = AccountType.Cash, Credit = 30m },
+      },
+    });
+    _harness.Handler.EnqueueJson(new TransactionsCreateResponse { Id = Guid.NewGuid() });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"tx duplicate {sourceId} --date 2025-11-08");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    CapturedRequest post = _harness.Handler.Requests[1];
+    post.Method.Should().Be(HttpMethod.Post);
+    post.Uri.AbsolutePath.Should().Be("/Transactions");
+    JsonDocument body = JsonDocument.Parse(post.Body!);
+    body.RootElement.GetProperty("date").GetString().Should().Be("2025-11-08");
+    body.RootElement.GetProperty("counterpartyId").GetGuid().Should().Be(cpId);
+    JsonElement rows = body.RootElement.GetProperty("transactionRows");
+    rows.GetArrayLength().Should().Be(2);
+    rows[0].GetProperty("debit").GetDecimal().Should().Be(30m);
+    rows[0].GetProperty("description").GetString().Should().Be("Prelievo contanti");
+    rows[1].GetProperty("credit").GetDecimal().Should().Be(30m);
+  }
+
+  [Test]
+  public async Task Duplicate_ShouldScaleRowsProportionally_WhenAmountGiven()
+  {
+    // arrange
+    Guid sourceId = Guid.Parse("b1b1b1b1-1111-1111-1111-111111111111");
+    Guid cpId = Guid.Parse("b1b1b1b1-2222-2222-2222-222222222222");
+    Guid walletAcc = Guid.Parse("b1b1b1b1-3333-3333-3333-333333333333");
+    Guid bankAcc = Guid.Parse("b1b1b1b1-4444-4444-4444-444444444444");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = sourceId, Date = new DateOnly(2025, 10, 1), CounterpartyId = cpId, CounterpartyName = "Sparkasse",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = walletAcc, AccountType = AccountType.Cash, Debit = 30m },
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 2, AccountId = bankAcc, AccountType = AccountType.Cash, Credit = 30m },
+      },
+    });
+    _harness.Handler.EnqueueJson(new TransactionsCreateResponse { Id = Guid.NewGuid() });
+
+    // act — scale 30 -> 50
+    CliInvocationResult result = await _harness.InvokeAsync($"tx duplicate {sourceId} --date 2025-11-08 --amount 50");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    JsonElement rows = JsonDocument.Parse(_harness.Handler.Requests[1].Body!).RootElement.GetProperty("transactionRows");
+    rows[0].GetProperty("debit").GetDecimal().Should().Be(50m);
+    rows[1].GetProperty("credit").GetDecimal().Should().Be(50m);
+  }
+
+  [Test]
+  public async Task Duplicate_ShouldFail_WhenSourceHasNoCounterpartyAndNoneProvided()
+  {
+    // arrange
+    Guid sourceId = Guid.Parse("c1c1c1c1-1111-1111-1111-111111111111");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = sourceId, Date = new DateOnly(2025, 10, 1), CounterpartyId = null, CounterpartyName = "",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = Guid.NewGuid(), AccountType = AccountType.Cash, Debit = 30m },
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 2, AccountId = Guid.NewGuid(), AccountType = AccountType.Cash, Credit = 30m },
+      },
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"tx duplicate {sourceId} --date 2025-11-08");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("no counterparty");
+  }
+
   // ----- set-counterparty -----
 
   [Test]
