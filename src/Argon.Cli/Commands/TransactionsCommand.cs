@@ -301,9 +301,10 @@ internal static class TransactionsCommand
   private static Command HistoryCommand(CliContextFactory factory)
   {
     Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
+    Option<bool> exact = new("--exact", "Require an exact counterparty-name match (default: substring match with disambiguation)");
 
     Command cmd = new("history", "Show the frequency table of accounts a counterparty has been posted against")
-      { counterpartyRef };
+      { counterpartyRef, exact };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
@@ -311,7 +312,8 @@ internal static class TransactionsCommand
 
       Guid counterpartyId = await app.Resolver.ResolveCounterpartyAsync(
         ctx.ParseResult.GetValueForOption(counterpartyRef)!,
-        ct);
+        ct,
+        ctx.ParseResult.GetValueForOption(exact));
 
       ICollection<CounterpartiesAccountHistoryResponse> result =
         await app.Counterparties.AccountHistoryAsync(counterpartyId, ct);

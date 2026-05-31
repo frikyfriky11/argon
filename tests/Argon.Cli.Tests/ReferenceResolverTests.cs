@@ -193,4 +193,91 @@ public class ReferenceResolverTests
     await act.Should().ThrowAsync<ArgumentException>()
       .WithMessage("*No counterparty matching 'Ghost'*");
   }
+
+  [Test]
+  public async Task ResolveCounterpartyAsync_ShouldMatchOnSubstring_WhenNoExactMatchAndExactlyOneContains()
+  {
+    // arrange — `Athesia` should resolve `Athesia Buch` without a separate cp list|grep
+    Guid expected = Guid.Parse("99999999-9999-9999-9999-999999999999");
+    _handler.EnqueueJson(new PaginatedListOfCounterpartiesGetListResponse
+    {
+      Items = new[]
+      {
+        new CounterpartiesGetListResponse { Id = expected, Name = "Athesia Buch" },
+        new CounterpartiesGetListResponse { Id = Guid.NewGuid(), Name = "Eurospar" },
+      },
+      PageNumber = 1, TotalPages = 1, TotalCount = 2,
+    });
+
+    // act
+    Guid result = await _sut.ResolveCounterpartyAsync("Athesia", CancellationToken.None);
+
+    // assert
+    result.Should().Be(expected);
+  }
+
+  [Test]
+  public async Task ResolveCounterpartyAsync_ShouldPreferExactMatch_OverSubstringCandidates()
+  {
+    // arrange — an exact "Amazon" wins even though "Amazon Web Services" also contains it
+    Guid exact = Guid.Parse("aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa");
+    _handler.EnqueueJson(new PaginatedListOfCounterpartiesGetListResponse
+    {
+      Items = new[]
+      {
+        new CounterpartiesGetListResponse { Id = exact, Name = "Amazon" },
+        new CounterpartiesGetListResponse { Id = Guid.NewGuid(), Name = "Amazon Web Services" },
+      },
+      PageNumber = 1, TotalPages = 1, TotalCount = 2,
+    });
+
+    // act
+    Guid result = await _sut.ResolveCounterpartyAsync("Amazon", CancellationToken.None);
+
+    // assert
+    result.Should().Be(exact);
+  }
+
+  [Test]
+  public async Task ResolveCounterpartyAsync_ShouldThrowDisambiguation_WhenMultipleSubstringMatches()
+  {
+    // arrange
+    Guid first = Guid.Parse("11111111-aaaa-aaaa-aaaa-111111111111");
+    Guid second = Guid.Parse("22222222-aaaa-aaaa-aaaa-222222222222");
+    _handler.EnqueueJson(new PaginatedListOfCounterpartiesGetListResponse
+    {
+      Items = new[]
+      {
+        new CounterpartiesGetListResponse { Id = first, Name = "Athesia Buch" },
+        new CounterpartiesGetListResponse { Id = second, Name = "Athesia Druck" },
+      },
+      PageNumber = 1, TotalPages = 1, TotalCount = 2,
+    });
+
+    // act
+    Func<Task> act = () => _sut.ResolveCounterpartyAsync("Athesia", CancellationToken.None);
+
+    // assert
+    (await act.Should().ThrowAsync<ArgumentException>()
+      .WithMessage("*Multiple counterparty entries match 'Athesia'*"))
+      .Which.Message.Should().ContainAll("Athesia Buch", "Athesia Druck");
+  }
+
+  [Test]
+  public async Task ResolveCounterpartyAsync_ShouldNotFallBackToSubstring_WhenExactIsRequested()
+  {
+    // arrange
+    _handler.EnqueueJson(new PaginatedListOfCounterpartiesGetListResponse
+    {
+      Items = new[] { new CounterpartiesGetListResponse { Id = Guid.NewGuid(), Name = "Athesia Buch" } },
+      PageNumber = 1, TotalPages = 1, TotalCount = 1,
+    });
+
+    // act
+    Func<Task> act = () => _sut.ResolveCounterpartyAsync("Athesia", CancellationToken.None, exact: true);
+
+    // assert
+    await act.Should().ThrowAsync<ArgumentException>()
+      .WithMessage("*No counterparty matching 'Athesia'*");
+  }
 }

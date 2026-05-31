@@ -119,7 +119,9 @@ A few things hold across every command — worth reading once.
 
 ### Names are accepted wherever an account or counterparty id is expected
 
-`--account`, `--counterparty`, the `tx categorize --account`, the `tx set-counterparty <counterparty>` positional, the account portion inside `--row`, and `tx history --counterparty` all accept either a GUID **or** the entity's exact name (case-insensitive). The CLI fetches the list once per invocation and resolves locally:
+`--account`, `--counterparty`, the `tx categorize --account`, the `tx set-counterparty <counterparty>` positional, the account portion inside `--row`, and `tx history --counterparty` all accept either a GUID **or** the entity's name. The CLI fetches the list once per invocation and resolves locally:
+
+Name resolution is **exact (case-insensitive) first, then substring**: an exact name match always wins; if there is none, a unique case-insensitive substring match is used (so `Athesia` resolves `Athesia Buch`). When a substring matches more than one entity the CLI lists the candidates and asks you to disambiguate rather than guessing. `tx history --counterparty` takes `--exact` to opt out of the substring fallback.
 
 ```bash
 argon tx list --counterparty "Eurospar"
