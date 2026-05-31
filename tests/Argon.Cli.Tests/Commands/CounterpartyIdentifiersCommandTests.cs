@@ -222,7 +222,7 @@ public class CounterpartyIdentifiersCommandTests
   {
     // arrange
     Guid id = Guid.Parse("55555555-5555-5555-5555-555555555555");
-    _harness.Handler.EnqueueEmpty(HttpStatusCode.OK);
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
 
     // act
     CliInvocationResult result = await _harness.InvokeAsync($"counterparty-identifiers delete {id}");

@@ -108,6 +108,8 @@ public class CounterpartiesController(
   /// <response code="204">The Counterparty was correctly deleted</response>
   /// <response code="404">A Counterparty with the specified id could not be found</response>
   [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   public async Task<ActionResult> Delete([FromRoute] Guid id)
   {
     CounterpartiesDeleteRequest request = new(id);

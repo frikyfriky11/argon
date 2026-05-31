@@ -100,7 +100,7 @@ internal static class CounterpartiesCommand
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
-      using FileResponse _ = await app.Counterparties.DeleteAsync(
+      await app.Counterparties.DeleteAsync(
         ctx.ParseResult.GetValueForArgument(id),
         ctx.GetCancellationToken());
       Console.WriteLine("deleted.");

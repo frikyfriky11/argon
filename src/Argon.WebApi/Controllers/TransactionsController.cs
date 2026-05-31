@@ -142,6 +142,8 @@ public class TransactionsController(
   /// <response code="204">The Transaction was correctly deleted</response>
   /// <response code="404">A Transaction with the specified id could not be found</response>
   [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   public async Task<ActionResult> Delete([FromRoute] Guid id)
   {
     TransactionsDeleteRequest request = new(id);

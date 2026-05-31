@@ -89,6 +89,8 @@ public class AccountsController(
   /// <response code="204">The Account was correctly deleted</response>
   /// <response code="404">A Account with the specified id could not be found</response>
   [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   public async Task<ActionResult> Delete([FromRoute] Guid id)
   {
     AccountsDeleteRequest request = new(id);

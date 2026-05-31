@@ -1259,7 +1259,7 @@ public class TransactionsCommandTests
   {
     // arrange
     Guid id = Guid.Parse("44444444-4444-4444-4444-444444444444");
-    _harness.Handler.EnqueueEmpty(HttpStatusCode.OK);
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
 
     // act
     CliInvocationResult result = await _harness.InvokeAsync($"tx delete {id}");

@@ -673,7 +673,7 @@ internal static class TransactionsCommand
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
-      using FileResponse _ = await app.Transactions.DeleteAsync(
+      await app.Transactions.DeleteAsync(
         ctx.ParseResult.GetValueForArgument(id),
         ctx.GetCancellationToken());
       Console.WriteLine("deleted.");

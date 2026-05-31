@@ -188,7 +188,7 @@ internal static class AccountsCommand
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
-      using FileResponse _ = await app.Accounts.DeleteAsync(
+      await app.Accounts.DeleteAsync(
         ctx.ParseResult.GetValueForArgument(id),
         ctx.GetCancellationToken());
       Console.WriteLine("deleted.");

@@ -137,7 +137,7 @@ internal static class CounterpartyIdentifiersCommand
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
-      using FileResponse _ = await app.CounterpartyIdentifiers.DeleteAsync(
+      await app.CounterpartyIdentifiers.DeleteAsync(
         ctx.ParseResult.GetValueForArgument(id),
         ctx.GetCancellationToken());
       Console.WriteLine("deleted.");

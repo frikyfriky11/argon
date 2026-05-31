@@ -301,9 +301,9 @@ export class AccountsClient extends ServiceBase {
     /**
      * Deletes an existing Account
      * @param id The id of the Account
-     * @return Nothing
+     * @return The Account was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/Accounts/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -311,11 +311,9 @@ export class AccountsClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -333,7 +331,7 @@ export class AccountsClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -343,22 +341,22 @@ export class AccountsClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Account with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -1213,9 +1211,9 @@ export class CounterpartiesClient extends ServiceBase {
     /**
      * Deletes an existing Counterparty
      * @param id The id of the Counterparty
-     * @return Nothing
+     * @return The Counterparty was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/Counterparties/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -1223,11 +1221,9 @@ export class CounterpartiesClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -1245,7 +1241,7 @@ export class CounterpartiesClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -1255,22 +1251,22 @@ export class CounterpartiesClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Counterparty with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -1639,9 +1635,9 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
     /**
      * Deletes an existing CounterpartyIdentifier
      * @param id The id of the CounterpartyIdentifier
-     * @return Nothing
+     * @return The CounterpartyIdentifier was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/CounterpartyIdentifiers/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -1649,11 +1645,9 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -1671,7 +1665,7 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -1681,22 +1675,22 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A CounterpartyIdentifier with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -2082,9 +2076,9 @@ export class TransactionsClient extends ServiceBase {
     /**
      * Deletes an existing Transaction
      * @param id The id of the Transaction
-     * @return Nothing
+     * @return The Transaction was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/Transactions/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -2092,11 +2086,9 @@ export class TransactionsClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -2114,7 +2106,7 @@ export class TransactionsClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -2124,22 +2116,22 @@ export class TransactionsClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Transaction with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -4839,13 +4831,6 @@ export interface ITransactionsCategorizeRowRequest {
 existing description is left untouched; pass an empty string to clear it.
              */
     description: string | null;
-}
-
-export interface FileResponse {
-    data: Blob;
-    status: number;
-    fileName?: string;
-    headers?: { [name: string]: any };
 }
 
 export class ApiException extends Error {

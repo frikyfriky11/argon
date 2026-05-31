@@ -106,6 +106,8 @@ public class CounterpartyIdentifiersController(
   /// <response code="204">The CounterpartyIdentifier was correctly deleted</response>
   /// <response code="404">A CounterpartyIdentifier with the specified id could not be found</response>
   [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   public async Task<ActionResult> Delete([FromRoute] Guid id)
   {
     CounterpartyIdentifiersDeleteRequest request = new(id);
