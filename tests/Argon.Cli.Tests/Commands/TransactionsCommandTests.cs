@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
+using Argon.Cli.Commands;
 using Argon.Cli.Generated;
 using Argon.Cli.Tests.Infrastructure;
 
@@ -147,6 +148,80 @@ public class TransactionsCommandTests
     result.ExitCode.Should().Be(0);
     result.StdOut.Should().Contain("page 1/5");
     result.StdOut.Should().Contain("(123 total)");
+  }
+
+  [Test]
+  public async Task List_ShouldExpandMonthToFirstAndLastDay_WhenMonthIsSupplied()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --month 2025-02");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    string query = _harness.Handler.Requests[0].Uri.Query;
+    query.Should().Contain("DateFrom=2025-02-01");
+    query.Should().Contain("DateTo=2025-02-28");
+  }
+
+  [Test]
+  public async Task List_ShouldUseEndOfMonthAwareRange_ForMonthsOfDifferingLength()
+  {
+    // arrange — January has 31 days; the range must not spill into February
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --month 2025-01");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    string query = _harness.Handler.Requests[0].Uri.Query;
+    query.Should().Contain("DateFrom=2025-01-01");
+    query.Should().Contain("DateTo=2025-01-31");
+  }
+
+  [Test]
+  public async Task List_ShouldRejectMonth_WhenCombinedWithExplicitFromOrTo()
+  {
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --month 2025-02 --from 2025-01-01");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("--month cannot be combined with --from/--to");
+    _harness.Handler.Requests.Should().BeEmpty();
+  }
+
+  [Test]
+  public async Task List_ShouldFail_WhenMonthIsMalformed()
+  {
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx list --month 2025-13");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("Invalid --month");
+    _harness.Handler.Requests.Should().BeEmpty();
+  }
+
+  [TestCase("current")]
+  [TestCase("last")]
+  public async Task List_ShouldAcceptRelativeMonthKeywords(string keyword)
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+    (DateTimeOffset expectedFrom, DateTimeOffset expectedTo) = TransactionsCommand.MonthToRange(keyword);
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"tx list --month {keyword}");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    string query = _harness.Handler.Requests[0].Uri.Query;
+    query.Should().Contain($"DateFrom={expectedFrom:yyyy-MM-dd}");
+    query.Should().Contain($"DateTo={expectedTo:yyyy-MM-dd}");
   }
 
   // ----- get -----

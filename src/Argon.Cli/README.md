@@ -228,11 +228,14 @@ argon tx list --status pending                             # rows still awaiting
 argon tx list --status duplicate                           # potential duplicates flagged by the importer
 argon tx list --account "Sparkasse famiglia" --from 2026-01-01
 argon tx list --counterparty "Eurospar" --counterparty "Iperpoli"     # repeatable
+argon tx list --month 2025-10                              # whole month, end-of-month aware
+argon tx list --month current                              # this calendar month
+argon tx list --month last                                 # previous calendar month
 argon tx list --page-size 50
 argon tx list --page-size -1 -o json | jq '.[] | .amount'
 ```
 
-`--account` and `--counterparty` are repeatable for "any of these". `--from` and `--to` are inclusive. `--status` is the most useful filter during a reconciliation pass — `pending` is everything the importer left for a human to categorise.
+`--account` and `--counterparty` are repeatable for "any of these". `--from` and `--to` are inclusive. `--month` (`yyyy-MM`, `current`, or `last`) is shorthand that expands to an inclusive `--from`/`--to` range and cannot be combined with them. `--status` is the most useful filter during a reconciliation pass — `pending` is everything the importer left for a human to categorise.
 
 ### Reading
 

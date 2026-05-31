@@ -28,6 +28,7 @@ internal static class TransactionsCommand
     Option<string[]> counterpartyRefs = new("--counterparty", "Filter by counterparty name or id (repeatable)") { AllowMultipleArgumentsPerToken = true };
     Option<DateTimeOffset?> from = new("--from", "Date from (inclusive)");
     Option<DateTimeOffset?> to = new("--to", "Date to (inclusive)");
+    Option<string?> month = new("--month", "Filter by month: yyyy-MM, 'current', or 'last'. Expands to --from/--to (cannot be combined with them).");
     Option<TransactionStatus?> status = new(
       "--status",
       parseArgument: r =>
@@ -45,7 +46,7 @@ internal static class TransactionsCommand
     Option<int?> pageSize = new("--page-size", "Page size (default 25, -1 for all)");
 
     Command cmd = new("list", "List transactions")
-      { accountRefs, counterpartyRefs, from, to, status, page, pageSize };
+      { accountRefs, counterpartyRefs, from, to, month, status, page, pageSize };
 
     cmd.SetHandler(async ctx =>
     {
@@ -57,11 +58,24 @@ internal static class TransactionsCommand
       List<Guid>? accountIds = await ResolveAllAsync(accountInputs, app.Resolver.ResolveAccountAsync, ct);
       List<Guid>? counterpartyIds = await ResolveAllAsync(counterpartyInputs, app.Resolver.ResolveCounterpartyAsync, ct);
 
+      DateTimeOffset? dateFrom = ctx.ParseResult.GetValueForOption(from);
+      DateTimeOffset? dateTo = ctx.ParseResult.GetValueForOption(to);
+      string? monthInput = ctx.ParseResult.GetValueForOption(month);
+      if (monthInput is not null)
+      {
+        if (dateFrom is not null || dateTo is not null)
+        {
+          throw new ArgumentException("--month cannot be combined with --from/--to.");
+        }
+
+        (dateFrom, dateTo) = MonthToRange(monthInput);
+      }
+
       PaginatedListOfTransactionsGetListResponse result = await app.Transactions.GetListAsync(
         accountIds: accountIds,
         counterpartyIds: counterpartyIds,
-        dateFrom: ctx.ParseResult.GetValueForOption(from),
-        dateTo: ctx.ParseResult.GetValueForOption(to),
+        dateFrom: dateFrom,
+        dateTo: dateTo,
         status: ctx.ParseResult.GetValueForOption(status),
         pageNumber: ctx.ParseResult.GetValueForOption(page),
         pageSize: ctx.ParseResult.GetValueForOption(pageSize),
@@ -393,6 +407,46 @@ internal static class TransactionsCommand
     }
 
     return resolved;
+  }
+
+  /// <summary>
+  ///   Expands a --month token (yyyy-MM, 'current', or 'last') into an inclusive
+  ///   [first-day, last-day] range, end-of-month aware. Returned as DateTimeOffset
+  ///   at midnight so it serialises to the same yyyy-MM-dd shape as --from/--to.
+  /// </summary>
+  internal static (DateTimeOffset From, DateTimeOffset To) MonthToRange(string raw)
+  {
+    string trimmed = raw.Trim().ToLowerInvariant();
+    int year;
+    int month;
+
+    switch (trimmed)
+    {
+      case "current":
+        year = DateTime.Today.Year;
+        month = DateTime.Today.Month;
+        break;
+      case "last":
+        DateTime firstOfLast = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-1);
+        year = firstOfLast.Year;
+        month = firstOfLast.Month;
+        break;
+      default:
+        string[] parts = trimmed.Split('-');
+        if (parts.Length != 2
+            || parts[0].Length != 4
+            || !int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out year)
+            || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out month)
+            || month is < 1 or > 12)
+        {
+          throw new ArgumentException($"Invalid --month '{raw}'. Expected yyyy-MM, 'current', or 'last'.");
+        }
+
+        break;
+    }
+
+    DateTimeOffset from = new(new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero);
+    return (from, from.AddMonths(1).AddDays(-1));
   }
 
   private static decimal? ParseAmount(string raw)
