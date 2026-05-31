@@ -176,6 +176,8 @@ In headless / SSH sessions the CLI detects `SSH_CONNECTION` / `SSH_TTY` and refu
 argon accounts list
 argon accounts list --from 2026-01-01 --to 2026-05-20      # restrict total-amount window
 argon accounts get <id>
+argon accounts balance "Resi in sospeso"                   # running balance + contributing rows
+argon accounts balance "Crediti vs Luca Bellemo" --as-of 2025-11-30
 argon accounts create --name "Checking" --type Cash
 argon accounts update <id> --name "Renamed" --type Cash
 argon accounts favourite <id>                              # toggles favourite on
@@ -184,6 +186,8 @@ argon accounts delete <id>
 ```
 
 `--type` takes the enum name — `Cash`, `Expense`, `Revenue`, `Setup`, `Debit`, `Credit`. `--from`/`--to` only affect the running-total window in the response, not which accounts are returned.
+
+`accounts balance <name>` prints the account's running balance and the transactions that contribute to it — the fastest way to audit a clearing account like `Resi in sospeso` or a `Crediti vs …`/`Debiti vs …` receivable. `--as-of <yyyy-MM-dd>` snapshots both the balance and the contributing rows at a date.
 
 ## Counterparties
 

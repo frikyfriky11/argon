@@ -85,6 +85,76 @@ public class AccountsCommandTests
       "OutputFormatter annotates the numeric `type` on account responses with the enum name");
   }
 
+  // ----- balance -----
+
+  [Test]
+  public async Task Balance_ShouldPrintBalanceAndContributions_FilteredToTheAccount()
+  {
+    // arrange
+    Guid accId = Guid.Parse("ba1aceee-1111-1111-1111-111111111111");
+    Guid otherAcc = Guid.Parse("ba1aceee-2222-2222-2222-222222222222");
+    _harness.Handler.EnqueueJson(new[]
+    {
+      new AccountsGetListResponse { Id = accId, Name = "Resi in sospeso", Type = AccountType.Cash, TotalAmount = 50m },
+      new AccountsGetListResponse { Id = otherAcc, Name = "Sparkasse", Type = AccountType.Cash, TotalAmount = 0m },
+    });
+    _harness.Handler.EnqueueJson(new PaginatedListOfTransactionsGetListResponse
+    {
+      Items = new[]
+      {
+        new TransactionsGetListResponse
+        {
+          Id = Guid.NewGuid(), Date = new DateOnly(2025, 10, 1), CounterpartyName = "Amazon",
+          TransactionRows = new[]
+          {
+            new TransactionRowsGetListResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = accId, Debit = 50m, Description = "Tapo P125M" },
+            new TransactionRowsGetListResponse { Id = Guid.NewGuid(), RowCounter = 2, AccountId = otherAcc, Credit = 50m },
+          },
+        },
+      },
+      PageNumber = 1, TotalPages = 1, TotalCount = 1,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"accounts balance {accId}");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdOut.Should().Contain("Resi in sospeso");
+    result.StdOut.Should().Contain("Balance : 50.00");
+    result.StdOut.Should().Contain("Tapo P125M");
+    result.StdOut.Should().Contain("Amazon");
+
+    CapturedRequest txRequest = _harness.Handler.Requests[1];
+    txRequest.Uri.AbsolutePath.Should().Be("/Transactions");
+    txRequest.Uri.Query.Should().Contain($"AccountIds={accId}");
+    txRequest.Uri.Query.Should().Contain("PageSize=-1");
+  }
+
+  [Test]
+  public async Task Balance_ShouldApplyAsOfDate_ToBothAccountTotalsAndTransactions()
+  {
+    // arrange
+    Guid accId = Guid.Parse("ba2aceee-1111-1111-1111-111111111111");
+    _harness.Handler.EnqueueJson(new[]
+    {
+      new AccountsGetListResponse { Id = accId, Name = "Crediti vs Luca", Type = AccountType.Credit, TotalAmount = 30m },
+    });
+    _harness.Handler.EnqueueJson(new PaginatedListOfTransactionsGetListResponse
+    {
+      Items = Array.Empty<TransactionsGetListResponse>(), PageNumber = 1, TotalPages = 0, TotalCount = 0,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"accounts balance {accId} --as-of 2025-11-30");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Uri.Query.Should().Contain("TotalAmountsTo=2025-11-30");
+    _harness.Handler.Requests[1].Uri.Query.Should().Contain("DateTo=2025-11-30");
+    result.StdOut.Should().Contain("as of 2025-11-30");
+  }
+
   [Test]
   public async Task Get_ShouldCallGetAccountsById_WithTheGuidArgument()
   {
