@@ -11,6 +11,8 @@ namespace Argon.Application.Transactions.GetList;
 /// <param name="DateTo">The end date to use in the search of the transaction</param>
 /// <param name="Status">Filter by transaction status</param>
 /// <param name="Linked">When true returns only transactions with a linked counterparty, when false only those without; null returns both</param>
+/// <param name="RowAmount">When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)</param>
+/// <param name="RowAmountTolerance">The +/- tolerance applied to RowAmount (defaults to 0 = exact match)</param>
 /// <param name="PageNumber">The page number (defaults to 1)</param>
 /// <param name="PageSize">The page size (defaults to 25)</param>
 [PublicAPI]
@@ -21,6 +23,8 @@ public record TransactionsGetListRequest(
   DateTimeOffset? DateTo,
   TransactionStatus? Status = null,
   bool? Linked = null,
+  decimal? RowAmount = null,
+  decimal? RowAmountTolerance = null,
   int PageNumber = 1,
   int PageSize = 25
 ) : PaginatedListRequest(PageNumber, PageSize),

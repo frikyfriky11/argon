@@ -3219,10 +3219,12 @@ namespace Argon.Cli.Generated
         /// <param name="dateTo">The end date to use in the search of the transaction</param>
         /// <param name="status">Filter by transaction status</param>
         /// <param name="linked">When true returns only transactions with a linked counterparty, when false only those without; null returns both</param>
+        /// <param name="rowAmount">When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)</param>
+        /// <param name="rowAmountTolerance">The +/- tolerance applied to RowAmount (defaults to 0 = exact match)</param>
         /// <param name="pageNumber">The number of the page to retrieve from the data source</param>
         /// <param name="pageSize">The number of items in the page that must be retrieved from the data source</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, decimal? rowAmount = null, decimal? rowAmountTolerance = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -3328,10 +3330,12 @@ namespace Argon.Cli.Generated
         /// <param name="dateTo">The end date to use in the search of the transaction</param>
         /// <param name="status">Filter by transaction status</param>
         /// <param name="linked">When true returns only transactions with a linked counterparty, when false only those without; null returns both</param>
+        /// <param name="rowAmount">When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)</param>
+        /// <param name="rowAmountTolerance">The +/- tolerance applied to RowAmount (defaults to 0 = exact match)</param>
         /// <param name="pageNumber">The number of the page to retrieve from the data source</param>
         /// <param name="pageSize">The number of items in the page that must be retrieved from the data source</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<PaginatedListOfTransactionsGetListResponse> GetListAsync(System.Collections.Generic.IEnumerable<System.Guid> accountIds = null, System.Collections.Generic.IEnumerable<System.Guid> counterpartyIds = null, System.DateTimeOffset? dateFrom = null, System.DateTimeOffset? dateTo = null, TransactionStatus? status = null, bool? linked = null, decimal? rowAmount = null, decimal? rowAmountTolerance = null, int? pageNumber = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -3370,6 +3374,14 @@ namespace Argon.Cli.Generated
                     if (linked != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("Linked")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(linked, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (rowAmount != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("RowAmount")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(rowAmount, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (rowAmountTolerance != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("RowAmountTolerance")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(rowAmountTolerance, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     if (pageNumber != null)
                     {

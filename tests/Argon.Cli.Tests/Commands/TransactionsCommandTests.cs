@@ -306,6 +306,53 @@ public class TransactionsCommandTests
     result.StdOut.Trim().Should().StartWith("[");
   }
 
+  // ----- find -----
+
+  [Test]
+  public async Task Find_ShouldSendRowAmountAndTolerance_AndDefaultToAllMatches()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx find --amount 93.78 --tolerance 0.50");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    string query = _harness.Handler.Requests[0].Uri.Query;
+    query.Should().Contain("RowAmount=93.78");
+    query.Should().Contain("RowAmountTolerance=0.5");
+    query.Should().Contain("PageSize=-1");
+  }
+
+  [Test]
+  public async Task Find_ShouldRequireAmount()
+  {
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx find --tolerance 1");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("--amount");
+    _harness.Handler.Requests.Should().BeEmpty();
+  }
+
+  [Test]
+  public async Task Find_ShouldExpandMonth_IntoDateRange()
+  {
+    // arrange
+    _harness.Handler.EnqueueJson(EmptyTransactionPage());
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync("tx find --amount 10 --month 2025-11");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    string query = _harness.Handler.Requests[0].Uri.Query;
+    query.Should().Contain("DateFrom=2025-11-01");
+    query.Should().Contain("DateTo=2025-11-30");
+  }
+
   // ----- get -----
 
   [Test]

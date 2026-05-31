@@ -294,6 +294,16 @@ argon tx patch <tx-id> \
 - `--date`/`--counterparty` are optional and default to the transaction's existing values, so a patch on an as-yet-unlinked transaction works without inventing a counterparty.
 - A parsed **Cash** (bank) row is treated as **read-only**: patch refuses to change its account/debit/credit and tells you so. Pass `--force` only if you genuinely mean to alter the parsed bank amount. Combined with the server-side balance check, this makes the silent "cash leg drifted by €X" class of error impossible via patch.
 
+### `tx find` — locate a transaction by amount
+
+Search for transactions having a row whose debit or credit matches an amount, with an optional tolerance — "is there a transaction anywhere matching this receipt?". The match runs server-side against the row debit/credit columns, so it returns just the hits (defaults to every match, not a single page).
+
+```bash
+argon tx find --amount 93.78                       # exact
+argon tx find --amount 93.78 --tolerance 0.50      # near match
+argon tx find --amount 50 --month 2025-11          # scope to a month
+```
+
 ### `tx duplicate` — clone an existing transaction
 
 For movements the parser can't ingest (cash withdrawals, recurring manual entries), clone a previous one instead of typing both rows from scratch. The rows, accounts, descriptions and counterparty are copied; `--date` sets the new date and the optional `--amount` rescales every row so the transaction total becomes that amount (proportionally — ideal for a fixed-shape cash-cash transfer). `--counterparty` overrides the copied counterparty.

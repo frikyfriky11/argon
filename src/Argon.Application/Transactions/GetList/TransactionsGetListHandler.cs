@@ -10,6 +10,10 @@ public class TransactionsGetListHandler(
 {
   public async Task<PaginatedList<TransactionsGetListResponse>> Handle(TransactionsGetListRequest request, CancellationToken cancellationToken)
   {
+    decimal tolerance = request.RowAmountTolerance ?? 0m;
+    decimal lowerBound = (request.RowAmount ?? 0m) - tolerance;
+    decimal upperBound = (request.RowAmount ?? 0m) + tolerance;
+
     return await dbContext
       .Transactions
       .AsNoTracking()
@@ -20,6 +24,9 @@ public class TransactionsGetListHandler(
       .Where(transaction => request.Status == null || transaction.Status == request.Status.Value)
       .Where(transaction => request.Linked == null
         || (request.Linked.Value ? transaction.CounterpartyId != null : transaction.CounterpartyId == null))
+      .Where(transaction => request.RowAmount == null || transaction.TransactionRows.Any(row =>
+        (row.Debit != null && row.Debit >= lowerBound && row.Debit <= upperBound)
+        || (row.Credit != null && row.Credit >= lowerBound && row.Credit <= upperBound)))
       .OrderByDescending(transaction => transaction.Date)
       .ThenByDescending(transaction => transaction.Created)
       .ThenByDescending(transaction => transaction.Id)

@@ -1791,10 +1791,12 @@ export class TransactionsClient extends ServiceBase {
      * @param dateTo (optional) The end date to use in the search of the transaction
      * @param status (optional) Filter by transaction status
      * @param linked (optional) When true returns only transactions with a linked counterparty, when false only those without; null returns both
+     * @param rowAmount (optional) When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)
+     * @param rowAmountTolerance (optional) The +/- tolerance applied to RowAmount (defaults to 0 = exact match)
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, linked: boolean | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, linked: boolean | null | undefined, rowAmount: number | null | undefined, rowAmountTolerance: number | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
@@ -1808,6 +1810,10 @@ export class TransactionsClient extends ServiceBase {
             url_ += "Status=" + encodeURIComponent("" + status) + "&";
         if (linked !== undefined && linked !== null)
             url_ += "Linked=" + encodeURIComponent("" + linked) + "&";
+        if (rowAmount !== undefined && rowAmount !== null)
+            url_ += "RowAmount=" + encodeURIComponent("" + rowAmount) + "&";
+        if (rowAmountTolerance !== undefined && rowAmountTolerance !== null)
+            url_ += "RowAmountTolerance=" + encodeURIComponent("" + rowAmountTolerance) + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)

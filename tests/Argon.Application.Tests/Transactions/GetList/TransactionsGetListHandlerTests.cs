@@ -348,6 +348,82 @@ public class TransactionsGetListHandlerTests
   }
 
   [Test]
+  public async Task Handle_ShouldMatchRowAmountWithinTolerance_WithRowAmountFilter()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+
+    Transaction match = new()
+    {
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 93.78m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 93.78m },
+      },
+    };
+    Transaction nonMatch = new()
+    {
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 10m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 10m },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(match, nonMatch);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, RowAmount: 93.80m, RowAmountTolerance: 0.50m);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(match.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldMatchExactly_WhenToleranceIsNotProvided()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+
+    Transaction exact = new()
+    {
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50m },
+      },
+    };
+    Transaction near = new()
+    {
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50.01m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50.01m },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(exact, near);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, RowAmount: 50m);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(exact.Id);
+  }
+
+  [Test]
   public async Task Handle_ShouldProjectEmptyCounterpartyName_WhenTransactionHasNoCounterparty()
   {
     // arrange

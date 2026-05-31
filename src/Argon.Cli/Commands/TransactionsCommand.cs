@@ -13,6 +13,7 @@ internal static class TransactionsCommand
     tx.AddAlias("tx");
     tx.AddCommand(ListCommand(factory));
     tx.AddCommand(GetCommand(factory));
+    tx.AddCommand(FindCommand(factory));
     tx.AddCommand(CreateCommand(factory));
     tx.AddCommand(UpdateCommand(factory));
     tx.AddCommand(PatchCommand(factory));
@@ -132,6 +133,60 @@ internal static class TransactionsCommand
       {
         OutputFormatter.Write(result, app.Output);
       }
+    });
+    return cmd;
+  }
+
+  private static Command FindCommand(CliContextFactory factory)
+  {
+    Option<decimal> amount = new("--amount", parseArgument: r =>
+        decimal.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
+      description: "Amount to match against any row's debit or credit") { IsRequired = true };
+    Option<decimal?> tolerance = new("--tolerance", parseArgument: r =>
+        r.Tokens.Count == 0 ? null : decimal.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
+      description: "+/- tolerance around --amount (default: exact match)");
+    Option<DateTimeOffset?> from = new("--from", "Date from (inclusive)");
+    Option<DateTimeOffset?> to = new("--to", "Date to (inclusive)");
+    Option<string?> month = new("--month", "Filter by month: yyyy-MM, 'current', or 'last'. Cannot be combined with --from/--to.");
+    Option<int?> pageSize = new("--page-size", "Page size (default -1, i.e. every match)");
+
+    Command cmd = new("find", "Find transactions having a row whose debit or credit matches an amount")
+      { amount, tolerance, from, to, month, pageSize };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      DateTimeOffset? dateFrom = ctx.ParseResult.GetValueForOption(from);
+      DateTimeOffset? dateTo = ctx.ParseResult.GetValueForOption(to);
+      string? monthInput = ctx.ParseResult.GetValueForOption(month);
+      if (monthInput is not null)
+      {
+        if (dateFrom is not null || dateTo is not null)
+        {
+          throw new ArgumentException("--month cannot be combined with --from/--to.");
+        }
+
+        (dateFrom, dateTo) = MonthToRange(monthInput);
+      }
+
+      PaginatedListOfTransactionsGetListResponse result = await app.Transactions.GetListAsync(
+        accountIds: null,
+        counterpartyIds: null,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        status: null,
+        linked: null,
+        rowAmount: ctx.ParseResult.GetValueForOption(amount),
+        rowAmountTolerance: ctx.ParseResult.GetValueForOption(tolerance),
+        pageNumber: null,
+        pageSize: ctx.ParseResult.GetValueForOption(pageSize) ?? -1,
+        cancellationToken: ct);
+
+      OutputFormatter.Write(result.Items, app.Output);
+      PaginationFooter.Write(
+        app.Output, result.PageNumber, result.TotalPages, result.TotalCount,
+        result.Items?.Count ?? 0, result.HasNextPage);
     });
     return cmd;
   }
