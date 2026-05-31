@@ -29,7 +29,10 @@ public class TransactionsGetHandler(
             row.Credit,
             row.Description
           ))
-          .ToList()
+          .ToList(),
+        transaction.RawImportData,
+        transaction.Status,
+        transaction.PotentialDuplicateOfTransactionId
       ))
       .FirstOrDefaultAsync(cancellationToken);
 

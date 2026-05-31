@@ -310,6 +310,56 @@ public class TransactionsCommandTests
     doc.RootElement.GetProperty("counterpartyName").GetString().Should().Be("Amazon");
   }
 
+  [Test]
+  public async Task Get_ShouldExposeRawImportDataStatusAndDuplicateId_InJson_LikeList()
+  {
+    // arrange
+    Guid id = Guid.Parse("4a4a4a4a-4a4a-4a4a-4a4a-4a4a4a4a4a4a");
+    Guid dupId = Guid.Parse("5b5b5b5b-5b5b-5b5b-5b5b-5b5b5b5b5b5b");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = id, Date = new DateOnly(2024, 3, 14),
+      CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = Array.Empty<TransactionRowsGetResponse>(),
+      RawImportData = "{\"Amount\":12.34,\"RawDescription\":\"amazon.it\"}",
+      Status = TransactionStatus.PotentialDuplicate,
+      PotentialDuplicateOfTransactionId = dupId,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"-o json tx get {id}");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    JsonDocument doc = JsonDocument.Parse(result.StdOut);
+    // rawImportData inner fields are lifted to the top level, exactly like tx list
+    doc.RootElement.GetProperty("amount").GetDecimal().Should().Be(12.34m);
+    doc.RootElement.GetProperty("rawDescription").GetString().Should().Be("amazon.it");
+    doc.RootElement.GetProperty("status").GetInt32().Should().Be((int)TransactionStatus.PotentialDuplicate);
+    doc.RootElement.GetProperty("potentialDuplicateOfTransactionId").GetGuid().Should().Be(dupId);
+  }
+
+  [Test]
+  public async Task Get_ShouldPrintStatusLine_InTableMode()
+  {
+    // arrange
+    Guid id = Guid.Parse("6c6c6c6c-6c6c-6c6c-6c6c-6c6c6c6c6c6c");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = id, Date = new DateOnly(2024, 3, 14),
+      CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = Array.Empty<TransactionRowsGetResponse>(),
+      Status = TransactionStatus.PendingImportReview,
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync($"tx get {id}");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdOut.Should().Contain("Status        : PendingImportReview");
+  }
+
   // ----- create -----
 
   [Test]

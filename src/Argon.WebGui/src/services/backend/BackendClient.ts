@@ -4232,6 +4232,12 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     counterpartyName!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData!: string | null;
+    /** The status of the transaction */
+    status!: TransactionStatus;
+    /** The id of the potential duplicate of the transaction */
+    potentialDuplicateOfTransactionId!: string | null;
 
     constructor(data?: ITransactionsGetResponse) {
         if (data) {
@@ -4256,6 +4262,9 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             else {
                 this.transactionRows = <any>null;
             }
+            this.rawImportData = _data["rawImportData"] !== undefined ? _data["rawImportData"] : <any>null;
+            this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.potentialDuplicateOfTransactionId = _data["potentialDuplicateOfTransactionId"] !== undefined ? _data["potentialDuplicateOfTransactionId"] : <any>null;
         }
     }
 
@@ -4277,6 +4286,9 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             for (let item of this.transactionRows)
                 data["transactionRows"].push(item.toJSON());
         }
+        data["rawImportData"] = this.rawImportData !== undefined ? this.rawImportData : <any>null;
+        data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["potentialDuplicateOfTransactionId"] = this.potentialDuplicateOfTransactionId !== undefined ? this.potentialDuplicateOfTransactionId : <any>null;
         return data;
     }
 }
@@ -4293,6 +4305,12 @@ export interface ITransactionsGetResponse {
     counterpartyName: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData: string | null;
+    /** The status of the transaction */
+    status: TransactionStatus;
+    /** The id of the potential duplicate of the transaction */
+    potentialDuplicateOfTransactionId: string | null;
 }
 
 /** The row of a transaction get response */

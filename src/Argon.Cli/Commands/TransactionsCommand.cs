@@ -105,6 +105,12 @@ internal static class TransactionsCommand
         Console.WriteLine($"Id            : {result.Id}");
         Console.WriteLine($"Date          : {result.Date:yyyy-MM-dd}");
         Console.WriteLine($"Counterparty  : {result.CounterpartyName} ({result.CounterpartyId})");
+        Console.WriteLine($"Status        : {result.Status}");
+        if (result.PotentialDuplicateOfTransactionId is { } duplicateOf)
+        {
+          Console.WriteLine($"Duplicate of  : {duplicateOf}");
+        }
+
         Console.WriteLine();
         OutputFormatter.Write(result.TransactionRows, app.Output);
       }

@@ -79,6 +79,38 @@ public class TransactionsGetHandlerTests
     result.TransactionRows[1].Debit.Should().Be(row2.Debit);
     result.TransactionRows[1].Credit.Should().Be(row2.Credit);
     result.TransactionRows[1].Description.Should().Be(row2.Description);
+
+    result.Status.Should().Be(TransactionStatus.Confirmed);
+    result.RawImportData.Should().BeNull();
+    result.PotentialDuplicateOfTransactionId.Should().BeNull();
+  }
+
+  [Test]
+  public async Task Handle_ShouldExposeRawImportDataStatusAndDuplicateId_WhenSetOnTheTransaction()
+  {
+    // arrange
+    Transaction original = new() { Date = new DateOnly(2023, 04, 01) };
+    await _dbContext.Transactions.AddAsync(original);
+
+    Transaction transaction = new()
+    {
+      Date = new DateOnly(2023, 04, 05),
+      Status = TransactionStatus.PotentialDuplicate,
+      RawImportData = "{\"Amount\":12.34}",
+      PotentialDuplicateOfTransactionId = original.Id,
+    };
+    await _dbContext.Transactions.AddAsync(transaction);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetRequest request = new(transaction.Id);
+
+    // act
+    TransactionsGetResponse result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Status.Should().Be(TransactionStatus.PotentialDuplicate);
+    result.RawImportData.Should().Be("{\"Amount\":12.34}");
+    result.PotentialDuplicateOfTransactionId.Should().Be(original.Id);
   }
 
   [Test]

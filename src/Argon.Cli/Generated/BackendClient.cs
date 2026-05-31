@@ -5229,6 +5229,27 @@ namespace Argon.Cli.Generated
         [System.Text.Json.Serialization.JsonPropertyName("transactionRows")]
         public System.Collections.Generic.ICollection<TransactionRowsGetResponse> TransactionRows { get; set; }
 
+        /// <summary>
+        /// The JSON representation of the raw import data of a bank statement
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("rawImportData")]
+        public string RawImportData { get; set; }
+
+        /// <summary>
+        /// The status of the transaction
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("status")]
+        public TransactionStatus Status { get; set; }
+
+        /// <summary>
+        /// The id of the potential duplicate of the transaction
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("potentialDuplicateOfTransactionId")]
+        public System.Guid? PotentialDuplicateOfTransactionId { get; set; }
+
     }
 
     /// <summary>
