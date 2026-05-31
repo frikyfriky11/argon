@@ -16,7 +16,7 @@ public record TransactionsGetResponse(
   Guid Id,
   DateOnly Date,
   Guid? CounterpartyId,
-  string? CounterpartyName,
+  string CounterpartyName,
   List<TransactionRowsGetResponse> TransactionRows,
   string? RawImportData,
   TransactionStatus Status,

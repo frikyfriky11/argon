@@ -5422,11 +5422,11 @@ namespace Argon.Cli.Generated
         public System.DateOnly Date { get; set; }
 
         /// <summary>
-        /// The id of the counterparty of the transaction
+        /// The id of the counterparty of the transaction, or null when the transaction has no linked counterparty
         /// </summary>
 
         [System.Text.Json.Serialization.JsonPropertyName("counterpartyId")]
-        public System.Guid CounterpartyId { get; set; }
+        public System.Guid? CounterpartyId { get; set; }
 
         /// <summary>
         /// The rows of the transaction

@@ -4229,7 +4229,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
     /** The name of the counterparty of the transaction */
-    counterpartyName!: string | null;
+    counterpartyName!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
     /** The JSON representation of the raw import data of a bank statement */
@@ -4302,7 +4302,7 @@ export interface ITransactionsGetResponse {
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
     /** The name of the counterparty of the transaction */
-    counterpartyName: string | null;
+    counterpartyName: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
     /** The JSON representation of the raw import data of a bank statement */
@@ -4566,8 +4566,8 @@ export interface ITransactionRowsCreateRequest {
 export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
     /** The date of the transaction */
     date!: DateTime;
-    /** The id of the counterparty of the transaction */
-    counterpartyId!: string;
+    /** The id of the counterparty of the transaction, or null when the transaction has no linked counterparty */
+    counterpartyId!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsUpdateRequest[];
 
@@ -4619,8 +4619,8 @@ export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
 export interface ITransactionsUpdateRequest {
     /** The date of the transaction */
     date: DateTime;
-    /** The id of the counterparty of the transaction */
-    counterpartyId: string;
+    /** The id of the counterparty of the transaction, or null when the transaction has no linked counterparty */
+    counterpartyId: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsUpdateRequest[];
 }
