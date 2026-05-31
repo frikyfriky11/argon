@@ -264,7 +264,7 @@ argon tx create --date 2026-05-20 --counterparty "Mein Beck" \
 
 ### Updating a transaction (full payload)
 
-`update` rewrites the transaction in one shot. Pass the row id in front of an existing row to keep it; leave the row id empty (`:`) to insert a new row.
+`update` rewrites the transaction in one shot. Pass the row id in front of an existing row to keep it; leave the row id empty (`:`) to insert a new row. `--date` and `--counterparty` are optional — omit them to keep the transaction's existing values (the CLI fetches them for you).
 
 ```bash
 argon tx update <tx-id> --date 2026-05-20 --counterparty "Mein Beck" \
@@ -272,7 +272,25 @@ argon tx update <tx-id> --date 2026-05-20 --counterparty "Mein Beck" \
     -r <row2-id>:"Ristoranti":8.50:0
 ```
 
-For the much more common case of "the importer left one row blank and I just need to fill it in", reach for `tx categorize` instead.
+For the much more common case of "the importer left one row blank and I just need to fill it in", reach for `tx categorize` instead. To change/add a *few* rows of a multi-row transaction without re-emitting the whole payload, use `tx patch`.
+
+### `tx patch` — change only the rows you name
+
+`patch` is the safe way to edit a multi-row transaction: you name only the rows you're changing (or adding); every other row passes through **verbatim** from the live transaction, so the immutable bank leg can't be corrupted by re-typing.
+
+```bash
+# fill the blank offsetting row and label it — the cash leg is never touched
+argon tx patch <tx-id> -r <blank-row-id>:"Prodotti per la pulizia della casa":1.16:0:"Sale lavastoviglie"
+
+# split a Mooney payment: set the real cost on the blank row, add a fee row
+argon tx patch <tx-id> \
+    -r <blank-row-id>:"Imposte e tasse":33.50:0 \
+    -r :"Commissioni bancarie":1.50:0:"Commissione Mooney"
+```
+
+- A row with a `rowId` updates that row; an empty `rowId` (`:`) appends a new one.
+- `--date`/`--counterparty` are optional and default to the transaction's existing values, so a patch on an as-yet-unlinked transaction works without inventing a counterparty.
+- A parsed **Cash** (bank) row is treated as **read-only**: patch refuses to change its account/debit/credit and tells you so. Pass `--force` only if you genuinely mean to alter the parsed bank amount. Combined with the server-side balance check, this makes the silent "cash leg drifted by €X" class of error impossible via patch.
 
 ### `tx categorize` — fill in one row of a pending transaction
 

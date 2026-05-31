@@ -4,12 +4,12 @@ namespace Argon.Application.Transactions.Update;
 ///   The request to update an existing transaction
 /// </summary>
 /// <param name="Date">The date of the transaction</param>
-/// <param name="CounterpartyId">The id of the counterparty of the transaction</param>
+/// <param name="CounterpartyId">The id of the counterparty of the transaction, or null when the transaction has no linked counterparty</param>
 /// <param name="TransactionRows">The rows of the transaction</param>
 [PublicAPI]
 public record TransactionsUpdateRequest(
   DateOnly Date,
-  Guid CounterpartyId,
+  Guid? CounterpartyId,
   List<TransactionRowsUpdateRequest> TransactionRows
 ) : IRequest
 {

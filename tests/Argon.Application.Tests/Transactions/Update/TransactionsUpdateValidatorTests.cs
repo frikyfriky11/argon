@@ -35,6 +35,24 @@ public class TransactionsUpdateValidatorTests
   }
 
   [Test]
+  public async Task Validator_ShouldNotReturnCounterpartyError_WhenCounterpartyIdIsNull()
+  {
+    EntityEntry<Account> accountGroceries = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries" });
+    EntityEntry<Account> accountBank = await _dbContext.Accounts.AddAsync(new Account { Name = "Bank" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), null, new List<TransactionRowsUpdateRequest>
+    {
+      new(Guid.NewGuid(), 1, accountGroceries.Entity.Id, 100.00m, null, "row 1"),
+      new(Guid.NewGuid(), 2, accountBank.Entity.Id, null, 100.00m, "row 2"),
+    });
+
+    TestValidationResult<TransactionsUpdateRequest>? result = await _sut.TestValidateAsync(request);
+
+    result.ShouldNotHaveValidationErrorFor(r => r.CounterpartyId);
+  }
+
+  [Test]
   public async Task Validator_ShouldReturnError_WhenCounterpartyIdDoesNotExist()
   {
     TransactionsUpdateRequest request = new(new DateOnly(2023, 04, 05), Guid.NewGuid(), new List<TransactionRowsUpdateRequest>());

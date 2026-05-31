@@ -539,6 +539,229 @@ public class TransactionsCommandTests
     _harness.Handler.Requests.Should().BeEmpty();
   }
 
+  [Test]
+  public async Task Update_ShouldDefaultDateAndCounterparty_FromExistingTransaction_WhenOmitted()
+  {
+    // arrange
+    Guid txId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+    Guid rowId = Guid.Parse("66666666-6666-6666-6666-666666666666");
+    Guid cpId = Guid.Parse("77777777-7777-7777-7777-777777777777");
+    Guid accId = Guid.Parse("88888888-8888-8888-8888-888888888888");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = cpId, CounterpartyName = "Amazon",
+      TransactionRows = Array.Empty<TransactionRowsGetResponse>(),
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act — no --date / --counterparty supplied
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx update {txId} -r {rowId}:{accId}:5:0:edited -r :{accId}:0:5:new");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    _harness.Handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+    CapturedRequest put = _harness.Handler.Requests[1];
+    put.Method.Should().Be(HttpMethod.Put);
+    JsonDocument body = JsonDocument.Parse(put.Body!);
+    body.RootElement.GetProperty("date").GetString().Should().Be("2025-10-09");
+    body.RootElement.GetProperty("counterpartyId").GetGuid().Should().Be(cpId);
+  }
+
+  // ----- patch -----
+
+  [Test]
+  public async Task Patch_ShouldUpdateOnlyTheNamedRow_AndPassOthersThroughVerbatim()
+  {
+    // arrange — a pending tx: cash leg filled, offsetting row blank
+    Guid txId = Guid.Parse("aaaa1111-1111-1111-1111-111111111111");
+    Guid cashRow = Guid.Parse("aaaa2222-2222-2222-2222-222222222222");
+    Guid blankRow = Guid.Parse("aaaa3333-3333-3333-3333-333333333333");
+    Guid cashAcc = Guid.Parse("aaaa4444-4444-4444-4444-444444444444");
+    Guid expenseAcc = Guid.Parse("aaaa5555-5555-5555-5555-555555555555");
+    Guid cpId = Guid.Parse("aaaa6666-6666-6666-6666-666666666666");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = cpId, CounterpartyName = "Amazon",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = cashRow, RowCounter = 1, AccountId = cashAcc, AccountType = AccountType.Cash, Credit = 1.16m },
+        new TransactionRowsGetResponse { Id = blankRow, RowCounter = 2, AccountId = null, AccountType = null, Debit = 1.16m },
+      },
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act — fill the blank row + label it; never re-type the cash leg
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx patch {txId} -r \"{blankRow}:{expenseAcc}:1.16:0:Sale lavastoviglie\"");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    result.StdOut.Trim().Should().Be("patched.");
+    CapturedRequest put = _harness.Handler.Requests[1];
+    put.Method.Should().Be(HttpMethod.Put);
+    JsonDocument body = JsonDocument.Parse(put.Body!);
+    body.RootElement.GetProperty("date").GetString().Should().Be("2025-10-09");
+    body.RootElement.GetProperty("counterpartyId").GetGuid().Should().Be(cpId);
+
+    JsonElement rows = body.RootElement.GetProperty("transactionRows");
+    rows.GetArrayLength().Should().Be(2);
+    JsonElement cash = rows.EnumerateArray().Single(r => r.GetProperty("id").GetGuid() == cashRow);
+    cash.GetProperty("accountId").GetGuid().Should().Be(cashAcc);
+    cash.GetProperty("credit").GetDecimal().Should().Be(1.16m);
+    JsonElement filled = rows.EnumerateArray().Single(r => r.GetProperty("id").GetGuid() == blankRow);
+    filled.GetProperty("accountId").GetGuid().Should().Be(expenseAcc);
+    filled.GetProperty("debit").GetDecimal().Should().Be(1.16m);
+    filled.GetProperty("description").GetString().Should().Be("Sale lavastoviglie");
+  }
+
+  [Test]
+  public async Task Patch_ShouldRefuseToChangeACashLeg_WithoutForce()
+  {
+    // arrange
+    Guid txId = Guid.Parse("bbbb1111-1111-1111-1111-111111111111");
+    Guid cashRow = Guid.Parse("bbbb2222-2222-2222-2222-222222222222");
+    Guid cashAcc = Guid.Parse("bbbb4444-4444-4444-4444-444444444444");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = cashRow, RowCounter = 1, AccountId = cashAcc, AccountType = AccountType.Cash, Credit = 1.16m },
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 2, AccountId = Guid.NewGuid(), AccountType = AccountType.Expense, Debit = 1.16m },
+      },
+    });
+
+    // act — try to shrink the cash leg from 1.16 to 9.99
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx patch {txId} -r {cashRow}:{cashAcc}:0:9.99");
+
+    // assert — rejected before any PUT
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("Cash (bank) leg");
+    _harness.Handler.Requests.Should().ContainSingle();
+    _harness.Handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+  }
+
+  [Test]
+  public async Task Patch_ShouldAllowChangingACashLeg_WithForce()
+  {
+    // arrange
+    Guid txId = Guid.Parse("cccc1111-1111-1111-1111-111111111111");
+    Guid cashRow = Guid.Parse("cccc2222-2222-2222-2222-222222222222");
+    Guid cashAcc = Guid.Parse("cccc4444-4444-4444-4444-444444444444");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = cashRow, RowCounter = 1, AccountId = cashAcc, AccountType = AccountType.Cash, Credit = 1.16m },
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 2, AccountId = Guid.NewGuid(), AccountType = AccountType.Expense, Debit = 1.16m },
+      },
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx patch {txId} --force -r {cashRow}:{cashAcc}:0:9.99");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    JsonDocument body = JsonDocument.Parse(_harness.Handler.Requests[1].Body!);
+    JsonElement cash = body.RootElement.GetProperty("transactionRows").EnumerateArray()
+      .Single(r => r.GetProperty("id").GetGuid() == cashRow);
+    cash.GetProperty("credit").GetDecimal().Should().Be(9.99m);
+  }
+
+  [Test]
+  public async Task Patch_ShouldAppendNewRows_WhenRowIdIsEmpty()
+  {
+    // arrange — split out a fee into a fresh row (Mooney pattern)
+    Guid txId = Guid.Parse("dddd1111-1111-1111-1111-111111111111");
+    Guid cashRow = Guid.Parse("dddd2222-2222-2222-2222-222222222222");
+    Guid blankRow = Guid.Parse("dddd3333-3333-3333-3333-333333333333");
+    Guid cashAcc = Guid.Parse("dddd4444-4444-4444-4444-444444444444");
+    Guid expenseAcc = Guid.Parse("dddd5555-5555-5555-5555-555555555555");
+    Guid feeAcc = Guid.Parse("dddd6666-6666-6666-6666-666666666666");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = Guid.NewGuid(), CounterpartyName = "Mooney",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = cashRow, RowCounter = 1, AccountId = cashAcc, AccountType = AccountType.Cash, Credit = 10m },
+        new TransactionRowsGetResponse { Id = blankRow, RowCounter = 2, AccountId = null, AccountType = null, Debit = 10m },
+      },
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act — fill the blank row with 8.50 and add a 1.50 fee row
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx patch {txId} -r {blankRow}:{expenseAcc}:8.50:0 -r :{feeAcc}:1.50:0:Commissione");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    JsonElement rows = JsonDocument.Parse(_harness.Handler.Requests[1].Body!).RootElement.GetProperty("transactionRows");
+    rows.GetArrayLength().Should().Be(3);
+    JsonElement fee = rows.EnumerateArray().Single(r => r.GetProperty("description").GetString() == "Commissione");
+    fee.GetProperty("accountId").GetGuid().Should().Be(feeAcc);
+    fee.GetProperty("rowCounter").GetInt32().Should().Be(3);
+    AssertNullOrAbsent(fee, "id", "a new row carries no id");
+  }
+
+  [Test]
+  public async Task Patch_ShouldSendNullCounterparty_OnAnUnlinkedTransaction()
+  {
+    // arrange — Delticom case: set a label before a counterparty exists
+    Guid txId = Guid.Parse("eeee1111-1111-1111-1111-111111111111");
+    Guid cashRow = Guid.Parse("eeee2222-2222-2222-2222-222222222222");
+    Guid blankRow = Guid.Parse("eeee3333-3333-3333-3333-333333333333");
+    Guid cashAcc = Guid.Parse("eeee4444-4444-4444-4444-444444444444");
+    Guid expenseAcc = Guid.Parse("eeee5555-5555-5555-5555-555555555555");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = null, CounterpartyName = "",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = cashRow, RowCounter = 1, AccountId = cashAcc, AccountType = AccountType.Cash, Credit = 80m },
+        new TransactionRowsGetResponse { Id = blankRow, RowCounter = 2, AccountId = null, AccountType = null, Debit = 80m },
+      },
+    });
+    _harness.Handler.EnqueueEmpty(HttpStatusCode.NoContent);
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx patch {txId} -r \"{blankRow}:{expenseAcc}:80:0:Pneumatici invernali\"");
+
+    // assert
+    result.ExitCode.Should().Be(0);
+    JsonDocument body = JsonDocument.Parse(_harness.Handler.Requests[1].Body!);
+    AssertNullOrAbsent(body.RootElement, "counterpartyId", "the transaction has no linked counterparty");
+  }
+
+  [Test]
+  public async Task Patch_ShouldFail_WhenNamedRowDoesNotExist()
+  {
+    // arrange
+    Guid txId = Guid.Parse("ffff1111-1111-1111-1111-111111111111");
+    Guid accId = Guid.Parse("ffff5555-5555-5555-5555-555555555555");
+    _harness.Handler.EnqueueJson(new TransactionsGetResponse
+    {
+      Id = txId, Date = new DateOnly(2025, 10, 9), CounterpartyId = Guid.NewGuid(), CounterpartyName = "Amazon",
+      TransactionRows = new[]
+      {
+        new TransactionRowsGetResponse { Id = Guid.NewGuid(), RowCounter = 1, AccountId = Guid.NewGuid(), AccountType = AccountType.Cash, Credit = 5m },
+      },
+    });
+
+    // act
+    CliInvocationResult result = await _harness.InvokeAsync(
+      $"tx patch {txId} -r 99999999-9999-9999-9999-999999999999:{accId}:5:0");
+
+    // assert
+    result.ExitCode.Should().NotBe(0);
+    result.StdErr.Should().Contain("no row with id");
+  }
+
   // ----- categorize -----
 
   [Test]

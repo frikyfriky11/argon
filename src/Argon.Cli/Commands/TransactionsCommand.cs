@@ -15,6 +15,7 @@ internal static class TransactionsCommand
     tx.AddCommand(GetCommand(factory));
     tx.AddCommand(CreateCommand(factory));
     tx.AddCommand(UpdateCommand(factory));
+    tx.AddCommand(PatchCommand(factory));
     tx.AddCommand(CategorizeCommand(factory));
     tx.AddCommand(SetCounterpartyCommand(factory));
     tx.AddCommand(HistoryCommand(factory));
@@ -166,10 +167,9 @@ internal static class TransactionsCommand
   private static Command UpdateCommand(CliContextFactory factory)
   {
     Argument<Guid> id = new("id", "Transaction id");
-    Option<DateOnly> date = new("--date", parseArgument: r =>
-        DateOnly.Parse(r.Tokens[0].Value, CultureInfo.InvariantCulture),
-      description: "Transaction date (yyyy-MM-dd)") { IsRequired = true };
-    Option<string> counterpartyRef = new("--counterparty", "Counterparty name or id") { IsRequired = true };
+    Option<DateOnly?> date = new("--date", parseArgument: ParseOptionalDate,
+      description: "Transaction date (yyyy-MM-dd). Defaults to the transaction's existing date when omitted.");
+    Option<string?> counterpartyRef = new("--counterparty", "Counterparty name or id. Defaults to the existing counterparty when omitted.");
     Option<string[]> rows = new(
       new[] { "--row", "-r" },
       "Row in the form [rowId]:<account>:<debit>:<credit>[:<description>] (account name or id). Empty rowId means new row.")
@@ -178,12 +178,13 @@ internal static class TransactionsCommand
       AllowMultipleArgumentsPerToken = false,
     };
 
-    Command cmd = new("update", "Update a transaction") { id, date, counterpartyRef, rows };
+    Command cmd = new("update", "Update a transaction (full row replace)") { id, date, counterpartyRef, rows };
     cmd.SetHandler(async ctx =>
     {
       CliContext app = factory.Build(ctx);
       CancellationToken ct = ctx.GetCancellationToken();
 
+      Guid transactionId = ctx.ParseResult.GetValueForArgument(id);
       string[] rowValues = ctx.ParseResult.GetValueForOption(rows) ?? Array.Empty<string>();
       List<TransactionRowsUpdateRequest> parsed = new();
       int counter = 1;
@@ -192,20 +193,195 @@ internal static class TransactionsCommand
         parsed.Add(await ParseUpdateRowAsync(raw, counter++, app.Resolver, ct));
       }
 
+      DateOnly? dateOpt = ctx.ParseResult.GetValueForOption(date);
+      string? cpRef = ctx.ParseResult.GetValueForOption(counterpartyRef);
+      (DateOnly finalDate, Guid? finalCounterpartyId) =
+        await ResolveDateAndCounterpartyAsync(app, transactionId, dateOpt, cpRef, ct);
+
       TransactionsUpdateRequest request = new()
       {
-        Date = ctx.ParseResult.GetValueForOption(date),
-        CounterpartyId = await app.Resolver.ResolveCounterpartyAsync(ctx.ParseResult.GetValueForOption(counterpartyRef)!, ct),
+        Date = finalDate,
+        CounterpartyId = finalCounterpartyId,
         TransactionRows = parsed,
       };
 
-      await app.Transactions.UpdateAsync(
-        ctx.ParseResult.GetValueForArgument(id),
-        request,
-        ct);
+      await app.Transactions.UpdateAsync(transactionId, request, ct);
       Console.WriteLine("updated.");
     });
     return cmd;
+  }
+
+  private static Command PatchCommand(CliContextFactory factory)
+  {
+    Argument<Guid> id = new("id", "Transaction id");
+    Option<DateOnly?> date = new("--date", parseArgument: ParseOptionalDate,
+      description: "Transaction date (yyyy-MM-dd). Defaults to the existing date when omitted.");
+    Option<string?> counterpartyRef = new("--counterparty", "Counterparty name or id. Defaults to the existing counterparty when omitted.");
+    Option<string[]> rows = new(
+      new[] { "--row", "-r" },
+      "Row to change/add: [rowId]:<account>:<debit>:<credit>[:<description>]. With a rowId the matching row is updated; empty rowId adds a new row. Repeatable.")
+    {
+      IsRequired = true,
+      AllowMultipleArgumentsPerToken = false,
+    };
+    Option<bool> force = new("--force", "Allow changing a parsed Cash (bank) row, which is otherwise treated as read-only.");
+
+    Command cmd = new("patch", "Update only the named rows of a transaction; untouched rows pass through unchanged")
+      { id, date, counterpartyRef, rows, force };
+    cmd.SetHandler(async ctx =>
+    {
+      CliContext app = factory.Build(ctx);
+      CancellationToken ct = ctx.GetCancellationToken();
+
+      Guid transactionId = ctx.ParseResult.GetValueForArgument(id);
+      bool forceCashLeg = ctx.ParseResult.GetValueForOption(force);
+
+      TransactionsGetResponse transaction = await app.Transactions.GetAsync(transactionId, ct);
+
+      string[] rowValues = ctx.ParseResult.GetValueForOption(rows) ?? Array.Empty<string>();
+      List<PatchRow> patchRows = new();
+      foreach (string raw in rowValues)
+      {
+        patchRows.Add(await ParsePatchRowAsync(raw, app.Resolver, ct));
+      }
+
+      List<TransactionRowsUpdateRequest> merged = MergePatchRows(transaction, patchRows, forceCashLeg);
+
+      DateOnly? dateOpt = ctx.ParseResult.GetValueForOption(date);
+      string? cpRef = ctx.ParseResult.GetValueForOption(counterpartyRef);
+      DateOnly finalDate = dateOpt ?? transaction.Date;
+      Guid? finalCounterpartyId = cpRef is null
+        ? transaction.CounterpartyId
+        : await app.Resolver.ResolveCounterpartyAsync(cpRef, ct);
+
+      TransactionsUpdateRequest request = new()
+      {
+        Date = finalDate,
+        CounterpartyId = finalCounterpartyId,
+        TransactionRows = merged,
+      };
+
+      await app.Transactions.UpdateAsync(transactionId, request, ct);
+      Console.WriteLine("patched.");
+    });
+    return cmd;
+  }
+
+  /// <summary>
+  ///   Merges the named patch rows onto the transaction's existing rows. Rows not
+  ///   named are re-emitted verbatim from the fetched transaction (so the immutable
+  ///   bank leg cannot be corrupted by re-typing), rows named by id are overwritten,
+  ///   and rows with an empty id are appended. A change to an existing Cash-type row's
+  ///   account/debit/credit is refused unless <paramref name="forceCashLeg" /> is set.
+  /// </summary>
+  private static List<TransactionRowsUpdateRequest> MergePatchRows(
+    TransactionsGetResponse transaction,
+    List<PatchRow> patchRows,
+    bool forceCashLeg)
+  {
+    foreach (PatchRow patch in patchRows.Where(p => p.RowId is not null))
+    {
+      TransactionRowsGetResponse? existing = transaction.TransactionRows.FirstOrDefault(r => r.Id == patch.RowId);
+      if (existing is null)
+      {
+        throw new ArgumentException($"Transaction {transaction.Id} has no row with id {patch.RowId}.");
+      }
+
+      bool changesValues = existing.AccountId != patch.AccountId
+                           || existing.Debit != patch.Debit
+                           || existing.Credit != patch.Credit;
+      if (!forceCashLeg && existing.AccountType == AccountType.Cash && changesValues)
+      {
+        throw new ArgumentException(
+          $"Row {existing.RowCounter} is a Cash (bank) leg and is treated as read-only. " +
+          "Re-run with --force only if you really mean to change the parsed bank amount.");
+      }
+    }
+
+    List<TransactionRowsUpdateRequest> merged = new();
+
+    foreach (TransactionRowsGetResponse existing in transaction.TransactionRows.OrderBy(r => r.RowCounter))
+    {
+      PatchRow? patch = patchRows.FirstOrDefault(p => p.RowId == existing.Id);
+      if (patch is not null)
+      {
+        merged.Add(new TransactionRowsUpdateRequest
+        {
+          Id = existing.Id,
+          RowCounter = existing.RowCounter,
+          AccountId = patch.AccountId,
+          Debit = patch.Debit,
+          Credit = patch.Credit,
+          Description = patch.DescriptionProvided ? patch.Description : existing.Description,
+        });
+        continue;
+      }
+
+      if (existing.AccountId is null)
+      {
+        throw new ArgumentException(
+          $"Row {existing.RowCounter} has no account and isn't part of this patch. " +
+          "Categorize it in the same call with -r, or use tx categorize.");
+      }
+
+      merged.Add(new TransactionRowsUpdateRequest
+      {
+        Id = existing.Id,
+        RowCounter = existing.RowCounter,
+        AccountId = existing.AccountId.Value,
+        Debit = existing.Debit,
+        Credit = existing.Credit,
+        Description = existing.Description,
+      });
+    }
+
+    int counter = transaction.TransactionRows.Count == 0
+      ? 0
+      : transaction.TransactionRows.Max(r => r.RowCounter);
+    foreach (PatchRow patch in patchRows.Where(p => p.RowId is null))
+    {
+      merged.Add(new TransactionRowsUpdateRequest
+      {
+        Id = null,
+        RowCounter = ++counter,
+        AccountId = patch.AccountId,
+        Debit = patch.Debit,
+        Credit = patch.Credit,
+        Description = patch.Description,
+      });
+    }
+
+    return merged;
+  }
+
+  private static async Task<(DateOnly Date, Guid? CounterpartyId)> ResolveDateAndCounterpartyAsync(
+    CliContext app,
+    Guid transactionId,
+    DateOnly? date,
+    string? counterpartyRef,
+    CancellationToken cancellationToken)
+  {
+    if (date is not null && counterpartyRef is not null)
+    {
+      return (date.Value, await app.Resolver.ResolveCounterpartyAsync(counterpartyRef, cancellationToken));
+    }
+
+    TransactionsGetResponse existing = await app.Transactions.GetAsync(transactionId, cancellationToken);
+    DateOnly finalDate = date ?? existing.Date;
+    Guid? counterpartyId = counterpartyRef is null
+      ? existing.CounterpartyId
+      : await app.Resolver.ResolveCounterpartyAsync(counterpartyRef, cancellationToken);
+    return (finalDate, counterpartyId);
+  }
+
+  private static DateOnly? ParseOptionalDate(System.CommandLine.Parsing.ArgumentResult result)
+  {
+    if (result.Tokens.Count == 0)
+    {
+      return null;
+    }
+
+    return DateOnly.Parse(result.Tokens[0].Value, CultureInfo.InvariantCulture);
   }
 
   private static Command CategorizeCommand(CliContextFactory factory)
@@ -396,6 +572,34 @@ internal static class TransactionsCommand
       Credit = credit,
       Description = description,
     };
+  }
+
+  private sealed record PatchRow(
+    Guid? RowId,
+    Guid AccountId,
+    decimal? Debit,
+    decimal? Credit,
+    string? Description,
+    bool DescriptionProvided);
+
+  private static async Task<PatchRow> ParsePatchRowAsync(
+    string raw, ReferenceResolver resolver, CancellationToken cancellationToken)
+  {
+    string[] parts = raw.Split(':', 5);
+    if (parts.Length < 4)
+    {
+      throw new ArgumentException(
+        $"Invalid row '{raw}'. Expected [rowId]:<account>:<debit>:<credit>[:<description>].");
+    }
+
+    Guid? rowId = string.IsNullOrWhiteSpace(parts[0]) ? null : Guid.Parse(parts[0]);
+    Guid accountId = await resolver.ResolveAccountAsync(parts[1], cancellationToken);
+    decimal? debit = ParseAmount(parts[2]);
+    decimal? credit = ParseAmount(parts[3]);
+    bool descriptionProvided = parts.Length == 5;
+    string? description = descriptionProvided ? parts[4] : null;
+
+    return new PatchRow(rowId, accountId, debit, credit, description, descriptionProvided);
   }
 
   private static async Task<List<Guid>?> ResolveAllAsync(
