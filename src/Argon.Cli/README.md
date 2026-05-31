@@ -352,6 +352,15 @@ A typical Amazon row will show several expense accounts (`Libri`, `Giochi`, `Ele
 argon tx delete <tx-id>
 ```
 
+## `reconcile` — does the ledger agree with the bank?
+
+```bash
+argon reconcile --account "Sparkasse famiglia" --expected 6442.09          # whole history
+argon reconcile --account "Sparkasse famiglia" --expected 6442.09 --month 2025-12
+```
+
+`reconcile` answers the end-of-import question "does my ledger agree with the bank?". It compares the account's ledger balance to the statement's `--expected` closing balance (saldo contabile finale) and prints `OK` or the signed `Delta`. It then checks every parsed transaction's **cash leg against its `rawImportData` amount** and lists any that disagree — the transpositions/typos that silently shift the balance (the Dec 2025 €7.80 bug). It exits non-zero when the balance is off or any cash leg mismatches, so it can gate a script. Manual entries (no `rawImportData`) are skipped. Scope it to a month with `--month`/`--from`/`--to`.
+
 ## Reconciliation walkthrough
 
 The day-to-day loop after running the bank-statement importer:

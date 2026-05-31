@@ -76,6 +76,7 @@ internal sealed class CliTestHarness : IDisposable
     root.AddCommand(CounterpartiesCommand.Build(factory));
     root.AddCommand(CounterpartyIdentifiersCommand.Build(factory));
     root.AddCommand(TransactionsCommand.Build(factory));
+    root.AddCommand(ReconcileCommand.Build(factory));
 
     Parser parser = new CommandLineBuilder(root)
       .UseDefaults()

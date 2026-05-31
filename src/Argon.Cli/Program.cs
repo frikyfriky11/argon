@@ -106,6 +106,7 @@ public static class Program
     root.AddCommand(CounterpartiesCommand.Build(factory));
     root.AddCommand(CounterpartyIdentifiersCommand.Build(factory));
     root.AddCommand(TransactionsCommand.Build(factory));
+    root.AddCommand(ReconcileCommand.Build(factory));
 
     return root;
   }
