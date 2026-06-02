@@ -36,4 +36,11 @@ public enum AccountType
   ///   Receivable accounts track money owed by others such as emitted invoices and reimbursements due.
   /// </summary>
   Receivable,
+
+  /// <summary>
+  ///   Asset accounts hold non-liquid assets carried at cost, such as real estate or equipment.
+  ///   They behave like <see cref="Cash" /> for balance purposes (a debit raises them), but are
+  ///   excluded from the liquid net-worth headline — they count only towards total net worth.
+  /// </summary>
+  Asset,
 }

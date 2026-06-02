@@ -31,6 +31,7 @@ const tabs = [
   { text: "Ricavo", value: AccountType.Revenue },
   { text: "Debito", value: AccountType.Liability },
   { text: "Credito", value: AccountType.Receivable },
+  { text: "Patrimoniale", value: AccountType.Asset },
   { text: "Iniziale", value: AccountType.Equity },
 ];
 

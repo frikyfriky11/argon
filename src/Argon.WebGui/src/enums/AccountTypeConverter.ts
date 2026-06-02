@@ -14,6 +14,8 @@ function convert(value: AccountType | undefined): string {
       return "Conto di debito";
     case AccountType.Receivable:
       return "Conto di credito";
+    case AccountType.Asset:
+      return "Conto patrimoniale";
     case undefined:
       return "";
   }

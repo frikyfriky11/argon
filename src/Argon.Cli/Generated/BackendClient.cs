@@ -4749,6 +4749,8 @@ namespace Argon.Cli.Generated
 
         Receivable = 5,
 
+        Asset = 6,
+
     }
 
     /// <summary>
