@@ -4743,11 +4743,11 @@ namespace Argon.Cli.Generated
 
         Revenue = 2,
 
-        Setup = 3,
+        Equity = 3,
 
-        Debit = 4,
+        Liability = 4,
 
-        Credit = 5,
+        Receivable = 5,
 
     }
 

@@ -2645,9 +2645,9 @@ export enum AccountType {
     Cash = 0,
     Expense = 1,
     Revenue = 2,
-    Setup = 3,
-    Debit = 4,
-    Credit = 5,
+    Equity = 3,
+    Liability = 4,
+    Receivable = 5,
 }
 
 /** The result of the get request of a Account entity */

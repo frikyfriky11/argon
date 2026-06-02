@@ -20,8 +20,8 @@ public class AccountsGetListHandlerTests
   {
     // arrange
     Account account1 = new Account { Name = "test account 1", Type = AccountType.Cash };
-    Account account2 = new Account { Name = "test account 2", Type = AccountType.Credit };
-    Account account3 = new Account { Name = "test account 3", Type = AccountType.Debit };
+    Account account2 = new Account { Name = "test account 2", Type = AccountType.Receivable };
+    Account account3 = new Account { Name = "test account 3", Type = AccountType.Liability };
     List<Account> accounts = new()
     {
       account1,

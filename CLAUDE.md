@@ -77,9 +77,9 @@ Argon is a **double-entry bookkeeping ledger**. Every `Transaction` groups two o
 | 0 | `Cash` | Liquid assets: bank accounts, wallets, brokerages, gift cards |
 | 1 | `Expense` | Spending categories |
 | 2 | `Revenue` | Income streams |
-| 3 | `Setup` | Opening balances (there should only ever be one) |
-| 4 | `Debit` | Payables — money owed to others (loans, unpaid invoices) |
-| 5 | `Credit` | Receivables — money others owe |
+| 3 | `Equity` | Owner's capital — the opening-balance plug ("Capitale iniziale") and later capital events |
+| 4 | `Liability` | Payables — money owed to others (mortgages, loans, unpaid invoices) |
+| 5 | `Receivable` | Money others owe (`Crediti vs …`, emitted invoices) |
 
 **Counterparty vs Account** — `Account` is *which ledger bucket* money moves between (your side); `Counterparty` is *who the other party is in real life* (merchant, employer, friend). The relationship is N:N: one counterparty hits many accounts (Amazon → books, electronics, gifts…), one account is hit by many counterparties (Groceries ← Eurospar, Iperpoli, Mein Beck…). `CounterpartyIdentifier` records the strings (IBANs, card descriptors) the parser uses to auto-match counterparties from raw bank descriptions.
 

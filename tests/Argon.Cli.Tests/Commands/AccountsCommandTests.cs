@@ -138,7 +138,7 @@ public class AccountsCommandTests
     Guid accId = Guid.Parse("ba2aceee-1111-1111-1111-111111111111");
     _harness.Handler.EnqueueJson(new[]
     {
-      new AccountsGetListResponse { Id = accId, Name = "Crediti vs Luca", Type = AccountType.Credit, TotalAmount = 30m },
+      new AccountsGetListResponse { Id = accId, Name = "Crediti vs Luca", Type = AccountType.Receivable, TotalAmount = 30m },
     });
     _harness.Handler.EnqueueJson(new PaginatedListOfTransactionsGetListResponse
     {
