@@ -1762,6 +1762,296 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
     }
 }
 
+export class StatisticsClient extends ServiceBase {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        super();
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? this.getBaseUrl("");
+
+    }
+
+    /**
+     * Gets the running balance of all Cash accounts at the end of each month.
+     * @param from (optional) The start date of the window to return (inclusive). Null returns from the first month.
+     * @param to (optional) The end date of the window to return (inclusive). Null returns up to the last month.
+     */
+    liquidity(from: DateTime | null | undefined, to: DateTime | null | undefined, cancelToken?: CancelToken): Promise<StatisticsLiquidityResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/liquidity?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processLiquidity(_response));
+        });
+    }
+
+    protected processLiquidity(response: AxiosResponse): Promise<StatisticsLiquidityResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsLiquidityResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsLiquidityResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsLiquidityResponse[]>(null as any);
+    }
+
+    /**
+     * Gets monthly income vs expense for a period.
+     * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
+     * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
+     */
+    cashflow(from: DateTime | null | undefined, to: DateTime | null | undefined, cancelToken?: CancelToken): Promise<StatisticsCashflowResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/cashflow?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processCashflow(_response));
+        });
+    }
+
+    protected processCashflow(response: AxiosResponse): Promise<StatisticsCashflowResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsCashflowResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsCashflowResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsCashflowResponse[]>(null as any);
+    }
+
+    /**
+     * Gets the top spending categories for a period with their cumulative percentage (Pareto).
+     * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
+     * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
+     * @param take (optional) How many top categories to return. Defaults to 10.
+     */
+    topCategories(from: DateTime | null | undefined, to: DateTime | null | undefined, take: number | undefined, cancelToken?: CancelToken): Promise<StatisticsTopCategoriesResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/top-categories?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        if (take === null)
+            throw new Error("The parameter 'take' cannot be null.");
+        else if (take !== undefined)
+            url_ += "Take=" + encodeURIComponent("" + take) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processTopCategories(_response));
+        });
+    }
+
+    protected processTopCategories(response: AxiosResponse): Promise<StatisticsTopCategoriesResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsTopCategoriesResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsTopCategoriesResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsTopCategoriesResponse[]>(null as any);
+    }
+
+    /**
+     * Gets the top counterparties by spend for a period.
+     * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
+     * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
+     * @param take (optional) How many top counterparties to return. Defaults to 10.
+     */
+    topCounterparties(from: DateTime | null | undefined, to: DateTime | null | undefined, take: number | undefined, cancelToken?: CancelToken): Promise<StatisticsTopCounterpartiesResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/top-counterparties?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        if (take === null)
+            throw new Error("The parameter 'take' cannot be null.");
+        else if (take !== undefined)
+            url_ += "Take=" + encodeURIComponent("" + take) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processTopCounterparties(_response));
+        });
+    }
+
+    protected processTopCounterparties(response: AxiosResponse): Promise<StatisticsTopCounterpartiesResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsTopCounterpartiesResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsTopCounterpartiesResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsTopCounterpartiesResponse[]>(null as any);
+    }
+}
+
 export class TransactionsClient extends ServiceBase {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -4161,6 +4451,232 @@ export class CounterpartyIdentifiersResolveRequest implements ICounterpartyIdent
 export interface ICounterpartyIdentifiersResolveRequest {
     /** The raw text to resolve (typically a snippet from a bank line) */
     rawText: string;
+}
+
+/** A single point of the liquid-asset balance time series. */
+export class StatisticsLiquidityResponse implements IStatisticsLiquidityResponse {
+    /** The calendar year of the point */
+    year!: number;
+    /** The calendar month of the point (1-12) */
+    month!: number;
+    /** The running balance of all Cash accounts at the end of this month */
+    balance!: number;
+
+    constructor(data?: IStatisticsLiquidityResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.year = _data["year"] !== undefined ? _data["year"] : <any>null;
+            this.month = _data["month"] !== undefined ? _data["month"] : <any>null;
+            this.balance = _data["balance"] !== undefined ? _data["balance"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsLiquidityResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsLiquidityResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["year"] = this.year !== undefined ? this.year : <any>null;
+        data["month"] = this.month !== undefined ? this.month : <any>null;
+        data["balance"] = this.balance !== undefined ? this.balance : <any>null;
+        return data;
+    }
+}
+
+/** A single point of the liquid-asset balance time series. */
+export interface IStatisticsLiquidityResponse {
+    /** The calendar year of the point */
+    year: number;
+    /** The calendar month of the point (1-12) */
+    month: number;
+    /** The running balance of all Cash accounts at the end of this month */
+    balance: number;
+}
+
+/** A single month of income vs expense. */
+export class StatisticsCashflowResponse implements IStatisticsCashflowResponse {
+    /** The calendar year of the point */
+    year!: number;
+    /** The calendar month of the point (1-12) */
+    month!: number;
+    /** The net income (Revenue accounts) booked in this month */
+    income!: number;
+    /** The net expense (Expense accounts) booked in this month */
+    expense!: number;
+
+    constructor(data?: IStatisticsCashflowResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.year = _data["year"] !== undefined ? _data["year"] : <any>null;
+            this.month = _data["month"] !== undefined ? _data["month"] : <any>null;
+            this.income = _data["income"] !== undefined ? _data["income"] : <any>null;
+            this.expense = _data["expense"] !== undefined ? _data["expense"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsCashflowResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsCashflowResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["year"] = this.year !== undefined ? this.year : <any>null;
+        data["month"] = this.month !== undefined ? this.month : <any>null;
+        data["income"] = this.income !== undefined ? this.income : <any>null;
+        data["expense"] = this.expense !== undefined ? this.expense : <any>null;
+        return data;
+    }
+}
+
+/** A single month of income vs expense. */
+export interface IStatisticsCashflowResponse {
+    /** The calendar year of the point */
+    year: number;
+    /** The calendar month of the point (1-12) */
+    month: number;
+    /** The net income (Revenue accounts) booked in this month */
+    income: number;
+    /** The net expense (Expense accounts) booked in this month */
+    expense: number;
+}
+
+/** A single ranked spending category. */
+export class StatisticsTopCategoriesResponse implements IStatisticsTopCategoriesResponse {
+    /** The id of the Expense account */
+    accountId!: string;
+    /** The name of the Expense account */
+    accountName!: string;
+    /** The total amount spent on this category in the period */
+    total!: number;
+    /** The cumulative share of the period's total spend covered by this category and every
+higher-ranked one (0-100). The last returned category's value is 100 only when all
+categories are returned; with a Take limit it reflects the share of the full total.
+             */
+    cumulativePercentage!: number;
+
+    constructor(data?: IStatisticsTopCategoriesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+            this.cumulativePercentage = _data["cumulativePercentage"] !== undefined ? _data["cumulativePercentage"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsTopCategoriesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsTopCategoriesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        data["cumulativePercentage"] = this.cumulativePercentage !== undefined ? this.cumulativePercentage : <any>null;
+        return data;
+    }
+}
+
+/** A single ranked spending category. */
+export interface IStatisticsTopCategoriesResponse {
+    /** The id of the Expense account */
+    accountId: string;
+    /** The name of the Expense account */
+    accountName: string;
+    /** The total amount spent on this category in the period */
+    total: number;
+    /** The cumulative share of the period's total spend covered by this category and every
+higher-ranked one (0-100). The last returned category's value is 100 only when all
+categories are returned; with a Take limit it reflects the share of the full total.
+             */
+    cumulativePercentage: number;
+}
+
+/** A single ranked counterparty by spend. */
+export class StatisticsTopCounterpartiesResponse implements IStatisticsTopCounterpartiesResponse {
+    /** The id of the counterparty, or null for the unlinked bucket */
+    counterpartyId!: string | null;
+    /** The name of the counterparty, or a placeholder for the unlinked bucket */
+    counterpartyName!: string;
+    /** The total amount spent with this counterparty in the period */
+    total!: number;
+
+    constructor(data?: IStatisticsTopCounterpartiesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsTopCounterpartiesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsTopCounterpartiesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        return data;
+    }
+}
+
+/** A single ranked counterparty by spend. */
+export interface IStatisticsTopCounterpartiesResponse {
+    /** The id of the counterparty, or null for the unlinked bucket */
+    counterpartyId: string | null;
+    /** The name of the counterparty, or a placeholder for the unlinked bucket */
+    counterpartyName: string;
+    /** The total amount spent with this counterparty in the period */
+    total: number;
 }
 
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
