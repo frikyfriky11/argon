@@ -8,12 +8,18 @@ import {
   AccountsClient,
   StatisticsClient,
 } from "../../services/backend/BackendClient";
-import { PeriodPreset, resolvePeriod } from "../../utils/statistics";
+import { formatPercent } from "../../utils/format";
+import {
+  PeriodPreset,
+  resolvePeriod,
+  savingsRate,
+} from "../../utils/statistics";
 import CashflowChart from "./CashflowChart";
 import ChartCard from "./ChartCard";
 import FavouriteAccounts from "./FavouriteAccounts";
 import LiquidityChart from "./LiquidityChart";
 import PeriodSelector from "./PeriodSelector";
+import SavingsChart from "./SavingsChart";
 import StatCards from "./StatCards";
 import TopCategoriesChart from "./TopCategoriesChart";
 import TopCounterpartiesChart from "./TopCounterpartiesChart";
@@ -60,6 +66,12 @@ export default function Dashboard() {
     queryFn: () =>
       new StatisticsClient().topCounterparties(period.from, period.to, TOP_N),
   });
+
+  const rate = cashflow.data ? savingsRate(cashflow.data) : null;
+  const savingsSummary =
+    rate == null
+      ? undefined
+      : `Nel periodo avete risparmiato il ${formatPercent(rate, i18n.language)} delle entrate.`;
 
   const categoriesCoverage =
     topCategories.data && topCategories.data.length > 0
@@ -111,6 +123,20 @@ export default function Dashboard() {
           >
             {cashflow.data && (
               <CashflowChart locale={i18n.language} points={cashflow.data} />
+            )}
+          </ChartCard>
+        </Grid>
+
+        <Grid item md={6} xs={12}>
+          <ChartCard
+            isEmpty={cashflow.data?.length === 0}
+            isError={cashflow.isError}
+            isPending={cashflow.isPending}
+            subtitle={savingsSummary}
+            title="Risparmio mensile"
+          >
+            {cashflow.data && (
+              <SavingsChart locale={i18n.language} points={cashflow.data} />
             )}
           </ChartCard>
         </Grid>

@@ -62,3 +62,64 @@ export function latestNet(
   const last = points[points.length - 1];
   return last.income - last.expense;
 }
+
+/** Number of trailing months averaged by the savings rolling-average line. */
+const ROLLING_WINDOW = 3;
+
+export type SavingsPoint = {
+  year: number;
+  month: number;
+  /** Income − expense for the month; negative when spending outran income. */
+  net: number;
+  /**
+   * Trailing average of `net` over the last {@link ROLLING_WINDOW} months
+   * (fewer near the start of the series), to smooth out lumpy one-off months.
+   */
+  rollingAverage: number;
+};
+
+/**
+ * Turns a cashflow series into per-month net savings plus a trailing
+ * rolling average. The rolling average uses whatever months are available
+ * when fewer than {@link ROLLING_WINDOW} precede a point, so the line spans
+ * the whole window rather than starting blank.
+ */
+export function monthlyNet(
+  points: { year: number; month: number; income: number; expense: number }[],
+): SavingsPoint[] {
+  const nets = points.map((point) => point.income - point.expense);
+  return points.map((point, index) => {
+    const start = Math.max(0, index - (ROLLING_WINDOW - 1));
+    const window = nets.slice(start, index + 1);
+    const rollingAverage =
+      window.reduce((sum, value) => sum + value, 0) / window.length;
+    return {
+      year: point.year,
+      month: point.month,
+      net: nets[index],
+      rollingAverage,
+    };
+  });
+}
+
+/**
+ * The savings rate over the whole series: (income − expense) / income.
+ * Aggregating across months rather than averaging monthly rates keeps a few
+ * big-income months from dominating. Returns null when there is no income to
+ * divide by (an empty period, or one with only expenses).
+ */
+export function savingsRate(
+  points: { income: number; expense: number }[],
+): number | null {
+  const totals = points.reduce(
+    (acc, point) => ({
+      income: acc.income + point.income,
+      expense: acc.expense + point.expense,
+    }),
+    { income: 0, expense: 0 },
+  );
+  if (totals.income <= 0) {
+    return null;
+  }
+  return (totals.income - totals.expense) / totals.income;
+}

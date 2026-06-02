@@ -5,7 +5,9 @@ import {
   latestBalance,
   latestNet,
   monthLabel,
+  monthlyNet,
   resolvePeriod,
+  savingsRate,
 } from "./statistics";
 
 const now = DateTime.fromISO("2026-06-02T10:00:00");
@@ -59,5 +61,56 @@ describe("latestNet", () => {
 
   it("returns null for an empty series", () => {
     expect(latestNet([])).toBeNull();
+  });
+});
+
+describe("monthlyNet", () => {
+  it("computes income minus expense per month", () => {
+    const result = monthlyNet([
+      { year: 2026, month: 1, income: 1000, expense: 600 },
+      { year: 2026, month: 2, income: 800, expense: 1000 },
+    ]);
+    expect(result.map((point) => point.net)).toEqual([400, -200]);
+  });
+
+  it("averages whatever months are available before the window fills", () => {
+    const result = monthlyNet([
+      { year: 2026, month: 1, income: 300, expense: 0 },
+      { year: 2026, month: 2, income: 600, expense: 0 },
+      { year: 2026, month: 3, income: 900, expense: 0 },
+      { year: 2026, month: 4, income: 1200, expense: 0 },
+    ]);
+    // nets are 300, 600, 900, 1200; trailing 3-month averages:
+    expect(result.map((point) => point.rollingAverage)).toEqual([
+      300, // [300]
+      450, // [300, 600]
+      600, // [300, 600, 900]
+      900, // [600, 900, 1200]
+    ]);
+  });
+
+  it("returns an empty array for an empty series", () => {
+    expect(monthlyNet([])).toEqual([]);
+  });
+});
+
+describe("savingsRate", () => {
+  it("divides aggregate net by aggregate income across the series", () => {
+    // total income 3000, total expense 2700 → saved 300 of 3000 = 10%.
+    expect(
+      savingsRate([
+        { income: 1000, expense: 900 },
+        { income: 2000, expense: 1800 },
+      ]),
+    ).toBeCloseTo(0.1);
+  });
+
+  it("is negative when spending outran income", () => {
+    expect(savingsRate([{ income: 100, expense: 150 }])).toBeCloseTo(-0.5);
+  });
+
+  it("returns null when there is no income to divide by", () => {
+    expect(savingsRate([{ income: 0, expense: 200 }])).toBeNull();
+    expect(savingsRate([])).toBeNull();
   });
 });

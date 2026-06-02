@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCompactCurrency, formatCurrency } from "./format";
+import { formatCompactCurrency, formatCurrency, formatPercent } from "./format";
 
 // Intl inserts a (narrow) no-break space before the € symbol; normalise any
 // unicode whitespace to a plain space so the assertions don't depend on the
@@ -31,5 +31,16 @@ describe("formatCompactCurrency", () => {
 
   it("abbreviates millions", () => {
     expect(norm(formatCompactCurrency(2_000_000, "en"))).toBe("€2M");
+  });
+});
+
+describe("formatPercent", () => {
+  it("renders a fraction as a percentage with the locale separator", () => {
+    expect(norm(formatPercent(0.093, "it"))).toBe("9,3%");
+    expect(norm(formatPercent(0.1, "en"))).toBe("10%");
+  });
+
+  it("formats negative ratios", () => {
+    expect(norm(formatPercent(-0.5, "en"))).toBe("-50%");
   });
 });

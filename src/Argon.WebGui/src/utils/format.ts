@@ -22,3 +22,14 @@ export function formatCompactCurrency(value: number, locale: string): string {
     maximumFractionDigits: 1,
   });
 }
+
+/**
+ * Formats a ratio as a locale-aware percentage with at most one fraction digit
+ * (e.g. 0.093 → "9,3%"). The input is a fraction, not percentage points.
+ */
+export function formatPercent(value: number, locale: string): string {
+  return value.toLocaleString(locale, {
+    style: "percent",
+    maximumFractionDigits: 1,
+  });
+}

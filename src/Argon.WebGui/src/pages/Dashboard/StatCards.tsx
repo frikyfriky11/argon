@@ -5,8 +5,8 @@ import {
   IStatisticsCashflowResponse,
   IStatisticsLiquidityResponse,
 } from "../../services/backend/BackendClient";
-import { formatCurrency } from "../../utils/format";
-import { latestBalance, latestNet } from "../../utils/statistics";
+import { formatCurrency, formatPercent } from "../../utils/format";
+import { latestBalance, latestNet, savingsRate } from "../../utils/statistics";
 
 export type StatCardsProps = {
   liquidity: IStatisticsLiquidityResponse[] | undefined;
@@ -18,8 +18,12 @@ export type StatCardsProps = {
 type Stat = {
   label: string;
   value: number | null;
+  format?: "currency" | "percent";
   color?: "error.main" | "success.main";
 };
+
+const signColor = (value: number | null): Stat["color"] =>
+  value == null ? undefined : value < 0 ? "error.main" : "success.main";
 
 export default function StatCards({
   liquidity,
@@ -29,6 +33,7 @@ export default function StatCards({
 }: StatCardsProps) {
   const balance = liquidity ? latestBalance(liquidity) : null;
   const net = cashflow ? latestNet(cashflow) : null;
+  const rate = cashflow ? savingsRate(cashflow) : null;
 
   const stats: Stat[] = [
     { label: "Patrimonio liquido", value: balance },
@@ -36,21 +41,36 @@ export default function StatCards({
     {
       label: "Saldo ultimo mese",
       value: net,
-      color: net == null ? undefined : net < 0 ? "error.main" : "success.main",
+      color: signColor(net),
+    },
+    {
+      label: "Tasso di risparmio",
+      value: rate,
+      format: "percent",
+      color: signColor(rate),
     },
   ];
+
+  const formatValue = (stat: Stat): string => {
+    if (stat.value == null) {
+      return "—";
+    }
+    return stat.format === "percent"
+      ? formatPercent(stat.value, locale)
+      : formatCurrency(stat.value, locale);
+  };
 
   return (
     <Grid container spacing={2}>
       {stats.map((stat) => (
-        <Grid item key={stat.label} sm={4} xs={12}>
+        <Grid item key={stat.label} md={3} sm={6} xs={12}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" variant="overline">
                 {stat.label}
               </Typography>
               <Typography color={stat.color} variant="h4">
-                {stat.value == null ? "—" : formatCurrency(stat.value, locale)}
+                {formatValue(stat)}
               </Typography>
             </CardContent>
           </Card>
