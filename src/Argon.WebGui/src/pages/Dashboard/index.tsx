@@ -37,6 +37,13 @@ export default function Dashboard() {
     queryFn: () => new StatisticsClient().liquidity(period.from, period.to),
   });
 
+  // Net worth is a point-in-time snapshot of the whole balance sheet, so it is
+  // independent of the selected period.
+  const netWorth = useQuery({
+    queryKey: ["statistics", "net-worth"],
+    queryFn: () => new StatisticsClient().netWorth(undefined),
+  });
+
   const cashflow = useQuery({
     queryKey: ["statistics", "cashflow", period.from, period.to],
     queryFn: () => new StatisticsClient().cashflow(period.from, period.to),
@@ -78,6 +85,7 @@ export default function Dashboard() {
         cashflow={cashflow.data}
         liquidity={liquidity.data}
         locale={i18n.language}
+        netWorth={netWorth.data?.total}
       />
 
       <Grid container spacing={2}>

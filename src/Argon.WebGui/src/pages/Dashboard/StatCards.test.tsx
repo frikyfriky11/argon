@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import StatCards from "./StatCards";
 
 describe("StatCards", () => {
-  it("shows the latest liquidity balance and the latest monthly net", () => {
+  it("shows the latest liquidity balance, net worth and the latest monthly net", () => {
     render(
       <StatCards
         cashflow={[
@@ -16,20 +16,28 @@ describe("StatCards", () => {
           { year: 2026, month: 5, balance: 5500 },
         ]}
         locale="en"
+        netWorth={118000}
       />,
     );
 
     expect(screen.getByText("Patrimonio liquido")).toBeInTheDocument();
     expect(screen.getByText("€5,500.00")).toBeInTheDocument();
+    expect(screen.getByText("Patrimonio netto")).toBeInTheDocument();
+    expect(screen.getByText("€118,000.00")).toBeInTheDocument();
     // latest net = 2000 - 1500 = 500
     expect(screen.getByText("€500.00")).toBeInTheDocument();
   });
 
   it("renders a dash when there is no data", () => {
     render(
-      <StatCards cashflow={undefined} liquidity={undefined} locale="en" />,
+      <StatCards
+        cashflow={undefined}
+        liquidity={undefined}
+        locale="en"
+        netWorth={undefined}
+      />,
     );
 
-    expect(screen.getAllByText("—")).toHaveLength(2);
+    expect(screen.getAllByText("—")).toHaveLength(3);
   });
 });

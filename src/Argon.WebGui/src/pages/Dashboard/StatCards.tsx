@@ -10,6 +10,7 @@ import { latestBalance, latestNet } from "../../utils/statistics";
 
 export type StatCardsProps = {
   liquidity: IStatisticsLiquidityResponse[] | undefined;
+  netWorth: number | undefined;
   cashflow: IStatisticsCashflowResponse[] | undefined;
   locale: string;
 };
@@ -22,6 +23,7 @@ type Stat = {
 
 export default function StatCards({
   liquidity,
+  netWorth,
   cashflow,
   locale,
 }: StatCardsProps) {
@@ -30,6 +32,7 @@ export default function StatCards({
 
   const stats: Stat[] = [
     { label: "Patrimonio liquido", value: balance },
+    { label: "Patrimonio netto", value: netWorth ?? null },
     {
       label: "Saldo ultimo mese",
       value: net,
@@ -40,7 +43,7 @@ export default function StatCards({
   return (
     <Grid container spacing={2}>
       {stats.map((stat) => (
-        <Grid item key={stat.label} sm={6} xs={12}>
+        <Grid item key={stat.label} sm={4} xs={12}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" variant="overline">

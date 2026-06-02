@@ -1844,6 +1844,64 @@ export class StatisticsClient extends ServiceBase {
     }
 
     /**
+     * Gets total net worth as it stands today (Assets − Liabilities across all balance-sheet accounts).
+     * @param request (optional) 
+     */
+    netWorth(request: StatisticsNetWorthRequest | undefined, cancelToken?: CancelToken): Promise<StatisticsNetWorthResponse> {
+        let url_ = this.baseUrl + "/Statistics/net-worth?";
+        if (request === null)
+            throw new Error("The parameter 'request' cannot be null.");
+        else if (request !== undefined)
+            url_ += "request=" + encodeURIComponent("" + request) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processNetWorth(_response));
+        });
+    }
+
+    protected processNetWorth(response: AxiosResponse): Promise<StatisticsNetWorthResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = StatisticsNetWorthResponse.fromJS(resultData200);
+            return Promise.resolve<StatisticsNetWorthResponse>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsNetWorthResponse>(null as any);
+    }
+
+    /**
      * Gets monthly income vs expense for a period.
      * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
      * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
@@ -4504,6 +4562,78 @@ export interface IStatisticsLiquidityResponse {
     month: number;
     /** The running balance of all Cash accounts at the end of this month */
     balance: number;
+}
+
+/** The current total net worth: Cash + Asset + Receivable balances, less what is owed on Liability accounts. */
+export class StatisticsNetWorthResponse implements IStatisticsNetWorthResponse {
+    /** Assets − Liabilities across all balance-sheet accounts */
+    total!: number;
+
+    constructor(data?: IStatisticsNetWorthResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsNetWorthResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsNetWorthResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        return data;
+    }
+}
+
+/** The current total net worth: Cash + Asset + Receivable balances, less what is owed on Liability accounts. */
+export interface IStatisticsNetWorthResponse {
+    /** Assets − Liabilities across all balance-sheet accounts */
+    total: number;
+}
+
+/** The request to fetch total net worth as it stands today: the balance-sheet identity Assets − Liabilities, summed across every Cash, Asset and Receivable account (assets) net of every Liability account (payables). Unlike the liquid headline this includes illiquid assets such as the house, so it surfaces real equity rather than just cash. */
+export class StatisticsNetWorthRequest implements IStatisticsNetWorthRequest {
+
+    constructor(data?: IStatisticsNetWorthRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): StatisticsNetWorthRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsNetWorthRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+/** The request to fetch total net worth as it stands today: the balance-sheet identity Assets − Liabilities, summed across every Cash, Asset and Receivable account (assets) net of every Liability account (payables). Unlike the liquid headline this includes illiquid assets such as the house, so it surfaces real equity rather than just cash. */
+export interface IStatisticsNetWorthRequest {
 }
 
 /** A single month of income vs expense. */

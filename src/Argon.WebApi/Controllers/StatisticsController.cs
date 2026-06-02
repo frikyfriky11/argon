@@ -1,5 +1,6 @@
 using Argon.Application.Statistics.Cashflow;
 using Argon.Application.Statistics.Liquidity;
+using Argon.Application.Statistics.NetWorth;
 using Argon.Application.Statistics.TopCategories;
 using Argon.Application.Statistics.TopCounterparties;
 
@@ -23,6 +24,17 @@ public class StatisticsController(
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<ActionResult<List<StatisticsLiquidityResponse>>> Liquidity(
     [FromQuery] StatisticsLiquidityRequest request)
+  {
+    return await mediator.Send(request);
+  }
+
+  /// <summary>
+  ///   Gets total net worth as it stands today (Assets − Liabilities across all balance-sheet accounts).
+  /// </summary>
+  [HttpGet("net-worth")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  public async Task<ActionResult<StatisticsNetWorthResponse>> NetWorth(
+    [FromQuery] StatisticsNetWorthRequest request)
   {
     return await mediator.Send(request);
   }
