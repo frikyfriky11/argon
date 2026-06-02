@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 import React from "react";
 
@@ -16,6 +17,7 @@ export default function CashflowChart({
   locale,
   height = 300,
 }: CashflowChartProps) {
+  const theme = useTheme();
   const valueFormatter = (value: number | null) =>
     value == null ? "" : formatCurrency(value, locale);
 
@@ -25,11 +27,13 @@ export default function CashflowChart({
       height={height}
       series={[
         {
+          color: theme.palette.secondary.main,
           data: points.map((point) => point.income),
           label: "Entrate",
           valueFormatter,
         },
         {
+          color: theme.palette.error.main,
           data: points.map((point) => point.expense),
           label: "Uscite",
           valueFormatter,

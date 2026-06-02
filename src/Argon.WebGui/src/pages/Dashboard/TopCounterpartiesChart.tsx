@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 import React from "react";
 
@@ -15,6 +16,7 @@ export default function TopCounterpartiesChart({
   locale,
   height = 320,
 }: TopCounterpartiesChartProps) {
+  const theme = useTheme();
   // Largest first in the data; reverse so the biggest bar sits at the top.
   const ordered = [...counterparties].reverse();
 
@@ -26,7 +28,7 @@ export default function TopCounterpartiesChart({
       margin={{ left: 160 }}
       series={[
         {
-          color: "#9c27b0",
+          color: theme.palette.primary.main,
           data: ordered.map((counterparty) => counterparty.total),
           label: "Spesa",
           valueFormatter: (value) =>

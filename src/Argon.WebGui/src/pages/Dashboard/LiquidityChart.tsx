@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
 import React from "react";
 
@@ -16,6 +17,8 @@ export default function LiquidityChart({
   locale,
   height = 300,
 }: LiquidityChartProps) {
+  const theme = useTheme();
+
   return (
     <LineChart
       grid={{ horizontal: true }}
@@ -23,6 +26,7 @@ export default function LiquidityChart({
       series={[
         {
           area: true,
+          color: theme.palette.primary.main,
           data: points.map((point) => point.balance),
           label: "Saldo",
           showMark: false,

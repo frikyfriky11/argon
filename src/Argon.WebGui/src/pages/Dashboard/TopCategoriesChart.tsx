@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 import React from "react";
 
@@ -15,6 +16,7 @@ export default function TopCategoriesChart({
   locale,
   height = 320,
 }: TopCategoriesChartProps) {
+  const theme = useTheme();
   // Largest first in the data; reverse so the biggest bar sits at the top of the
   // horizontal axis (which renders bottom-to-top).
   const ordered = [...categories].reverse();
@@ -27,6 +29,7 @@ export default function TopCategoriesChart({
       margin={{ left: 160 }}
       series={[
         {
+          color: theme.palette.primary.main,
           data: ordered.map((category) => category.total),
           label: "Spesa",
           valueFormatter: (value) =>
