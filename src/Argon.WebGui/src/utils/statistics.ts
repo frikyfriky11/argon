@@ -48,9 +48,7 @@ export function monthLabel(
 }
 
 /** The most recent balance in a liquidity series, or null when empty. */
-export function latestBalance(
-  points: { balance: number }[],
-): number | null {
+export function latestBalance(points: { balance: number }[]): number | null {
   return points.length === 0 ? null : points[points.length - 1].balance;
 }
 
