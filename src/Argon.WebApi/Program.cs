@@ -38,18 +38,19 @@ public static class Program
           .Enrich.FromLogContext();
 
         // Ship logs to the OTLP collector when configured. The sink attaches the active
-        // TraceId/SpanId, giving log↔trace correlation. No-op when the endpoint is unset.
-        string? otlpEndpoint = context.Configuration["OpenTelemetry:OtlpEndpoint"];
-        if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+        // TraceId/SpanId, giving log↔trace correlation. Endpoint/name/protocol are resolved with
+        // the standard OTEL_* env vars taking precedence; no-op when no endpoint is resolved.
+        string? otlpEndpoint = OpenTelemetryDefaults.ResolveOtlpEndpoint(context.Configuration);
+        if (otlpEndpoint is not null)
         {
           configuration.WriteTo.OpenTelemetry(options =>
           {
             options.Endpoint = otlpEndpoint;
-            options.Protocol = OtlpProtocol.Grpc;
+            options.Protocol = OpenTelemetryDefaults.ResolveOtlpProtocol(context.Configuration);
             options.ResourceAttributes = new Dictionary<string, object>
             {
-              ["service.name"] = "argon-webapi",
-              ["service.version"] = typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.7.0",
+              ["service.name"] = OpenTelemetryDefaults.ResolveServiceName(context.Configuration),
+              ["service.version"] = OpenTelemetryDefaults.ServiceVersion,
             };
           });
         }
