@@ -56,3 +56,32 @@ docker exec argon-db-1 psql -U postgres -d ArgonDb -c 'SELECT t."LastModified" F
 ```
 
 To wipe and start over: `docker compose -p argon -f compose/docker-compose.dev.yml down -v && … up -d`.
+
+## PostgreSQL major-version upgrades
+
+The compose files run **PostgreSQL 18** (`postgres:18.4-alpine`). Crossing a major version (the original 15 → 18, or any future bump) is **not** a plain image-tag swap: the on-disk data format changes and the stock `postgres:18` image refuses to boot on an older data dir. Two things make the crossing a single `docker compose up`:
+
+1. **`PGDATA` is pinned to `/var/lib/postgresql/data`** on the `db` service in every compose file. PostgreSQL 18's image moved the default `PGDATA` to `/var/lib/postgresql/18/docker`; **without the pin the image ignores the existing volume and initialises a fresh, empty cluster.** Keep the pin.
+2. **A one-time transition through [`pgautoupgrade`](https://github.com/pgautoupgrade/docker-pgautoupgrade)** runs `pg_upgrade` in place on first boot.
+
+### Performing the upgrade (15 → 18, and the pattern for future majors)
+
+1. **Back up first** — `pg_upgrade` runs in link mode and is one-way:
+   ```bash
+   docker exec argon-db-1 pg_dumpall -U postgres > argon_pre18_$(date +%Y%m%d).sql
+   ```
+2. **Transition deploy** — temporarily point the `db` image at the auto-upgrade variant (same `PGDATA` pin, same volume):
+   ```yaml
+   image: "pgautoupgrade/pgautoupgrade:18.4-alpine"
+   ```
+   `docker compose … up -d --pull always` then detects the old data dir and upgrades it in place to 18.4 before serving. The prod/test healthcheck `start_period: 60s` keeps `webapi` (`depends_on: service_healthy`) waiting while the upgrade runs.
+3. **Refresh planner statistics** — `pg_upgrade` does not carry them over:
+   ```bash
+   docker exec <db-container> vacuumdb -U postgres --all --analyze-in-stages
+   ```
+4. **Steady-state deploy** — flip the `db` image back to the lean stock image and redeploy:
+   ```yaml
+   image: "postgres:18.4-alpine"
+   ```
+
+The committed compose files are already at step 4 (stock `postgres:18.4-alpine`); the `pgautoupgrade` image is only needed for the single transition deploy. The dev path is identical — the dev container's data carries across `up` as long as you don't `down -v`. Rehearse against a clone of the volume before touching prod.

@@ -1,12 +1,12 @@
 ﻿services:
   db:
-    image: "pgautoupgrade/pgautoupgrade:18.4-alpine"
+    image: "postgres:18.4-alpine"
     environment:
       POSTGRES_PASSWORD: "Passw0rd!"
       POSTGRES_DB: "ArgonDb"
       # PostgreSQL 18's image moved the default PGDATA to /var/lib/postgresql/18/docker.
-      # Pin it back to the legacy path so the existing 15.x data dir is found and
-      # auto-upgraded in place by pgautoupgrade, rather than a fresh empty cluster.
+      # Pin it back to the legacy path so the server keeps using the existing data dir
+      # (initialised under 15, upgraded in place to 18) instead of a fresh empty cluster.
       PGDATA: "/var/lib/postgresql/data"
     restart: unless-stopped
     volumes:
