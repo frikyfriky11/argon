@@ -30,10 +30,30 @@ public static class Program
   private static IHostBuilder CreateHostBuilder(string[] args)
   {
     return Host.CreateDefaultBuilder(args)
-      .UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext())
+      .UseSerilog((context, services, configuration) =>
+      {
+        configuration
+          .ReadFrom.Configuration(context.Configuration)
+          .ReadFrom.Services(services)
+          .Enrich.FromLogContext();
+
+        // Ship logs to the OTLP collector when configured. The sink attaches the active
+        // TraceId/SpanId, giving log↔trace correlation. No-op when the endpoint is unset.
+        string? otlpEndpoint = context.Configuration["OpenTelemetry:OtlpEndpoint"];
+        if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+        {
+          configuration.WriteTo.OpenTelemetry(options =>
+          {
+            options.Endpoint = otlpEndpoint;
+            options.Protocol = OtlpProtocol.Grpc;
+            options.ResourceAttributes = new Dictionary<string, object>
+            {
+              ["service.name"] = "argon-webapi",
+              ["service.version"] = typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.7.0",
+            };
+          });
+        }
+      })
       .ConfigureWebHostDefaults(builder => builder.UseStartup<Startup>());
   }
 }
