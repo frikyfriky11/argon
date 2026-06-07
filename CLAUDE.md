@@ -41,9 +41,9 @@ pnpm format         # Prettier with import sorting
 
 ```bash
 docker-compose -f compose/docker-compose.dev.yml up    # Dev (PostgreSQL only)
-docker-compose -f compose/docker-compose.prod.yml up   # Production
-docker-compose -f compose/docker-compose.test.yml up   # Test environment
 ```
+
+Prod and test run on the homelab via **Portainer GitOps** (the `homelab-gitops` repo, `apps/argon` and `apps/argon-test`) — that is the source of truth for those stacks. This repo only builds and pushes the images (GitHub Actions → GHCR); there are no prod/test compose files here.
 
 ## Architecture
 
