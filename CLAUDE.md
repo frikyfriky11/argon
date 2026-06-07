@@ -8,7 +8,7 @@ Argon is a personal finance management application (v1.7.0). It handles bank acc
 
 ## Commands
 
-### Backend (.NET 8)
+### Backend (.NET 10)
 
 ```bash
 # Build all projects
@@ -55,7 +55,7 @@ The backend is split into four projects:
 
 **Argon.Application** — Business logic organized into feature folders (Accounts, Transactions, BankStatements, Counterparties, BudgetItems). Each feature contains CQRS handlers using **MediatR** with Request/Handler/Response types. FluentValidation validators run via `ValidationBehaviour`. Performance and logging pipeline behaviours are also wired here.
 
-**Argon.Infrastructure** — EF Core 8 with PostgreSQL (Npgsql). `ApplicationDbContext` is the main DbContext. Entity configurations use fluent API. `AuditableEntitySaveChangesInterceptor` sets Created/LastModified on save.
+**Argon.Infrastructure** — EF Core 10 with PostgreSQL (Npgsql). `ApplicationDbContext` is the main DbContext. Entity configurations use fluent API. `AuditableEntitySaveChangesInterceptor` sets Created/LastModified on save.
 
 **Argon.WebApi** — ASP.NET Core controllers (one per feature). NSwag generates the OpenAPI spec, which in turn generates the TypeScript client for the frontend. JWT Bearer authentication with CORS. Health endpoint at `/healthz`.
 
@@ -123,7 +123,7 @@ Entry point: `src/main.tsx` — mounts nested providers: AuthProvider (OIDC) →
 
 ## Database
 
-PostgreSQL 15+. EF Core migrations live in `src/Argon.Infrastructure/Persistence/Migrations/`. `ApplicationDbContextInitializer` (called from Startup) applies pending migrations and seeds initial data on startup.
+PostgreSQL 18 (the compose stack runs 18.4-alpine; the Npgsql provider supports 15+). EF Core migrations live in `src/Argon.Infrastructure/Persistence/Migrations/`. `ApplicationDbContextInitializer` (called from Startup) applies pending migrations and seeds initial data on startup.
 
 ## Code Generation
 
@@ -141,7 +141,7 @@ Authentication is handled by **Authentik** (self-hosted IdP). The frontend uses 
 
 ## CLI
 
-`src/Argon.Cli/` is a .NET 8 command-line client (`argon`) that wraps the WebApi. It is a pure REST consumer with its own NSwag-generated client (`src/Argon.Cli/Generated/BackendClient.cs`, regenerated on every WebApi Debug build via the same `nswag.json`) and signs users in via the OAuth 2.0 device-code flow against Authentik. v1 surface covers Accounts, Counterparties, CounterpartyIdentifiers, and Transactions. See `src/Argon.Cli/README.md` for the local-dev workflow (`dotnet run --project src/Argon.Cli -- ...`) and configuration details.
+`src/Argon.Cli/` is a .NET 10 command-line client (`argon`) that wraps the WebApi. It is a pure REST consumer with its own NSwag-generated client (`src/Argon.Cli/Generated/BackendClient.cs`, regenerated on every WebApi Debug build via the same `nswag.json`) and signs users in via the OAuth 2.0 device-code flow against Authentik. v1 surface covers Accounts, Counterparties, CounterpartyIdentifiers, and Transactions. See `src/Argon.Cli/README.md` for the local-dev workflow (`dotnet run --project src/Argon.Cli -- ...`) and configuration details.
 
 ## Tests
 
