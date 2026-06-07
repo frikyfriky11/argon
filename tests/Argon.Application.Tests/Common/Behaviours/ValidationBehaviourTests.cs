@@ -12,7 +12,7 @@ public class ValidationBehaviourTests
     // arrange
     ValidationBehaviour<TestRequest, string> behaviour = new(Array.Empty<IValidator<TestRequest>>());
     bool nextCalled = false;
-    RequestHandlerDelegate<string> next = () =>
+    RequestHandlerDelegate<string> next = _ =>
     {
       nextCalled = true;
       return Task.FromResult("handled");
@@ -32,7 +32,7 @@ public class ValidationBehaviourTests
     // arrange
     ValidationBehaviour<TestRequest, string> behaviour = new(new IValidator<TestRequest>[] { new TestRequestValidator() });
     bool nextCalled = false;
-    RequestHandlerDelegate<string> next = () =>
+    RequestHandlerDelegate<string> next = _ =>
     {
       nextCalled = true;
       return Task.FromResult("handled");
@@ -52,7 +52,7 @@ public class ValidationBehaviourTests
     // arrange
     ValidationBehaviour<TestRequest, string> behaviour = new(new IValidator<TestRequest>[] { new TestRequestValidator() });
     bool nextCalled = false;
-    RequestHandlerDelegate<string> next = () =>
+    RequestHandlerDelegate<string> next = _ =>
     {
       nextCalled = true;
       return Task.FromResult("handled");
