@@ -38,12 +38,14 @@ public class CounterpartiesGetHandlerTests
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {
     // arrange
-    CounterpartiesGetRequest request = new(Guid.NewGuid());
+    Guid id = Guid.NewGuid();
+    CounterpartiesGetRequest request = new(id);
 
     // act
     Func<Task<CounterpartiesGetResponse>> act = async () => await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    await act.Should().ThrowAsync<NotFoundException>();
+    await act.Should().ThrowAsync<NotFoundException>()
+      .WithMessage($"*Counterparty*{id}*");
   }
 }

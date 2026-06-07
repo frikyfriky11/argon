@@ -172,6 +172,9 @@ namespace Argon.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("AccountingDate")
+                        .HasColumnType("date");
+
                     b.Property<Guid?>("BankStatementId")
                         .HasColumnType("uuid");
 

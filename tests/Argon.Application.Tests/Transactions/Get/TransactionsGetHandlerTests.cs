@@ -62,10 +62,13 @@ public class TransactionsGetHandlerTests
     result.Id.Should().Be(transaction.Id);
     result.Date.Should().Be(transaction.Date);
     result.CounterpartyId.Should().Be(transaction.CounterpartyId);
-    
+    result.CounterpartyName.Should().Be("Market");
+
     result.TransactionRows[0].Id.Should().Be(row1.Id);
     result.TransactionRows[0].RowCounter.Should().Be(row1.RowCounter);
     result.TransactionRows[0].AccountId.Should().Be(row1.AccountId);
+    result.TransactionRows[0].AccountName.Should().Be("Groceries");
+    result.TransactionRows[0].AccountType.Should().Be(accountGroceries.Entity.Type);
     result.TransactionRows[0].Debit.Should().Be(row1.Debit);
     result.TransactionRows[0].Credit.Should().Be(row1.Credit);
     result.TransactionRows[0].Description.Should().Be(row1.Description);
@@ -76,18 +79,52 @@ public class TransactionsGetHandlerTests
     result.TransactionRows[1].Debit.Should().Be(row2.Debit);
     result.TransactionRows[1].Credit.Should().Be(row2.Credit);
     result.TransactionRows[1].Description.Should().Be(row2.Description);
+
+    result.Status.Should().Be(TransactionStatus.Confirmed);
+    result.RawImportData.Should().BeNull();
+    result.PotentialDuplicateOfTransactionId.Should().BeNull();
+  }
+
+  [Test]
+  public async Task Handle_ShouldExposeRawImportDataStatusAndDuplicateId_WhenSetOnTheTransaction()
+  {
+    // arrange
+    Transaction original = new() { Date = new DateOnly(2023, 04, 01) };
+    await _dbContext.Transactions.AddAsync(original);
+
+    Transaction transaction = new()
+    {
+      Date = new DateOnly(2023, 04, 05),
+      Status = TransactionStatus.PotentialDuplicate,
+      RawImportData = "{\"Amount\":12.34}",
+      PotentialDuplicateOfTransactionId = original.Id,
+    };
+    await _dbContext.Transactions.AddAsync(transaction);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetRequest request = new(transaction.Id);
+
+    // act
+    TransactionsGetResponse result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Status.Should().Be(TransactionStatus.PotentialDuplicate);
+    result.RawImportData.Should().Be("{\"Amount\":12.34}");
+    result.PotentialDuplicateOfTransactionId.Should().Be(original.Id);
   }
 
   [Test]
   public async Task Handle_ShouldThrowNotFoundException_WithNonExistingId()
   {
     // arrange
-    TransactionsGetRequest request = new(Guid.NewGuid());
+    Guid id = Guid.NewGuid();
+    TransactionsGetRequest request = new(id);
 
     // act
     Func<Task<TransactionsGetResponse>> act = async () => await _sut.Handle(request, CancellationToken.None);
 
     // assert
-    await act.Should().ThrowAsync<NotFoundException>();
+    await act.Should().ThrowAsync<NotFoundException>()
+      .WithMessage($"*Transaction*{id}*");
   }
 }

@@ -75,6 +75,7 @@ public class SparkasseV1Parser(ILogger<SparkasseV1Parser> logger) : IParser
 
         resultItem.Amount = item.Amount;
         resultItem.Date = item.CurrencyDate;
+        resultItem.AccountingDate = item.AccountingDate;
         resultItem.CounterpartyName = item.CounterpartyName;
         resultItem.SpecificParsedItem = item;
       }

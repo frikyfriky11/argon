@@ -49,4 +49,31 @@ public class AccountsUpdateValidatorTests
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Type));
   }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenNameAlreadyBelongsToAnotherAccount()
+  {
+    // arrange
+    EntityEntry<Account> other = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries", Type = AccountType.Expense });
+    EntityEntry<Account> edited = await _dbContext.Accounts.AddAsync(new Account { Name = "Restaurants", Type = AccountType.Expense });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    AccountsUpdateRequest request = new("groceries", AccountType.Expense) { Id = edited.Entity.Id };
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.Name));
+  }
+
+  [Test]
+  public async Task Validator_ShouldNotReturnError_WhenAccountKeepsItsOwnName()
+  {
+    // arrange
+    EntityEntry<Account> edited = await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries", Type = AccountType.Expense });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    AccountsUpdateRequest request = new("Groceries", AccountType.Expense) { Id = edited.Entity.Id };
+
+    // act + assert
+    await _sut.ShouldNotFailOnProperty(request, nameof(request.Name));
+  }
 }

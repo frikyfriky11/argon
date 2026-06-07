@@ -29,9 +29,10 @@ const tabs = [
   { text: "Liquidità", value: AccountType.Cash },
   { text: "Spesa", value: AccountType.Expense },
   { text: "Ricavo", value: AccountType.Revenue },
-  { text: "Debito", value: AccountType.Debit },
-  { text: "Credito", value: AccountType.Credit },
-  { text: "Iniziale", value: AccountType.Setup },
+  { text: "Debito", value: AccountType.Liability },
+  { text: "Credito", value: AccountType.Receivable },
+  { text: "Patrimoniale", value: AccountType.Asset },
+  { text: "Iniziale", value: AccountType.Equity },
 ];
 
 export type ResultsProps = {

@@ -61,4 +61,17 @@ public class AccountsCreateValidatorTests
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Type));
   }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenNameAlreadyExistsCaseInsensitively()
+  {
+    // arrange
+    await _dbContext.Accounts.AddAsync(new Account { Name = "Groceries", Type = AccountType.Expense });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    AccountsCreateRequest request = new("groceries", AccountType.Expense);
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.Name));
+  }
 }

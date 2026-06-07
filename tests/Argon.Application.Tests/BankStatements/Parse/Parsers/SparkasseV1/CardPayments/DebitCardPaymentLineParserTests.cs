@@ -24,6 +24,7 @@ public class DebitCardPaymentLineParserTests
 
   [TestCase("PAGAMENTO DEBITO VISA/MASTERCARD")]
   [TestCase("PAGAM. POS MAESTRO CARTA")]
+  [TestCase("ACCREDITO VISA")]
   public void CanParse_ShouldReturnTrue_GivenValidInput(string rawDescription)
   {
     bool result = _sut.CanParse(rawDescription);
@@ -116,5 +117,33 @@ public class DebitCardPaymentLineParserTests
       "Paypal *Zalandose",
       "416363******3171"
     );
+
+    yield return CreateTestCase(
+      new DateOnly(2025, 5, 7),
+      new DateOnly(2025, 5, 3),
+      """
+      ACCREDITO VISA
+      del 03/05/25 all'estero a 800-279-6620 valuta eur paese lussemburgo c/o amzn mktp it carta n. 416363******3171
+      """,
+      10.01m,
+      "Visa/Mastercard",
+      new DateOnly(2025, 5, 3),
+      true,
+      "800-279-6620",
+      "EUR",
+      "Lussemburgo",
+      "Amzn Mktp It",
+      "416363******3171"
+    );
+  }
+
+  [TestCase("MOVIMENTO NON RICONOSCIUTO 123")]
+  public void CanParse_ShouldReturnFalse_GivenUnrelatedInput(string rawDescription)
+  {
+    // Act
+    bool result = _sut.CanParse(rawDescription);
+
+    // Assert
+    result.Should().BeFalse();
   }
 }

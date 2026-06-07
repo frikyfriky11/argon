@@ -48,4 +48,17 @@ public class CounterpartiesCreateValidatorTests
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenNameAlreadyExistsCaseInsensitively()
+  {
+    // arrange
+    await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Amazon" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartiesCreateRequest request = new("amazon");
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.Name));
+  }
 }

@@ -42,4 +42,31 @@ public class CounterpartiesUpdateValidatorTests
 
     await _sut.ShouldFailOnProperty(request, nameof(request.Name));
   }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenNameAlreadyBelongsToAnotherCounterparty()
+  {
+    // arrange
+    await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Amazon" });
+    EntityEntry<Counterparty> edited = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Eurospar" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartiesUpdateRequest request = new("amazon") { Id = edited.Entity.Id };
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.Name));
+  }
+
+  [Test]
+  public async Task Validator_ShouldNotReturnError_WhenCounterpartyKeepsItsOwnName()
+  {
+    // arrange
+    EntityEntry<Counterparty> edited = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Amazon" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartiesUpdateRequest request = new("Amazon") { Id = edited.Entity.Id };
+
+    // act + assert
+    await _sut.ShouldNotFailOnProperty(request, nameof(request.Name));
+  }
 }

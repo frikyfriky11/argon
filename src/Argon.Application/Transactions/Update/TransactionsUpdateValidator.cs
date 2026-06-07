@@ -6,7 +6,7 @@ public class TransactionsUpdateValidator : AbstractValidator<TransactionsUpdateR
   public TransactionsUpdateValidator(IApplicationDbContext dbContext)
   {
     RuleFor(request => request.CounterpartyId)
-      .MustAsync(async (id, cancellationToken) => await dbContext.Counterparties.AnyAsync(counterparty => counterparty.Id == id,  cancellationToken))
+      .MustAsync(async (id, cancellationToken) => id == null || await dbContext.Counterparties.AnyAsync(counterparty => counterparty.Id == id.Value,  cancellationToken))
       .WithMessage("The counterparty id {PropertyValue} does not exist");
 
     RuleFor(request => request.TransactionRows)

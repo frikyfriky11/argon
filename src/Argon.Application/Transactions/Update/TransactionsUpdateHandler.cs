@@ -23,7 +23,7 @@ public class TransactionsUpdateHandler(
 
     List<TransactionRowsUpdateRequest> tempRequestRows = request.TransactionRows;
 
-    foreach (TransactionRow entityRow in entity.TransactionRows)
+    foreach (TransactionRow entityRow in entity.TransactionRows.ToList())
     {
       TransactionRowsUpdateRequest? requestRow = tempRequestRows.FirstOrDefault(r => r.Id == entityRow.Id);
 

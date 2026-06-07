@@ -1,5 +1,7 @@
 using Argon.Application.BankStatements.Parse;
 using Argon.Application.BankStatements.Parse.Parsers;
+using Argon.Application.BankStatements.Parse.Parsers.SparkasseV1.Cash;
+using Argon.Application.Counterparties.Common;
 using Moq;
 
 namespace Argon.Application.Tests.BankStatements.Parse;
@@ -18,7 +20,34 @@ public class BankStatementsParseHandlerTests
     _mockParsersFactory = new Mock<IParsersFactory>();
     _mockParser = new Mock<IParser>();
 
-    _sut = new BankStatementsParseHandler(_mockParsersFactory.Object, _dbContext);
+    _sut = new BankStatementsParseHandler(
+      _mockParsersFactory.Object,
+      _dbContext,
+      new CounterpartyResolver(_dbContext));
+  }
+
+  private Guid SetupParser(params BankStatementItem[] items)
+  {
+    Guid parserId = Guid.NewGuid();
+    _mockParser.Setup(p => p.ParserId).Returns(parserId);
+    _mockParser.Setup(p => p.ParserDisplayName).Returns("Test Parser");
+    _mockParser.Setup(p => p.ParseAsync(It.IsAny<Stream>())).ReturnsAsync(items.ToList());
+    _mockParsersFactory.Setup(f => f.CreateParserAsync(parserId)).ReturnsAsync(_mockParser.Object);
+    return parserId;
+  }
+
+  private static BankStatementsParseRequest RequestFor(Guid parserId, Guid accountId) =>
+    new(new byte[] { 0x01, 0x02 }, "test.xlsx", parserId, accountId);
+
+  private async Task<Account> SeedAccountAsync()
+  {
+    EntityEntry<Account> account = await _dbContext.Accounts.AddAsync(new Account
+    {
+      Name = "Test Account",
+      Type = AccountType.Cash,
+    });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+    return account.Entity;
   }
 
   [Test]
@@ -85,17 +114,36 @@ public class BankStatementsParseHandlerTests
     bankStatement.FileContent.Should().NotBeEmpty();
     bankStatement.Transactions.Should().HaveCount(2);
 
-    Transaction transaction1 = bankStatement.Transactions.First();
-    transaction1.Date.Should().Be(DateOnly.FromDateTime(DateTime.Now));
-    transaction1.Status.Should().Be(TransactionStatus.PendingImportReview);
-    transaction1.TransactionRows.Should().HaveCount(2);
-    transaction1.TransactionRows.First().AccountId.Should().Be(account.Entity.Id);
+    // positive amount (incoming 100): the bank-side row is debited, the offsetting row credited
+    Transaction positiveTransaction = bankStatement.Transactions.Single(t => t.TransactionRows.Any(r => r.Debit == 100));
+    positiveTransaction.Date.Should().Be(DateOnly.FromDateTime(DateTime.Now));
+    positiveTransaction.Status.Should().Be(TransactionStatus.PendingImportReview);
+    positiveTransaction.TransactionRows.Should().HaveCount(2);
 
-    Transaction transaction2 = bankStatement.Transactions.Last();
-    transaction2.Date.Should().Be(DateOnly.FromDateTime(DateTime.Now));
-    transaction2.Status.Should().Be(TransactionStatus.PendingImportReview);
-    transaction2.TransactionRows.Should().HaveCount(2);
-    transaction2.TransactionRows.First().AccountId.Should().Be(account.Entity.Id);
+    TransactionRow positiveBankRow = positiveTransaction.TransactionRows.Single(r => r.AccountId == account.Entity.Id);
+    positiveBankRow.RowCounter.Should().Be(1);
+    positiveBankRow.Debit.Should().Be(100);
+    positiveBankRow.Credit.Should().BeNull();
+
+    TransactionRow positiveOffsetRow = positiveTransaction.TransactionRows.Single(r => r.AccountId == null);
+    positiveOffsetRow.RowCounter.Should().Be(2);
+    positiveOffsetRow.Debit.Should().BeNull();
+    positiveOffsetRow.Credit.Should().Be(100);
+
+    // negative amount (outgoing 50): the bank-side row is credited with the absolute amount
+    Transaction negativeTransaction = bankStatement.Transactions.Single(t => t.TransactionRows.Any(r => r.Credit == 50));
+    negativeTransaction.Status.Should().Be(TransactionStatus.PendingImportReview);
+    negativeTransaction.TransactionRows.Should().HaveCount(2);
+
+    TransactionRow negativeBankRow = negativeTransaction.TransactionRows.Single(r => r.AccountId == account.Entity.Id);
+    negativeBankRow.RowCounter.Should().Be(2);
+    negativeBankRow.Credit.Should().Be(50);
+    negativeBankRow.Debit.Should().BeNull();
+
+    TransactionRow negativeOffsetRow = negativeTransaction.TransactionRows.Single(r => r.AccountId == null);
+    negativeOffsetRow.RowCounter.Should().Be(1);
+    negativeOffsetRow.Debit.Should().Be(50);
+    negativeOffsetRow.Credit.Should().BeNull();
   }
 
   [Test]
@@ -439,5 +487,141 @@ public class BankStatementsParseHandlerTests
     Transaction importedTransaction = bankStatement.Transactions.First();
     importedTransaction.Status.Should().Be(TransactionStatus.PotentialDuplicate);
     importedTransaction.PotentialDuplicateOfTransactionId.Should().Be(existingTransaction.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldFlagDuplicate_WhenAnAmountMatchFallsWithinTheDateWindow()
+  {
+    // arrange: an existing transaction two days before the parsed item, same amount
+    Account account = await SeedAccountAsync();
+    DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
+    Transaction existing = new()
+    {
+      Date = today.AddDays(-2),
+      Status = TransactionStatus.Confirmed,
+      TransactionRows = new List<TransactionRow> { new() { AccountId = account.Id, Debit = 100, RowCounter = 1 } },
+    };
+    await _dbContext.Transactions.AddAsync(existing);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    Guid parserId = SetupParser(new BankStatementItem
+    {
+      Date = today, Amount = 100, RawInput = "Within window", CounterpartyName = "Nobody",
+    });
+
+    // act
+    BankStatementsParseResponse response = await _sut.Handle(RequestFor(parserId, account.Id), CancellationToken.None);
+
+    // assert
+    Transaction imported = await _dbContext.Transactions.FirstAsync(t => t.BankStatementId == response.BankStatementId);
+    imported.Status.Should().Be(TransactionStatus.PotentialDuplicate);
+    imported.PotentialDuplicateOfTransactionId.Should().Be(existing.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldNotFlagDuplicate_WhenTheOnlyAmountMatchIsOutsideTheDateWindow()
+  {
+    // arrange: an existing transaction four days before the parsed item (outside the +/-3 day window)
+    Account account = await SeedAccountAsync();
+    DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
+    Transaction existing = new()
+    {
+      Date = today.AddDays(-4),
+      Status = TransactionStatus.Confirmed,
+      TransactionRows = new List<TransactionRow> { new() { AccountId = account.Id, Debit = 100, RowCounter = 1 } },
+    };
+    await _dbContext.Transactions.AddAsync(existing);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    Guid parserId = SetupParser(new BankStatementItem
+    {
+      Date = today, Amount = 100, RawInput = "Outside window", CounterpartyName = "Nobody",
+    });
+
+    // act
+    BankStatementsParseResponse response = await _sut.Handle(RequestFor(parserId, account.Id), CancellationToken.None);
+
+    // assert
+    Transaction imported = await _dbContext.Transactions.FirstAsync(t => t.BankStatementId == response.BankStatementId);
+    imported.Status.Should().Be(TransactionStatus.PendingImportReview);
+    imported.PotentialDuplicateOfTransactionId.Should().BeNull();
+  }
+
+  [Test]
+  public async Task Handle_ShouldFlagDuplicate_WhenOnlyTheCounterpartyMatches_WithinTheDateWindow()
+  {
+    // arrange: existing transaction with a different amount but the same counterparty, same date
+    Account account = await SeedAccountAsync();
+    DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "Acme" });
+    Transaction existing = new()
+    {
+      Date = today,
+      CounterpartyId = counterparty.Entity.Id,
+      Status = TransactionStatus.Confirmed,
+      TransactionRows = new List<TransactionRow> { new() { AccountId = account.Id, Debit = 999, RowCounter = 1 } },
+    };
+    await _dbContext.Transactions.AddAsync(existing);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    Guid parserId = SetupParser(new BankStatementItem
+    {
+      Date = today, Amount = 100, RawInput = "Counterparty match", CounterpartyName = "Acme",
+    });
+
+    // act
+    BankStatementsParseResponse response = await _sut.Handle(RequestFor(parserId, account.Id), CancellationToken.None);
+
+    // assert
+    Transaction imported = await _dbContext.Transactions.FirstAsync(t => t.BankStatementId == response.BankStatementId && t.Status == TransactionStatus.PotentialDuplicate);
+    imported.PotentialDuplicateOfTransactionId.Should().Be(existing.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldPersistAccountingDate_SeparateFromTheCurrencyDate()
+  {
+    // arrange
+    Account account = await SeedAccountAsync();
+    Guid parserId = SetupParser(new BankStatementItem
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      Amount = 100,
+      RawInput = "Raw line",
+      CounterpartyName = "Nobody",
+    });
+
+    // act
+    BankStatementsParseResponse response = await _sut.Handle(RequestFor(parserId, account.Id), CancellationToken.None);
+
+    // assert
+    Transaction imported = await _dbContext.Transactions.FirstAsync(t => t.BankStatementId == response.BankStatementId);
+    imported.Date.Should().Be(new DateOnly(2025, 10, 30));
+    imported.AccountingDate.Should().Be(new DateOnly(2025, 11, 1));
+  }
+
+  [Test]
+  public async Task Handle_ShouldPersistRawImportData_FromTheSpecificParsedItem()
+  {
+    // arrange
+    Account account = await SeedAccountAsync();
+    DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+    WithdrawalItem specificItem = new(today, today, "Bancomat withdrawal", -100);
+
+    Guid parserId = SetupParser(new BankStatementItem
+    {
+      Date = today, Amount = -100, RawInput = "Raw line", CounterpartyName = "Nobody", SpecificParsedItem = specificItem,
+    });
+
+    // act
+    BankStatementsParseResponse response = await _sut.Handle(RequestFor(parserId, account.Id), CancellationToken.None);
+
+    // assert
+    Transaction imported = await _dbContext.Transactions.FirstAsync(t => t.BankStatementId == response.BankStatementId);
+    imported.RawImportData.Should().NotBeNullOrEmpty();
+    imported.RawImportData.Should().Contain("Bancomat withdrawal");
   }
 }

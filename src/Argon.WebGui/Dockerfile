@@ -1,4 +1,4 @@
-FROM node:20.3 AS build-env
+FROM node:24 AS build-env
 
 # this project uses pnpm as a package manager, so let's install it
 RUN npm i -g pnpm@9.6.0

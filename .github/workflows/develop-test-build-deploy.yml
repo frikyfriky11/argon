@@ -10,7 +10,7 @@ env:
 jobs:
   tests:
     name: Run .NET backend tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     
     env:
       DOTNET_INSTALL_DIR: "./.dotnet"
@@ -22,16 +22,46 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
           
       - name: Run tests
         run: dotnet test
         
+  tests-frontend:
+    name: Run frontend tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src/Argon.WebGui
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/Argon.WebGui/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
   build-push-webapi:
     name: Build WebApi image and push to Docker registry
-    runs-on: self-hosted
-    needs: tests
-    
+    runs-on: ubuntu-latest
+    needs: [ tests, tests-frontend ]
+
     permissions:
       contents: read
       packages: write
@@ -69,9 +99,9 @@ jobs:
 
   build-push-webgui:
     name: Build WebGui image and push to Docker registry
-    runs-on: self-hosted
-    needs: tests
-    
+    runs-on: ubuntu-latest
+    needs: [ tests, tests-frontend ]
+
     permissions:
       contents: read
       packages: write
@@ -114,39 +144,3 @@ jobs:
             REDIRECT_URI=https://${{ secrets.PUBLIC_HOST_TEST }}/auth/post-sign-in
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-  deploy:
-    name: Deploy the app to the TEST env
-    runs-on: self-hosted
-    needs: [ build-push-webapi, build-push-webgui ]
-    
-    env:
-      PUBLIC_HOST_TEST: ${{ secrets.PUBLIC_HOST_TEST }}
-      AUTH_AUTHORITY_TEST: ${{ secrets.AUTH_AUTHORITY_TEST }}
-      AUTH_CLIENT_ID_TEST: ${{ secrets.AUTH_CLIENT_ID_TEST }}
-      COMPOSE_VOLUMES_TEST: ${{ secrets.COMPOSE_VOLUMES_TEST }}
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-      
-    - name: Substitute environment variables from docker-compose.test.yml and rename it
-      run: envsubst < compose/docker-compose.test.yml > compose/docker-compose.yml
-      
-    - name: Copy docker-compose.yml to remote server via SSH
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.REMOTE_SSH_HOST }}
-        username: ${{ secrets.REMOTE_SSH_USERNAME }}
-        password: ${{ secrets.REMOTE_SSH_PASSWORD }}
-        source: "compose/docker-compose.yml"
-        target: "${{ secrets.REMOTE_SSH_FOLDER_TEST }}"
-        strip_components: 1 # removes the deploy folder when copying over to destination
-
-    - name: Up the Docker compose project on the remote server via SSH
-      uses: appleboy/ssh-action@v1.2.0
-      with:
-        host: ${{ secrets.REMOTE_SSH_HOST }}
-        username: ${{ secrets.REMOTE_SSH_USERNAME }}
-        password: ${{ secrets.REMOTE_SSH_PASSWORD }}
-        script: cd ${{ secrets.REMOTE_SSH_FOLDER_TEST }} && docker compose up -d --pull always

@@ -3,6 +3,7 @@ using Argon.Application.CounterpartyIdentifiers.Create;
 using Argon.Application.CounterpartyIdentifiers.Delete;
 using Argon.Application.CounterpartyIdentifiers.Get;
 using Argon.Application.CounterpartyIdentifiers.GetList;
+using Argon.Application.CounterpartyIdentifiers.Resolve;
 using Argon.Application.CounterpartyIdentifiers.Update;
 
 namespace Argon.WebApi.Controllers;
@@ -82,6 +83,22 @@ public class CounterpartyIdentifiersController(
   }
 
   /// <summary>
+  ///   Matches a free-form raw text against existing counterparties using the same
+  ///   substring rules the bank-statement importer relies on. Useful for previewing
+  ///   what the importer would resolve a raw description to before running it.
+  /// </summary>
+  /// <param name="request">The raw text to resolve</param>
+  /// <returns>A list of matching counterparties with the match source flags</returns>
+  /// <response code="200">The list of matching counterparties (may be empty)</response>
+  [HttpPost("resolve")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  public async Task<ActionResult<List<CounterpartyIdentifiersResolveResponse>>> Resolve(
+    [FromBody] CounterpartyIdentifiersResolveRequest request)
+  {
+    return await mediator.Send(request);
+  }
+
+  /// <summary>
   ///   Deletes an existing CounterpartyIdentifier
   /// </summary>
   /// <param name="id">The id of the CounterpartyIdentifier</param>
@@ -89,6 +106,8 @@ public class CounterpartyIdentifiersController(
   /// <response code="204">The CounterpartyIdentifier was correctly deleted</response>
   /// <response code="404">A CounterpartyIdentifier with the specified id could not be found</response>
   [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   public async Task<ActionResult> Delete([FromRoute] Guid id)
   {
     CounterpartyIdentifiersDeleteRequest request = new(id);

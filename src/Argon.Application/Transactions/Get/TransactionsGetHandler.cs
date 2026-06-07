@@ -14,6 +14,7 @@ public class TransactionsGetHandler(
       .Select(transaction => new TransactionsGetResponse(
         transaction.Id,
         transaction.Date,
+        transaction.AccountingDate,
         transaction.CounterpartyId,
         transaction.Counterparty != null ? transaction.Counterparty.Name : string.Empty,
         transaction.TransactionRows
@@ -29,13 +30,16 @@ public class TransactionsGetHandler(
             row.Credit,
             row.Description
           ))
-          .ToList()
+          .ToList(),
+        transaction.RawImportData,
+        transaction.Status,
+        transaction.PotentialDuplicateOfTransactionId
       ))
       .FirstOrDefaultAsync(cancellationToken);
 
     if (result is null)
     {
-      throw new NotFoundException();
+      throw new NotFoundException(nameof(Transaction), request.Id);
     }
 
     return result;

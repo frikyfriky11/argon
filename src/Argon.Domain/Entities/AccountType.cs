@@ -21,18 +21,26 @@ public enum AccountType
   Revenue,
 
   /// <summary>
-  ///   Setup accounts are used only for setting up the initial transactions that populate the initial situation.
-  ///   There should be only one setup account ever.
+  ///   Equity accounts hold the owner's capital — most notably the opening-balance entry
+  ///   ("Capitale iniziale") that plugs the assets − liabilities residual on the books, and any
+  ///   later capital injections, write-offs or net-worth reconciliation adjustments.
   /// </summary>
-  Setup,
+  Equity,
 
   /// <summary>
-  ///   Debit accounts are used to track money that is owed to others such as loans, unpaid invoices, etc.
+  ///   Liability accounts track payables — money owed to others such as mortgages, loans and unpaid invoices.
   /// </summary>
-  Debit,
+  Liability,
 
   /// <summary>
-  ///   Credit accounts are used to track money that is owed from others such as emitted invoices, etc.
+  ///   Receivable accounts track money owed by others such as emitted invoices and reimbursements due.
   /// </summary>
-  Credit,
+  Receivable,
+
+  /// <summary>
+  ///   Asset accounts hold non-liquid assets carried at cost, such as real estate or equipment.
+  ///   They behave like <see cref="Cash" /> for balance purposes (a debit raises them), but are
+  ///   excluded from the liquid net-worth headline — they count only towards total net worth.
+  /// </summary>
+  Asset,
 }

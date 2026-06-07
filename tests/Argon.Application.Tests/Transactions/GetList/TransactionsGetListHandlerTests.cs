@@ -106,10 +106,16 @@ public class TransactionsGetListHandlerTests
       resultItem.Id.Should().Be(expectedItem.Id);
       resultItem.Date.Should().Be(expectedItem.Date);
       resultItem.CounterpartyId.Should().Be(expectedItem.CounterpartyId);
+      resultItem.CounterpartyName.Should().Be(expectedItem.Counterparty?.Name ?? string.Empty);
+      resultItem.Status.Should().Be(expectedItem.Status);
+      resultItem.RawImportData.Should().Be(expectedItem.RawImportData);
+      resultItem.PotentialDuplicateOfTransactionId.Should().Be(expectedItem.PotentialDuplicateOfTransactionId);
       resultItem.TransactionRows.Should().HaveCount(expectedItem.TransactionRows.Count);
       resultItem.TransactionRows[0].RowCounter.Should().Be(expectedItem.TransactionRows.First().RowCounter);
       resultItem.TransactionRows[0].Description.Should().Be(expectedItem.TransactionRows.First().Description);
       resultItem.TransactionRows[0].AccountId.Should().Be(expectedItem.TransactionRows.First().AccountId);
+      resultItem.TransactionRows[0].AccountName.Should().Be(expectedItem.TransactionRows.First().Account?.Name);
+      resultItem.TransactionRows[0].AccountType.Should().Be(expectedItem.TransactionRows.First().Account?.Type);
       resultItem.TransactionRows[0].Debit.Should().Be(expectedItem.TransactionRows.First().Debit);
       resultItem.TransactionRows[0].Credit.Should().Be(expectedItem.TransactionRows.First().Credit);
       resultItem.TransactionRows[1].RowCounter.Should().Be(expectedItem.TransactionRows.Last().RowCounter);
@@ -135,7 +141,7 @@ public class TransactionsGetListHandlerTests
     await _dbContext.Transactions.AddRangeAsync(transactions);
     await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-    TransactionsGetListRequest request = new(null, null, null, null, 1, 2);
+    TransactionsGetListRequest request = new(null, null, null, null, PageNumber: 1, PageSize: 2);
 
     // act
     PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
@@ -214,5 +220,353 @@ public class TransactionsGetListHandlerTests
 
     // assert
     CheckResults(result, transactions, 2, 1, 2, [2, 1]);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyTransactionsWithRequestedStatus_WithStatusFilter()
+  {
+    // arrange
+    List<Transaction> transactions = CreateTestTransactions();
+    transactions[0].Status = TransactionStatus.PendingImportReview;
+    transactions[1].Status = TransactionStatus.Confirmed;
+    transactions[2].Status = TransactionStatus.PendingImportReview;
+
+    await _dbContext.Transactions.AddRangeAsync(transactions);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, Status: TransactionStatus.PendingImportReview);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    CheckResults(result, transactions, 2, 1, 2, [3, 1]);
+  }
+
+  [Test]
+  public async Task Handle_ShouldReturnSecondPage_WithPreviousPageFlagSet()
+  {
+    // arrange
+    List<Transaction> transactions = CreateTestTransactions();
+
+    await _dbContext.Transactions.AddRangeAsync(transactions);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, PageNumber: 2, PageSize: 2);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(transactions[0].Id); // oldest transaction, last in date-desc order
+    result.PageNumber.Should().Be(2);
+    result.HasPreviousPage.Should().BeTrue();
+    result.HasNextPage.Should().BeFalse();
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyUnlinkedTransactions_WhenLinkedIsFalse()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Counterparty market = new() { Id = _marketCounterpartyId, Name = "Market" };
+
+    Transaction linkedTx = new()
+    {
+      Counterparty = market,
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50 },
+      },
+    };
+    Transaction unlinkedTx = new()
+    {
+      Counterparty = null,
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 20 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 20 },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(linkedTx, unlinkedTx);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, Linked: false);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(unlinkedTx.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldRetrieveOnlyLinkedTransactions_WhenLinkedIsTrue()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Counterparty market = new() { Id = _marketCounterpartyId, Name = "Market" };
+
+    Transaction linkedTx = new()
+    {
+      Counterparty = market,
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50 },
+      },
+    };
+    Transaction unlinkedTx = new()
+    {
+      Counterparty = null,
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 20 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 20 },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(linkedTx, unlinkedTx);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, Linked: true);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(linkedTx.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldMatchRowAmountWithinTolerance_WithRowAmountFilter()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+
+    Transaction match = new()
+    {
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 93.78m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 93.78m },
+      },
+    };
+    Transaction nonMatch = new()
+    {
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 10m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 10m },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(match, nonMatch);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, RowAmount: 93.80m, RowAmountTolerance: 0.50m);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(match.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldMatchExactly_WhenToleranceIsNotProvided()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+
+    Transaction exact = new()
+    {
+      Date = new DateOnly(2024, 9, 12),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50m },
+      },
+    };
+    Transaction near = new()
+    {
+      Date = new DateOnly(2024, 9, 13),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50.01m },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50.01m },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(exact, near);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null, RowAmount: 50m);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].Id.Should().Be(exact.Id);
+  }
+
+  [Test]
+  public async Task Handle_ShouldFilterByAccountingDate_FallingBackToDate_WhenDateFieldIsAccountingDate()
+  {
+    // arrange
+    Account groceries = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bank = new() { Id = _bankAccountId, Name = "Bank" };
+
+    // booked in November but value-dated in October (the boundary case)
+    Transaction bookedInNovember = new()
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 10 },
+        new() { RowCounter = 2, Account = bank, Credit = 10 },
+      },
+    };
+    Transaction octoberTx = new()
+    {
+      Date = new DateOnly(2025, 10, 15),
+      AccountingDate = new DateOnly(2025, 10, 15),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 20 },
+        new() { RowCounter = 2, Account = bank, Credit = 20 },
+      },
+    };
+    // manual entry, no accounting date — must fall back to its Date (November)
+    Transaction manualNovember = new()
+    {
+      Date = new DateOnly(2025, 11, 5),
+      AccountingDate = null,
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 30 },
+        new() { RowCounter = 2, Account = bank, Credit = 30 },
+      },
+    };
+    await _dbContext.Transactions.AddRangeAsync(bookedInNovember, octoberTx, manualNovember);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(
+      null, null,
+      new DateTimeOffset(2025, 11, 1, 0, 0, 0, TimeSpan.Zero),
+      new DateTimeOffset(2025, 11, 30, 0, 0, 0, TimeSpan.Zero),
+      DateField: TransactionDateField.AccountingDate);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert — the Nov-booked (Oct value) tx and the manual Nov tx are in; the Oct tx is out
+    result.Items.Select(i => i.Id).Should().BeEquivalentTo(new[] { bookedInNovember.Id, manualNovember.Id });
+  }
+
+  [Test]
+  public async Task Handle_ShouldFilterByCurrencyDate_WhenDateFieldIsDate()
+  {
+    // arrange — same boundary tx; with the default Date field it falls in October, not November
+    Account groceries = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bank = new() { Id = _bankAccountId, Name = "Bank" };
+    Transaction bookedInNovember = new()
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 10 },
+        new() { RowCounter = 2, Account = bank, Credit = 10 },
+      },
+    };
+    await _dbContext.Transactions.AddAsync(bookedInNovember);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(
+      null, null,
+      new DateTimeOffset(2025, 11, 1, 0, 0, 0, TimeSpan.Zero),
+      new DateTimeOffset(2025, 11, 30, 0, 0, 0, TimeSpan.Zero),
+      DateField: TransactionDateField.Date);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert — invisible under the currency-date filter (this is the bug accountingDate fixes)
+    result.Items.Should().BeEmpty();
+  }
+
+  [Test]
+  public async Task Handle_ShouldProjectAccountingDate()
+  {
+    // arrange
+    Account groceries = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bank = new() { Id = _bankAccountId, Name = "Bank" };
+    Transaction transaction = new()
+    {
+      Date = new DateOnly(2025, 10, 30),
+      AccountingDate = new DateOnly(2025, 11, 1),
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceries, Debit = 10 },
+        new() { RowCounter = 2, Account = bank, Credit = 10 },
+      },
+    };
+    await _dbContext.Transactions.AddAsync(transaction);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result =
+      await _sut.Handle(new TransactionsGetListRequest(null, null, null, null), CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].AccountingDate.Should().Be(new DateOnly(2025, 11, 1));
+  }
+
+  [Test]
+  public async Task Handle_ShouldProjectEmptyCounterpartyName_WhenTransactionHasNoCounterparty()
+  {
+    // arrange
+    Account groceriesAccount = new() { Id = _groceriesAccountId, Name = "Groceries" };
+    Account bankAccount = new() { Id = _bankAccountId, Name = "Bank" };
+    Transaction transaction = new()
+    {
+      Counterparty = null,
+      Date = new DateOnly(2024, 9, 12),
+      Status = TransactionStatus.PendingImportReview,
+      TransactionRows = new List<TransactionRow>
+      {
+        new() { RowCounter = 1, Account = groceriesAccount, Debit = 50 },
+        new() { RowCounter = 2, Account = bankAccount, Credit = 50 },
+      },
+    };
+
+    await _dbContext.Transactions.AddAsync(transaction);
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    TransactionsGetListRequest request = new(null, null, null, null);
+
+    // act
+    PaginatedList<TransactionsGetListResponse> result = await _sut.Handle(request, CancellationToken.None);
+
+    // assert
+    result.Items.Should().ContainSingle();
+    result.Items[0].CounterpartyId.Should().BeNull();
+    result.Items[0].CounterpartyName.Should().BeEmpty();
   }
 }

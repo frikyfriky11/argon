@@ -45,6 +45,7 @@ export default function Index() {
         filters.counterpartyIds,
         filters.dateFrom,
         filters.dateTo,
+        null,
         pageParam,
         filters.pageSize,
       ),

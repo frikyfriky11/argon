@@ -301,9 +301,9 @@ export class AccountsClient extends ServiceBase {
     /**
      * Deletes an existing Account
      * @param id The id of the Account
-     * @return Nothing
+     * @return The Account was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/Accounts/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -311,11 +311,9 @@ export class AccountsClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -333,7 +331,7 @@ export class AccountsClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -343,22 +341,22 @@ export class AccountsClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Account with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -1213,9 +1211,9 @@ export class CounterpartiesClient extends ServiceBase {
     /**
      * Deletes an existing Counterparty
      * @param id The id of the Counterparty
-     * @return Nothing
+     * @return The Counterparty was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/Counterparties/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -1223,11 +1221,9 @@ export class CounterpartiesClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -1245,7 +1241,7 @@ export class CounterpartiesClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -1255,22 +1251,96 @@ export class CounterpartiesClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Counterparty with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Gets the frequency table of accounts a counterparty has historically been
+    posted against. Used during reconciliation to see which expense/revenue
+    account this counterparty typically maps to.
+     * @param id The id of the Counterparty
+     * @return The frequency table
+     */
+    accountHistory(id: string, cancelToken?: CancelToken): Promise<CounterpartiesAccountHistoryResponse[]> {
+        let url_ = this.baseUrl + "/Counterparties/{id}/account-history";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processAccountHistory(_response));
+        });
+    }
+
+    protected processAccountHistory(response: AxiosResponse): Promise<CounterpartiesAccountHistoryResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CounterpartiesAccountHistoryResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<CounterpartiesAccountHistoryResponse[]>(result200);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Counterparty with the specified id could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartiesAccountHistoryResponse[]>(null as any);
     }
 }
 
@@ -1565,9 +1635,9 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
     /**
      * Deletes an existing CounterpartyIdentifier
      * @param id The id of the CounterpartyIdentifier
-     * @return Nothing
+     * @return The CounterpartyIdentifier was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/CounterpartyIdentifiers/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -1575,11 +1645,9 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -1597,7 +1665,7 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -1607,22 +1675,438 @@ export class CounterpartyIdentifiersClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A CounterpartyIdentifier with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Matches a free-form raw text against existing counterparties using the same
+    substring rules the bank-statement importer relies on. Useful for previewing
+    what the importer would resolve a raw description to before running it.
+     * @param request The raw text to resolve
+     * @return The list of matching counterparties (may be empty)
+     */
+    resolve(request: CounterpartyIdentifiersResolveRequest, cancelToken?: CancelToken): Promise<CounterpartyIdentifiersResolveResponse[]> {
+        let url_ = this.baseUrl + "/CounterpartyIdentifiers/resolve";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processResolve(_response));
+        });
+    }
+
+    protected processResolve(response: AxiosResponse): Promise<CounterpartyIdentifiersResolveResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CounterpartyIdentifiersResolveResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<CounterpartyIdentifiersResolveResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CounterpartyIdentifiersResolveResponse[]>(null as any);
+    }
+}
+
+export class StatisticsClient extends ServiceBase {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        super();
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? this.getBaseUrl("");
+
+    }
+
+    /**
+     * Gets the running balance of all Cash accounts at the end of each month.
+     * @param from (optional) The start date of the window to return (inclusive). Null returns from the first month.
+     * @param to (optional) The end date of the window to return (inclusive). Null returns up to the last month.
+     */
+    liquidity(from: DateTime | null | undefined, to: DateTime | null | undefined, cancelToken?: CancelToken): Promise<StatisticsLiquidityResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/liquidity?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processLiquidity(_response));
+        });
+    }
+
+    protected processLiquidity(response: AxiosResponse): Promise<StatisticsLiquidityResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsLiquidityResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsLiquidityResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsLiquidityResponse[]>(null as any);
+    }
+
+    /**
+     * Gets total net worth as it stands today (Assets − Liabilities across all balance-sheet accounts).
+     * @param request (optional) 
+     */
+    netWorth(request: StatisticsNetWorthRequest | undefined, cancelToken?: CancelToken): Promise<StatisticsNetWorthResponse> {
+        let url_ = this.baseUrl + "/Statistics/net-worth?";
+        if (request === null)
+            throw new Error("The parameter 'request' cannot be null.");
+        else if (request !== undefined)
+            url_ += "request=" + encodeURIComponent("" + request) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processNetWorth(_response));
+        });
+    }
+
+    protected processNetWorth(response: AxiosResponse): Promise<StatisticsNetWorthResponse> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = StatisticsNetWorthResponse.fromJS(resultData200);
+            return Promise.resolve<StatisticsNetWorthResponse>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsNetWorthResponse>(null as any);
+    }
+
+    /**
+     * Gets monthly income vs expense for a period.
+     * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
+     * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
+     */
+    cashflow(from: DateTime | null | undefined, to: DateTime | null | undefined, cancelToken?: CancelToken): Promise<StatisticsCashflowResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/cashflow?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processCashflow(_response));
+        });
+    }
+
+    protected processCashflow(response: AxiosResponse): Promise<StatisticsCashflowResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsCashflowResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsCashflowResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsCashflowResponse[]>(null as any);
+    }
+
+    /**
+     * Gets the top spending categories for a period with their cumulative percentage (Pareto).
+     * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
+     * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
+     * @param take (optional) How many top categories to return. Defaults to 10.
+     */
+    topCategories(from: DateTime | null | undefined, to: DateTime | null | undefined, take: number | undefined, cancelToken?: CancelToken): Promise<StatisticsTopCategoriesResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/top-categories?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        if (take === null)
+            throw new Error("The parameter 'take' cannot be null.");
+        else if (take !== undefined)
+            url_ += "Take=" + encodeURIComponent("" + take) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processTopCategories(_response));
+        });
+    }
+
+    protected processTopCategories(response: AxiosResponse): Promise<StatisticsTopCategoriesResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsTopCategoriesResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsTopCategoriesResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsTopCategoriesResponse[]>(null as any);
+    }
+
+    /**
+     * Gets the top counterparties by spend for a period.
+     * @param from (optional) The start of the period (inclusive). Null means from the first transaction.
+     * @param to (optional) The end of the period (inclusive). Null means up to the last transaction.
+     * @param take (optional) How many top counterparties to return. Defaults to 10.
+     */
+    topCounterparties(from: DateTime | null | undefined, to: DateTime | null | undefined, take: number | undefined, cancelToken?: CancelToken): Promise<StatisticsTopCounterpartiesResponse[]> {
+        let url_ = this.baseUrl + "/Statistics/top-counterparties?";
+        if (from !== undefined && from !== null)
+            url_ += "From=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "To=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        if (take === null)
+            throw new Error("The parameter 'take' cannot be null.");
+        else if (take !== undefined)
+            url_ += "Take=" + encodeURIComponent("" + take) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "application/json"
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processTopCounterparties(_response));
+        });
+    }
+
+    protected processTopCounterparties(response: AxiosResponse): Promise<StatisticsTopCounterpartiesResponse[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StatisticsTopCounterpartiesResponse.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<StatisticsTopCounterpartiesResponse[]>(result200);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StatisticsTopCounterpartiesResponse[]>(null as any);
     }
 }
 
@@ -1647,10 +2131,15 @@ export class TransactionsClient extends ServiceBase {
      * @param counterpartyIds (optional) The counterparty ids used in the transaction
      * @param dateFrom (optional) The start date to use in the search of the transaction
      * @param dateTo (optional) The end date to use in the search of the transaction
+     * @param status (optional) Filter by transaction status
+     * @param linked (optional) When true returns only transactions with a linked counterparty, when false only those without; null returns both
+     * @param rowAmount (optional) When set, returns only transactions having a row whose debit or credit matches this amount (within RowAmountTolerance)
+     * @param rowAmountTolerance (optional) The +/- tolerance applied to RowAmount (defaults to 0 = exact match)
+     * @param dateField (optional) Which date field DateFrom/DateTo filter on (defaults to the currency Date; AccountingDate uses the booking date, falling back to Date)
      * @param pageNumber (optional) The number of the page to retrieve from the data source
      * @param pageSize (optional) The number of items in the page that must be retrieved from the data source
      */
-    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
+    getList(accountIds: string[] | null | undefined, counterpartyIds: string[] | null | undefined, dateFrom: DateTime | null | undefined, dateTo: DateTime | null | undefined, status: TransactionStatus | null | undefined, linked: boolean | null | undefined, rowAmount: number | null | undefined, rowAmountTolerance: number | null | undefined, dateField: TransactionDateField | undefined, pageNumber: number | undefined, pageSize: number | undefined, cancelToken?: CancelToken): Promise<PaginatedListOfTransactionsGetListResponse> {
         let url_ = this.baseUrl + "/Transactions?";
         if (accountIds !== undefined && accountIds !== null)
             accountIds && accountIds.forEach(item => { url_ += "AccountIds=" + encodeURIComponent("" + item) + "&"; });
@@ -1660,6 +2149,18 @@ export class TransactionsClient extends ServiceBase {
             url_ += "DateFrom=" + encodeURIComponent(dateFrom ? "" + dateFrom.toString() : "") + "&";
         if (dateTo !== undefined && dateTo !== null)
             url_ += "DateTo=" + encodeURIComponent(dateTo ? "" + dateTo.toString() : "") + "&";
+        if (status !== undefined && status !== null)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (linked !== undefined && linked !== null)
+            url_ += "Linked=" + encodeURIComponent("" + linked) + "&";
+        if (rowAmount !== undefined && rowAmount !== null)
+            url_ += "RowAmount=" + encodeURIComponent("" + rowAmount) + "&";
+        if (rowAmountTolerance !== undefined && rowAmountTolerance !== null)
+            url_ += "RowAmountTolerance=" + encodeURIComponent("" + rowAmountTolerance) + "&";
+        if (dateField === null)
+            throw new Error("The parameter 'dateField' cannot be null.");
+        else if (dateField !== undefined)
+            url_ += "DateField=" + encodeURIComponent("" + dateField) + "&";
         if (pageNumber === null)
             throw new Error("The parameter 'pageNumber' cannot be null.");
         else if (pageNumber !== undefined)
@@ -1923,9 +2424,9 @@ export class TransactionsClient extends ServiceBase {
     /**
      * Deletes an existing Transaction
      * @param id The id of the Transaction
-     * @return Nothing
+     * @return The Transaction was correctly deleted
      */
-    delete(id: string, cancelToken?: CancelToken): Promise<FileResponse> {
+    delete(id: string, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/Transactions/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
@@ -1933,11 +2434,9 @@ export class TransactionsClient extends ServiceBase {
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
-            responseType: "blob",
             method: "DELETE",
             url: url_,
             headers: {
-                "Accept": "application/octet-stream"
             },
             cancelToken
         };
@@ -1955,7 +2454,7 @@ export class TransactionsClient extends ServiceBase {
         });
     }
 
-    protected processDelete(response: AxiosResponse): Promise<FileResponse> {
+    protected processDelete(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -1965,22 +2464,174 @@ export class TransactionsClient extends ServiceBase {
                 }
             }
         }
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers["content-disposition"] : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return Promise.resolve({ fileName: fileName, status: status, data: new Blob([response.data], { type: response.headers["content-type"] }), headers: _headers });
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A Transaction with the specified id could not be found", status, _responseText, _headers, result404);
+
         } else if (status !== 200 && status !== 204) {
             const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Reassigns the counterparty of a Transaction without resending the rest of the
+    transaction. Used when the importer auto-matched the wrong counterparty.
+     * @param id The id of the Transaction
+     * @param request The new counterparty id
+     * @return The counterparty was updated successfully
+     */
+    setCounterparty(id: string, request: TransactionsSetCounterpartyRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/Transactions/{id}/counterparty";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PATCH",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processSetCounterparty(_response));
+        });
+    }
+
+    protected processSetCounterparty(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied request did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("The Transaction could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Assigns an account to a single row of a Transaction without resending the rest
+    of the transaction. Intended for the import-review reconciliation flow.
+     * @param id The id of the Transaction
+     * @param rowId The id of the TransactionRow to update
+     * @param request The categorization payload (account id)
+     * @return The row was categorized successfully
+     */
+    categorizeRow(id: string, rowId: string, request: TransactionsCategorizeRowRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/Transactions/{id}/rows/{rowId}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (rowId === undefined || rowId === null)
+            throw new Error("The parameter 'rowId' must be defined.");
+        url_ = url_.replace("{rowId}", encodeURIComponent("" + rowId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PATCH",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cancelToken
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.instance.request(transformedOptions_);
+        }).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.transformResult(url_, _response, (_response: AxiosResponse) => this.processCategorizeRow(_response));
+        });
+    }
+
+    protected processCategorizeRow(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 204) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("The supplied request did not pass validation checks", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("The Transaction or TransactionRow could not be found", status, _responseText, _headers, result404);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
     }
 }
 
@@ -2052,9 +2703,10 @@ export enum AccountType {
     Cash = 0,
     Expense = 1,
     Revenue = 2,
-    Setup = 3,
-    Debit = 4,
-    Credit = 5,
+    Equity = 3,
+    Liability = 4,
+    Receivable = 5,
+    Asset = 6,
 }
 
 /** The result of the get request of a Account entity */
@@ -2543,8 +3195,10 @@ export interface IBankStatementGetResponse {
 export class TransactionsGetListResponse implements ITransactionsGetListResponse {
     /** The id of the transaction */
     id!: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date!: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate!: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
     /** The name of the counterparty of the transaction */
@@ -2571,6 +3225,7 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
         if (_data) {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
+            this.accountingDate = _data["accountingDate"] ? DateTime.fromISO(_data["accountingDate"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
@@ -2598,6 +3253,7 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
+        data["accountingDate"] = this.accountingDate ? this.accountingDate.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
@@ -2616,8 +3272,10 @@ export class TransactionsGetListResponse implements ITransactionsGetListResponse
 export interface ITransactionsGetListResponse {
     /** The id of the transaction */
     id: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
     /** The name of the counterparty of the transaction */
@@ -3347,6 +4005,88 @@ export interface ICounterpartiesUpdateRequest {
     name: string;
 }
 
+/** One entry in the account-frequency table for a counterparty. */
+export class CounterpartiesAccountHistoryResponse implements ICounterpartiesAccountHistoryResponse {
+    /** The id of the account */
+    accountId!: string;
+    /** The name of the account */
+    accountName!: string;
+    /** The type of the account */
+    accountType!: AccountType;
+    /** How many transaction rows tagged this counterparty are posted on this account */
+    count!: number;
+    /** The net amount (sum of debit minus credit) posted on this account for this counterparty */
+    total!: number;
+    /** The average net amount per posting (Total divided by Count) */
+    average!: number;
+    /** The most recent transaction date posted on this account for this counterparty */
+    lastDate!: DateTime;
+    /** The most frequent non-empty row description on this account for this counterparty, if any */
+    mostCommonDescription!: string | null;
+
+    constructor(data?: ICounterpartiesAccountHistoryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.accountType = _data["accountType"] !== undefined ? _data["accountType"] : <any>null;
+            this.count = _data["count"] !== undefined ? _data["count"] : <any>null;
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+            this.average = _data["average"] !== undefined ? _data["average"] : <any>null;
+            this.lastDate = _data["lastDate"] ? DateTime.fromISO(_data["lastDate"].toString()) : <any>null;
+            this.mostCommonDescription = _data["mostCommonDescription"] !== undefined ? _data["mostCommonDescription"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartiesAccountHistoryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartiesAccountHistoryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["accountType"] = this.accountType !== undefined ? this.accountType : <any>null;
+        data["count"] = this.count !== undefined ? this.count : <any>null;
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        data["average"] = this.average !== undefined ? this.average : <any>null;
+        data["lastDate"] = this.lastDate ? this.lastDate.toFormat('yyyy-MM-dd') : <any>null;
+        data["mostCommonDescription"] = this.mostCommonDescription !== undefined ? this.mostCommonDescription : <any>null;
+        return data;
+    }
+}
+
+/** One entry in the account-frequency table for a counterparty. */
+export interface ICounterpartiesAccountHistoryResponse {
+    /** The id of the account */
+    accountId: string;
+    /** The name of the account */
+    accountName: string;
+    /** The type of the account */
+    accountType: AccountType;
+    /** How many transaction rows tagged this counterparty are posted on this account */
+    count: number;
+    /** The net amount (sum of debit minus credit) posted on this account for this counterparty */
+    total: number;
+    /** The average net amount per posting (Total divided by Count) */
+    average: number;
+    /** The most recent transaction date posted on this account for this counterparty */
+    lastDate: DateTime;
+    /** The most frequent non-empty row description on this account for this counterparty, if any */
+    mostCommonDescription: string | null;
+}
+
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
 export class PaginatedListOfCounterpartyIdentifiersGetListResponse implements IPaginatedListOfCounterpartyIdentifiersGetListResponse {
     /** The collection of items that this PaginatedList object represents
@@ -3676,6 +4416,400 @@ export interface ICounterpartyIdentifiersUpdateRequest {
     identifierText: string;
 }
 
+export class CounterpartyIdentifiersResolveResponse implements ICounterpartyIdentifiersResolveResponse {
+    /** The matched counterparty id */
+    counterpartyId!: string;
+    /** The matched counterparty name */
+    counterpartyName!: string;
+    /** True if any of the counterparty's identifiers matched the raw text */
+    matchedByIdentifier!: boolean;
+    /** True if the counterparty's name itself matched the raw text */
+    matchedByName!: boolean;
+
+    constructor(data?: ICounterpartyIdentifiersResolveResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
+            this.matchedByIdentifier = _data["matchedByIdentifier"] !== undefined ? _data["matchedByIdentifier"] : <any>null;
+            this.matchedByName = _data["matchedByName"] !== undefined ? _data["matchedByName"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersResolveResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersResolveResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
+        data["matchedByIdentifier"] = this.matchedByIdentifier !== undefined ? this.matchedByIdentifier : <any>null;
+        data["matchedByName"] = this.matchedByName !== undefined ? this.matchedByName : <any>null;
+        return data;
+    }
+}
+
+export interface ICounterpartyIdentifiersResolveResponse {
+    /** The matched counterparty id */
+    counterpartyId: string;
+    /** The matched counterparty name */
+    counterpartyName: string;
+    /** True if any of the counterparty's identifiers matched the raw text */
+    matchedByIdentifier: boolean;
+    /** True if the counterparty's name itself matched the raw text */
+    matchedByName: boolean;
+}
+
+/** The request to match a free-form raw text against existing counterparties using the same substring rules the bank-statement importer relies on. */
+export class CounterpartyIdentifiersResolveRequest implements ICounterpartyIdentifiersResolveRequest {
+    /** The raw text to resolve (typically a snippet from a bank line) */
+    rawText!: string;
+
+    constructor(data?: ICounterpartyIdentifiersResolveRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rawText = _data["rawText"] !== undefined ? _data["rawText"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CounterpartyIdentifiersResolveRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CounterpartyIdentifiersResolveRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rawText"] = this.rawText !== undefined ? this.rawText : <any>null;
+        return data;
+    }
+}
+
+/** The request to match a free-form raw text against existing counterparties using the same substring rules the bank-statement importer relies on. */
+export interface ICounterpartyIdentifiersResolveRequest {
+    /** The raw text to resolve (typically a snippet from a bank line) */
+    rawText: string;
+}
+
+/** A single point of the liquid-asset balance time series. */
+export class StatisticsLiquidityResponse implements IStatisticsLiquidityResponse {
+    /** The calendar year of the point */
+    year!: number;
+    /** The calendar month of the point (1-12) */
+    month!: number;
+    /** The running balance of all Cash accounts at the end of this month */
+    balance!: number;
+
+    constructor(data?: IStatisticsLiquidityResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.year = _data["year"] !== undefined ? _data["year"] : <any>null;
+            this.month = _data["month"] !== undefined ? _data["month"] : <any>null;
+            this.balance = _data["balance"] !== undefined ? _data["balance"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsLiquidityResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsLiquidityResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["year"] = this.year !== undefined ? this.year : <any>null;
+        data["month"] = this.month !== undefined ? this.month : <any>null;
+        data["balance"] = this.balance !== undefined ? this.balance : <any>null;
+        return data;
+    }
+}
+
+/** A single point of the liquid-asset balance time series. */
+export interface IStatisticsLiquidityResponse {
+    /** The calendar year of the point */
+    year: number;
+    /** The calendar month of the point (1-12) */
+    month: number;
+    /** The running balance of all Cash accounts at the end of this month */
+    balance: number;
+}
+
+/** The current total net worth: Cash + Asset + Receivable balances, less what is owed on Liability accounts. */
+export class StatisticsNetWorthResponse implements IStatisticsNetWorthResponse {
+    /** Assets − Liabilities across all balance-sheet accounts */
+    total!: number;
+
+    constructor(data?: IStatisticsNetWorthResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsNetWorthResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsNetWorthResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        return data;
+    }
+}
+
+/** The current total net worth: Cash + Asset + Receivable balances, less what is owed on Liability accounts. */
+export interface IStatisticsNetWorthResponse {
+    /** Assets − Liabilities across all balance-sheet accounts */
+    total: number;
+}
+
+/** The request to fetch total net worth as it stands today: the balance-sheet identity Assets − Liabilities, summed across every Cash, Asset and Receivable account (assets) net of every Liability account (payables). Unlike the liquid headline this includes illiquid assets such as the house, so it surfaces real equity rather than just cash. */
+export class StatisticsNetWorthRequest implements IStatisticsNetWorthRequest {
+
+    constructor(data?: IStatisticsNetWorthRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): StatisticsNetWorthRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsNetWorthRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+/** The request to fetch total net worth as it stands today: the balance-sheet identity Assets − Liabilities, summed across every Cash, Asset and Receivable account (assets) net of every Liability account (payables). Unlike the liquid headline this includes illiquid assets such as the house, so it surfaces real equity rather than just cash. */
+export interface IStatisticsNetWorthRequest {
+}
+
+/** A single month of income vs expense. */
+export class StatisticsCashflowResponse implements IStatisticsCashflowResponse {
+    /** The calendar year of the point */
+    year!: number;
+    /** The calendar month of the point (1-12) */
+    month!: number;
+    /** The net income (Revenue accounts) booked in this month */
+    income!: number;
+    /** The net expense (Expense accounts) booked in this month */
+    expense!: number;
+
+    constructor(data?: IStatisticsCashflowResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.year = _data["year"] !== undefined ? _data["year"] : <any>null;
+            this.month = _data["month"] !== undefined ? _data["month"] : <any>null;
+            this.income = _data["income"] !== undefined ? _data["income"] : <any>null;
+            this.expense = _data["expense"] !== undefined ? _data["expense"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsCashflowResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsCashflowResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["year"] = this.year !== undefined ? this.year : <any>null;
+        data["month"] = this.month !== undefined ? this.month : <any>null;
+        data["income"] = this.income !== undefined ? this.income : <any>null;
+        data["expense"] = this.expense !== undefined ? this.expense : <any>null;
+        return data;
+    }
+}
+
+/** A single month of income vs expense. */
+export interface IStatisticsCashflowResponse {
+    /** The calendar year of the point */
+    year: number;
+    /** The calendar month of the point (1-12) */
+    month: number;
+    /** The net income (Revenue accounts) booked in this month */
+    income: number;
+    /** The net expense (Expense accounts) booked in this month */
+    expense: number;
+}
+
+/** A single ranked spending category. */
+export class StatisticsTopCategoriesResponse implements IStatisticsTopCategoriesResponse {
+    /** The id of the Expense account */
+    accountId!: string;
+    /** The name of the Expense account */
+    accountName!: string;
+    /** The total amount spent on this category in the period */
+    total!: number;
+    /** The cumulative share of the period's total spend covered by this category and every
+higher-ranked one (0-100). The last returned category's value is 100 only when all
+categories are returned; with a Take limit it reflects the share of the full total.
+             */
+    cumulativePercentage!: number;
+
+    constructor(data?: IStatisticsTopCategoriesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.accountName = _data["accountName"] !== undefined ? _data["accountName"] : <any>null;
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+            this.cumulativePercentage = _data["cumulativePercentage"] !== undefined ? _data["cumulativePercentage"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsTopCategoriesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsTopCategoriesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["accountName"] = this.accountName !== undefined ? this.accountName : <any>null;
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        data["cumulativePercentage"] = this.cumulativePercentage !== undefined ? this.cumulativePercentage : <any>null;
+        return data;
+    }
+}
+
+/** A single ranked spending category. */
+export interface IStatisticsTopCategoriesResponse {
+    /** The id of the Expense account */
+    accountId: string;
+    /** The name of the Expense account */
+    accountName: string;
+    /** The total amount spent on this category in the period */
+    total: number;
+    /** The cumulative share of the period's total spend covered by this category and every
+higher-ranked one (0-100). The last returned category's value is 100 only when all
+categories are returned; with a Take limit it reflects the share of the full total.
+             */
+    cumulativePercentage: number;
+}
+
+/** A single ranked counterparty by spend. */
+export class StatisticsTopCounterpartiesResponse implements IStatisticsTopCounterpartiesResponse {
+    /** The id of the counterparty, or null for the unlinked bucket */
+    counterpartyId!: string | null;
+    /** The name of the counterparty, or a placeholder for the unlinked bucket */
+    counterpartyName!: string;
+    /** The total amount spent with this counterparty in the period */
+    total!: number;
+
+    constructor(data?: IStatisticsTopCounterpartiesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+            this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
+            this.total = _data["total"] !== undefined ? _data["total"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): StatisticsTopCounterpartiesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new StatisticsTopCounterpartiesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
+        data["total"] = this.total !== undefined ? this.total : <any>null;
+        return data;
+    }
+}
+
+/** A single ranked counterparty by spend. */
+export interface IStatisticsTopCounterpartiesResponse {
+    /** The id of the counterparty, or null for the unlinked bucket */
+    counterpartyId: string | null;
+    /** The name of the counterparty, or a placeholder for the unlinked bucket */
+    counterpartyName: string;
+    /** The total amount spent with this counterparty in the period */
+    total: number;
+}
+
 /** This model represents a paginated list of generic results, allowing pagination to occur for better performance when retrieving large amounts of records from an endpoint. */
 export class PaginatedListOfTransactionsGetListResponse implements IPaginatedListOfTransactionsGetListResponse {
     /** The collection of items that this PaginatedList object represents
@@ -3769,18 +4903,32 @@ export interface IPaginatedListOfTransactionsGetListResponse {
     hasNextPage: boolean;
 }
 
+/** Selects which date field the transactions list filters (and is interpreted) on. */
+export enum TransactionDateField {
+    Date = 0,
+    AccountingDate = 1,
+}
+
 /** The result of the get request of a Transaction entity */
 export class TransactionsGetResponse implements ITransactionsGetResponse {
     /** The id of the transaction */
     id!: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date!: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate!: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId!: string | null;
     /** The name of the counterparty of the transaction */
-    counterpartyName!: string | null;
+    counterpartyName!: string;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsGetResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData!: string | null;
+    /** The status of the transaction */
+    status!: TransactionStatus;
+    /** The id of the potential duplicate of the transaction */
+    potentialDuplicateOfTransactionId!: string | null;
 
     constructor(data?: ITransactionsGetResponse) {
         if (data) {
@@ -3795,6 +4943,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         if (_data) {
             this.id = _data["id"] !== undefined ? _data["id"] : <any>null;
             this.date = _data["date"] ? DateTime.fromISO(_data["date"].toString()) : <any>null;
+            this.accountingDate = _data["accountingDate"] ? DateTime.fromISO(_data["accountingDate"].toString()) : <any>null;
             this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
             this.counterpartyName = _data["counterpartyName"] !== undefined ? _data["counterpartyName"] : <any>null;
             if (Array.isArray(_data["transactionRows"])) {
@@ -3805,6 +4954,9 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             else {
                 this.transactionRows = <any>null;
             }
+            this.rawImportData = _data["rawImportData"] !== undefined ? _data["rawImportData"] : <any>null;
+            this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.potentialDuplicateOfTransactionId = _data["potentialDuplicateOfTransactionId"] !== undefined ? _data["potentialDuplicateOfTransactionId"] : <any>null;
         }
     }
 
@@ -3819,6 +4971,7 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id !== undefined ? this.id : <any>null;
         data["date"] = this.date ? this.date.toFormat('yyyy-MM-dd') : <any>null;
+        data["accountingDate"] = this.accountingDate ? this.accountingDate.toFormat('yyyy-MM-dd') : <any>null;
         data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
         data["counterpartyName"] = this.counterpartyName !== undefined ? this.counterpartyName : <any>null;
         if (Array.isArray(this.transactionRows)) {
@@ -3826,6 +4979,9 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
             for (let item of this.transactionRows)
                 data["transactionRows"].push(item.toJSON());
         }
+        data["rawImportData"] = this.rawImportData !== undefined ? this.rawImportData : <any>null;
+        data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["potentialDuplicateOfTransactionId"] = this.potentialDuplicateOfTransactionId !== undefined ? this.potentialDuplicateOfTransactionId : <any>null;
         return data;
     }
 }
@@ -3834,14 +4990,22 @@ export class TransactionsGetResponse implements ITransactionsGetResponse {
 export interface ITransactionsGetResponse {
     /** The id of the transaction */
     id: string;
-    /** The date of the transaction */
+    /** The date of the transaction (currency/value date) */
     date: DateTime;
+    /** The accounting (booking) date, or null for manual entries */
+    accountingDate: DateTime | null;
     /** The id of the counterparty of the transaction */
     counterpartyId: string | null;
     /** The name of the counterparty of the transaction */
-    counterpartyName: string | null;
+    counterpartyName: string;
     /** The rows of the transaction */
     transactionRows: TransactionRowsGetResponse[];
+    /** The JSON representation of the raw import data of a bank statement */
+    rawImportData: string | null;
+    /** The status of the transaction */
+    status: TransactionStatus;
+    /** The id of the potential duplicate of the transaction */
+    potentialDuplicateOfTransactionId: string | null;
 }
 
 /** The row of a transaction get response */
@@ -4097,8 +5261,8 @@ export interface ITransactionRowsCreateRequest {
 export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
     /** The date of the transaction */
     date!: DateTime;
-    /** The id of the counterparty of the transaction */
-    counterpartyId!: string;
+    /** The id of the counterparty of the transaction, or null when the transaction has no linked counterparty */
+    counterpartyId!: string | null;
     /** The rows of the transaction */
     transactionRows!: TransactionRowsUpdateRequest[];
 
@@ -4150,8 +5314,8 @@ export class TransactionsUpdateRequest implements ITransactionsUpdateRequest {
 export interface ITransactionsUpdateRequest {
     /** The date of the transaction */
     date: DateTime;
-    /** The id of the counterparty of the transaction */
-    counterpartyId: string;
+    /** The id of the counterparty of the transaction, or null when the transaction has no linked counterparty */
+    counterpartyId: string | null;
     /** The rows of the transaction */
     transactionRows: TransactionRowsUpdateRequest[];
 }
@@ -4226,11 +5390,94 @@ export interface ITransactionRowsUpdateRequest {
     description: string | null;
 }
 
-export interface FileResponse {
-    data: Blob;
-    status: number;
-    fileName?: string;
-    headers?: { [name: string]: any };
+/** The request to reassign the counterparty of a Transaction without resending the rest of the transaction. Used when the parser auto-matched the wrong counterparty. */
+export class TransactionsSetCounterpartyRequest implements ITransactionsSetCounterpartyRequest {
+    /** The id of the counterparty to assign to the transaction */
+    counterpartyId!: string;
+
+    constructor(data?: ITransactionsSetCounterpartyRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.counterpartyId = _data["counterpartyId"] !== undefined ? _data["counterpartyId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): TransactionsSetCounterpartyRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionsSetCounterpartyRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["counterpartyId"] = this.counterpartyId !== undefined ? this.counterpartyId : <any>null;
+        return data;
+    }
+}
+
+/** The request to reassign the counterparty of a Transaction without resending the rest of the transaction. Used when the parser auto-matched the wrong counterparty. */
+export interface ITransactionsSetCounterpartyRequest {
+    /** The id of the counterparty to assign to the transaction */
+    counterpartyId: string;
+}
+
+/** The request to assign an account to a single transaction row without resending the rest of the transaction. Used by the import-review reconciliation flow. */
+export class TransactionsCategorizeRowRequest implements ITransactionsCategorizeRowRequest {
+    /** The id of the account to assign to the row */
+    accountId!: string;
+    /** Optional description to set on the row being categorized. When null the row's
+existing description is left untouched; pass an empty string to clear it.
+             */
+    description!: string | null;
+
+    constructor(data?: ITransactionsCategorizeRowRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"] !== undefined ? _data["accountId"] : <any>null;
+            this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): TransactionsCategorizeRowRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionsCategorizeRowRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId !== undefined ? this.accountId : <any>null;
+        data["description"] = this.description !== undefined ? this.description : <any>null;
+        return data;
+    }
+}
+
+/** The request to assign an account to a single transaction row without resending the rest of the transaction. Used by the import-review reconciliation flow. */
+export interface ITransactionsCategorizeRowRequest {
+    /** The id of the account to assign to the row */
+    accountId: string;
+    /** Optional description to set on the row being categorized. When null the row's
+existing description is left untouched; pass an empty string to clear it.
+             */
+    description: string | null;
 }
 
 export class ApiException extends Error {

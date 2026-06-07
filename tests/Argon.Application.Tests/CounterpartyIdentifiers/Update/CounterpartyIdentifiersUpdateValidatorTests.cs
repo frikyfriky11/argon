@@ -56,4 +56,33 @@ public class CounterpartyIdentifiersUpdateValidatorTests
 
     await _sut.ShouldFailOnProperty(request, nameof(request.CounterpartyId));
   }
+
+  [Test]
+  public async Task Validator_ShouldReturnError_WhenIdentifierTextAlreadyBelongsToAnotherIdentifier()
+  {
+    // arrange
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "test counterparty" });
+    await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier { Counterparty = counterparty.Entity, IdentifierText = "EXISTING" });
+    EntityEntry<CounterpartyIdentifier> edited = await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier { Counterparty = counterparty.Entity, IdentifierText = "OTHER" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartyIdentifiersUpdateRequest request = new(counterparty.Entity.Id, "existing") { Id = edited.Entity.Id };
+
+    // act + assert
+    await _sut.ShouldFailOnProperty(request, nameof(request.IdentifierText));
+  }
+
+  [Test]
+  public async Task Validator_ShouldNotReturnError_WhenIdentifierKeepsItsOwnText()
+  {
+    // arrange
+    EntityEntry<Counterparty> counterparty = await _dbContext.Counterparties.AddAsync(new Counterparty { Name = "test counterparty" });
+    EntityEntry<CounterpartyIdentifier> edited = await _dbContext.CounterpartyIdentifiers.AddAsync(new CounterpartyIdentifier { Counterparty = counterparty.Entity, IdentifierText = "EXISTING" });
+    await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+    CounterpartyIdentifiersUpdateRequest request = new(counterparty.Entity.Id, "EXISTING") { Id = edited.Entity.Id };
+
+    // act + assert
+    await _sut.ShouldNotFailOnProperty(request, nameof(request.IdentifierText));
+  }
 }

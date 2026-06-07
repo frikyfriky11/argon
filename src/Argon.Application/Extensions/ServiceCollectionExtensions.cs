@@ -31,5 +31,8 @@ public static class ServiceCollectionExtensions
 
     // add all the factories
     services.AddScoped<IParsersFactory, ParsersFactory>();
+
+    // add the cross-cutting counterparty resolver shared by the importer and the API
+    services.AddScoped<Counterparties.Common.ICounterpartyResolver, Counterparties.Common.CounterpartyResolver>();
   }
 }
