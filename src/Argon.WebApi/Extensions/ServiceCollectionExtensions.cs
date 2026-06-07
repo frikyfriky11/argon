@@ -57,5 +57,28 @@ public static class ServiceCollectionExtensions
         options.Audience = configuration.GetValue<string>("Auth:ClientId");
       });
     services.AddAuthorization();
+
+    // OpenTelemetry traces + metrics. Only wired when an OTLP endpoint is configured,
+    // so the API runs unchanged when the collector is absent (CI, prod, other devs).
+    string? otlpEndpoint = configuration["OpenTelemetry:OtlpEndpoint"];
+    if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+    {
+      Uri endpoint = new(otlpEndpoint);
+
+      services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource.AddService(
+          serviceName: "argon-webapi",
+          serviceVersion: typeof(ServiceCollectionExtensions).Assembly.GetName().Version?.ToString() ?? "1.7.0"))
+        .WithTracing(tracing => tracing
+          .AddAspNetCoreInstrumentation()  // inbound HTTP server spans
+          .AddHttpClientInstrumentation()  // outbound HTTP client spans
+          .AddSource("Npgsql")             // PostgreSQL command spans (EF Core → Npgsql ActivitySource)
+          .AddOtlpExporter(otlp => otlp.Endpoint = endpoint))
+        .WithMetrics(metrics => metrics
+          .AddAspNetCoreInstrumentation()
+          .AddHttpClientInstrumentation()
+          .AddRuntimeInstrumentation()     // GC, JIT, thread pool, ...
+          .AddOtlpExporter(otlp => otlp.Endpoint = endpoint));
+    }
   }
 }
