@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Argon.Cli</RootNamespace>
     <AssemblyName>argon</AssemblyName>
     <Nullable>enable</Nullable>
@@ -34,7 +34,7 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack>
-      <PackagePath>tools\net8.0\any\</PackagePath>
+      <PackagePath>tools\net10.0\any\</PackagePath>
     </None>
   </ItemGroup>
 
