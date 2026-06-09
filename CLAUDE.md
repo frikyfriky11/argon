@@ -249,3 +249,34 @@ When Claude is the one creating the commit, the message **must** end with a `Co-
 ```
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 ```
+
+## Releases (git flow)
+
+`develop` is the integration branch; `master` only receives release merges. A release is an annotated tag `vX.Y.Z` on the `master` merge commit — **pushing the tag is what triggers the release CI** (tests + `latest`/`vX.Y.Z`/`sha-*` images to GHCR); pushing `master` alone triggers nothing. Pushing `develop` builds `latest-develop` images. Reconstructed from the v1.7.0/v1.8.0 history:
+
+```bash
+git checkout -b release/vX.Y.Z develop
+
+# 1. Version bump — update the version in all five files:
+#      <Version> in src/Argon.{Application,Domain,Infrastructure,WebApi}/*.csproj
+#      "version" in src/Argon.WebGui/package.json
+git commit -am "Version bump to vX.Y.Z"
+
+# 2. Merge into master (no fast-forward) and tag the merge commit
+git checkout master
+git merge --no-ff release/vX.Y.Z        # -> "Merge branch 'release/vX.Y.Z'"
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+
+# 3. Merge the tag back into develop
+git checkout develop
+git merge --no-ff vX.Y.Z                # -> "Merge tag 'vX.Y.Z' into develop"
+
+# 4. Clean up and push everything (the tag push kicks off the release build)
+git branch -d release/vX.Y.Z
+git push origin master develop vX.Y.Z
+```
+
+Conventions observed in the history (don't "fix" them):
+- The version-bump commit and the merge/tag messages do **not** use conventional-commit prefixes.
+- `Argon.Cli` and the test projects are not version-bumped.
+- Deployment is pull-based: prod (`homelab-gitops` `apps/argon`) pins `:latest`, so after CI pushes the images, the running stack updates only when Portainer re-pulls — if prod doesn't pick the release up on its own, redeploy/re-pull the `argon` stack in Portainer.

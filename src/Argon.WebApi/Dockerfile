@@ -45,7 +45,7 @@ ENTRYPOINT ["dotnet", "Argon.WebApi.dll"]
 # this healthcheck reports the healthy/unhealthy status to the Docker engine by contacting the API at the healthz endpoint.
 # if the healthcheck returns HTTP 200 OK, then it is reported as healthy.
 # if the healthcheck returns HTTP 503 Service Unavailable, then it is reported as unhealthy.
-HEALTHCHECK --interval=3s --timeout=2s --start-period=10s --retries=3 CMD curl --fail http://localhost/healthz || exit 1
+HEALTHCHECK --interval=30s --timeout=2s --start-period=10s --retries=3 CMD curl --fail http://localhost/healthz || exit 1
 
 # we instruct the consumers of this image that it exposes the port 80 on TCP
 EXPOSE 80/tcp
