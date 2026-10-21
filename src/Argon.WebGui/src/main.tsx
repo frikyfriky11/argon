@@ -9,18 +9,19 @@ import { AuthProvider, AuthProviderProps } from "react-oidc-context";
 
 import { theme } from "./config/MaterialTheme";
 import MainRouter from "./router";
+import { runtimeConfig } from "./runtime-config";
 import "./utils/TranslationSetup";
 
 console.log("Vite environment:", import.meta.env.MODE);
-console.log("Environment:", import.meta.env.VITE_APP_RUNNING_ENVIRONMENT);
-console.log("Build:", import.meta.env.VITE_APP_BUILD_ID);
-console.log("Commit:", import.meta.env.VITE_APP_COMMIT_HASH);
+console.log("Environment:", runtimeConfig.VITE_APP_RUNNING_ENVIRONMENT);
+console.log("Build:", runtimeConfig.VITE_APP_BUILD_ID);
+console.log("Commit:", runtimeConfig.VITE_APP_COMMIT_HASH);
 
 const oidcConfig: AuthProviderProps = {
-  authority: import.meta.env.VITE_APP_AUTHORITY,
-  client_id: import.meta.env.VITE_APP_CLIENT_ID,
-  redirect_uri: import.meta.env.VITE_APP_REDIRECT_URI,
-  scope: import.meta.env.VITE_APP_SCOPE,
+  authority: runtimeConfig.VITE_APP_AUTHORITY,
+  client_id: runtimeConfig.VITE_APP_CLIENT_ID,
+  redirect_uri: runtimeConfig.VITE_APP_REDIRECT_URI,
+  scope: runtimeConfig.VITE_APP_SCOPE,
   userStore: new WebStorageStateStore({ store: window.localStorage }),
 };
 

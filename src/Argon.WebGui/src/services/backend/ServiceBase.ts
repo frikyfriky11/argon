@@ -1,6 +1,8 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { User } from "oidc-client-ts";
 
+import { runtimeConfig } from "../../runtime-config";
+
 /**
  * This abstract class is inherited by the BackendClient to configure the
  * baseURL of the API client-side.
@@ -16,7 +18,7 @@ export default abstract class ServiceBase {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getBaseUrl(_input: string): string {
-    return import.meta.env.VITE_APP_BACKEND_API_URI;
+    return runtimeConfig.VITE_APP_BACKEND_API_URI;
   }
 
   /**
@@ -27,7 +29,7 @@ export default abstract class ServiceBase {
     let accessToken = "";
 
     const oidcStorage = localStorage.getItem(
-      `oidc.user:${import.meta.env.VITE_APP_AUTHORITY}:${import.meta.env.VITE_APP_CLIENT_ID}`,
+      `oidc.user:${runtimeConfig.VITE_APP_AUTHORITY}:${runtimeConfig.VITE_APP_CLIENT_ID}`,
     );
 
     if (oidcStorage) {

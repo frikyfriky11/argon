@@ -51,6 +51,10 @@ RUN npm run build
 # this is a multi stage build, so the build process happens on the node base image and the final image
 # uses only the nginx image, to minimize the size of the resulting image
 FROM nginx:1.25.1
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends jq \
+  && rm -rf /var/lib/apt/lists/*
+COPY ["src/Argon.WebGui/docker-entrypoint.d/40-runtime-config.sh", "/docker-entrypoint.d/40-runtime-config.sh"]
 
 # copy over the configuration of nginx and replace it inside the image
 COPY ["src/Argon.WebGui/nginx.conf", "/etc/nginx/conf.d/default.conf"]

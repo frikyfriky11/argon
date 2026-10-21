@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Argon is a personal finance management application (v1.7.0). It handles bank account tracking, transaction management, budget items, bank statement imports with automatic parsing, and transaction reconciliation/duplicate detection.
+Argon is a personal finance management application. It handles bank account tracking, transaction management, budget items, bank statement imports with automatic parsing, and transaction reconciliation/duplicate detection.
 
 ## Commands
 
@@ -43,7 +43,9 @@ pnpm format         # Prettier with import sorting
 docker-compose -f compose/docker-compose.dev.yml up    # Dev (PostgreSQL only)
 ```
 
-Prod and test run on the homelab via **Portainer GitOps** (the `homelab-gitops` repo, `apps/argon` and `apps/argon-test`) — that is the source of truth for those stacks. This repo only builds and pushes the images (GitHub Actions → GHCR); there are no prod/test compose files here.
+Production and staging run from the sibling `homelab` repository (`services/argon*`, `roles/argon*`, `services/private-release/argon.json`). The repository-specific self-hosted runner verifies changes, builds one immutable API/frontend image set on `develop`, transfers it privately with archive hash and BuildKit provenance, and accepts it only after live smoke checks. `master` version tags or a manual production workflow promote the identical accepted Git tree without rebuilding. No GitHub artifacts/cache or GHCR handoff is required.
+
+Frontend environment settings are generated as `runtime-config.js` at container startup. Authentication authority/client/redirect remain independent between staging and production while the same bundle is promoted. Local Vite settings remain the development fallback. Production API containers set `ARGON_SKIP_MIGRATIONS=true`; the receiver checks the exact declared schema and automatic application rollback compatibility. New migrations require an explicit rehearsed operation.
 
 ## Architecture
 
@@ -123,7 +125,7 @@ Entry point: `src/main.tsx` — mounts nested providers: AuthProvider (OIDC) →
 
 ## Database
 
-PostgreSQL 18 (the compose stack runs 18.4-alpine; the Npgsql provider supports 15+). EF Core migrations live in `src/Argon.Infrastructure/Persistence/Migrations/`. `ApplicationDbContextInitializer` (called from Startup) applies pending migrations and seeds initial data on startup.
+PostgreSQL 18 (the compose stack runs 18.4-alpine; the Npgsql provider supports 15+). EF Core migrations live in `src/Argon.Infrastructure/Persistence/Migrations/`. `ApplicationDbContextInitializer` applies pending migrations and seeds initial data by default for local development. Staging and production set `ARGON_SKIP_MIGRATIONS=true`; private releases require the declared schema to match before replacing applications. Schema changes require a separate reviewed backup/migration/recovery operation.
 
 ## Code Generation
 
@@ -252,31 +254,10 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 
 ## Releases (git flow)
 
-`develop` is the integration branch; `master` only receives release merges. A release is an annotated tag `vX.Y.Z` on the `master` merge commit — **pushing the tag is what triggers the release CI** (tests + `latest`/`vX.Y.Z`/`sha-*` images to GHCR); pushing `master` alone triggers nothing. Pushing `develop` builds `latest-develop` images. Reconstructed from the v1.7.0/v1.8.0 history:
-
-```bash
-git checkout -b release/vX.Y.Z develop
-
-# 1. Version bump — update the version in all five files:
-#      <Version> in src/Argon.{Application,Domain,Infrastructure,WebApi}/*.csproj
-#      "version" in src/Argon.WebGui/package.json
-git commit -am "Version bump to vX.Y.Z"
-
-# 2. Merge into master (no fast-forward) and tag the merge commit
-git checkout master
-git merge --no-ff release/vX.Y.Z        # -> "Merge branch 'release/vX.Y.Z'"
-git tag -a vX.Y.Z -m "Release vX.Y.Z"
-
-# 3. Merge the tag back into develop
-git checkout develop
-git merge --no-ff vX.Y.Z                # -> "Merge tag 'vX.Y.Z' into develop"
-
-# 4. Clean up and push everything (the tag push kicks off the release build)
-git branch -d release/vX.Y.Z
-git push origin master develop vX.Y.Z
-```
-
-Conventions observed in the history (don't "fix" them):
-- The version-bump commit and the merge/tag messages do **not** use conventional-commit prefixes.
-- `Argon.Cli` and the test projects are not version-bumped.
-- Deployment is pull-based: prod (`homelab-gitops` `apps/argon`) pins `:latest`, so after CI pushes the images, the running stack updates only when Portainer re-pulls — if prod doesn't pick the release up on its own, redeploy/re-pull the `argon` stack in Portainer.
+- `develop` is the integration/staging branch; `master` receives deliberate release merges. Keep the current product version for CI migration work.
+- A develop push runs all backend/frontend behavior gates on the repository-specific self-hosted Linux runner, builds one coherent API/frontend image set with BuildKit provenance, transfers it over restricted SSH, performs live smoke checks and marks it accepted.
+- The frontend image generates `runtime-config.js` from environment-specific public settings at startup. The same immutable bundle must retain distinct staging/production Authentik authority, client, redirect and environment; local Vite settings remain the development fallback.
+- Production promotes the identical accepted staging Git tree and image IDs. It never rebuilds release images or runs schema migrations. The `master-test-build-deploy.yml` workflow supports manual dispatch from `master` and existing version-tag releases; do not create a version tag for infrastructure-only work.
+- Before promotion, confirm `git rev-parse master^{tree}` equals the accepted develop tree, then dispatch `gh workflow run master-test-build-deploy.yml --ref master`. A master push alone does not release.
+- The receiver requires current-ref/exact-run/attempt Verify evidence, archive checksums, source/provenance, a matching schema policy and fresh protected backups. Failure restores only application images while preserving databases, authentication keys and writes made after the backup.
+- Runtime declarations, receiver policy and recovery records live in sibling `homelab`; never use Portainer, mutable registry tags or GitHub artifact/cache storage as a release handoff.

@@ -1,149 +1,57 @@
-name: master - Test, Build and Deploy
-
+name: master - Verify and private release
 on:
   push:
-    tags:
-      - "v**"
-
-env:
-  REGISTRY: ghcr.io
-
+    tags: ["v**"]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: argon-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  tests:
-    name: Run .NET backend tests
-    runs-on: ubuntu-latest
-    
-    env:
-      DOTNET_INSTALL_DIR: "./.dotnet"
-    
+  verify:
+    name: Verify
+    runs-on: [self-hosted, Linux, X64, argon-build]
+    timeout-minutes: 25
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v4
         with:
-          dotnet-version: 10.0.x
-          
-      - name: Run tests
-        run: dotnet test
-        
-  tests-frontend:
-    name: Run frontend tests
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: src/Argon.WebGui
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
         with:
-          version: 9.6.0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
-          cache-dependency-path: src/Argon.WebGui/pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test
-
-  build-push-webapi:
-    name: Build WebApi image and push to Docker registry
-    runs-on: ubuntu-latest
-    needs: [ tests, tests-frontend ]
-
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+          dest: ~/setup-pnpm-${{ runner.name }}
+      - name: Verify all backend behavior
+        run: dotnet test
+      - name: Verify frontend behavior and runtime configuration
+        working-directory: src/Argon.WebGui
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+          pnpm build
+  release:
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    name: Private release
+    needs: verify
+    runs-on: [self-hosted, Linux, X64, argon-build]
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOMELAB_DEPLOY_HOST: ${{ vars.HOMELAB_DEPLOY_HOST }}
+      HOMELAB_DEPLOY_KNOWN_HOSTS: ${{ vars.HOMELAB_DEPLOY_KNOWN_HOSTS }}
+      HOMELAB_DEPLOY_SSH_KEY: ${{ secrets.HOMELAB_DEPLOY_SSH_KEY }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/frikyfriky11/argon-webapi
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ github.ref_name }}
-            type=sha
-
-      - name: Build Docker image and push to registry
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: src/Argon.WebApi/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  build-push-webgui:
-    name: Build WebGui image and push to Docker registry
-    runs-on: ubuntu-latest
-    needs: [ tests, tests-frontend ]
-
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/frikyfriky11/argon-webgui
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ github.ref_name }}
-            type=sha
-
-      - name: Build Docker image and push to registry
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: src/Argon.WebGui/Dockerfile
-          push: true
-          build-args: |
-            BACKEND_API_URI=https://${{ secrets.PUBLIC_HOST_PROD }}/api
-            RUNNING_ENVIRONMENT=prod
-            BUILD_ID=${{ github.run_id }}
-            COMMIT_HASH=${{ github.ref_name }}-${{ github.sha }}
-            AUTHORITY=${{ secrets.AUTH_AUTHORITY_PROD }}
-            CLIENT_ID=${{ secrets.AUTH_CLIENT_ID_PROD }}
-            REDIRECT_URI=https://${{ secrets.PUBLIC_HOST_PROD }}/auth/post-sign-in
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          persist-credentials: false
+      - name: promote the verified image set
+        run: python3 tooling/release/deploy.py promote --environment production
+      - name: Verify actual health, authentication and frontend configuration
+        run: python3 tooling/release/smoke.py https://argon.previatozanirato.family production
