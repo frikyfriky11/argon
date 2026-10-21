@@ -12,5 +12,8 @@
         "COMMIT_HASH": "{source}"
       }
     }
+  ],
+  "verify_commands": [
+    ["python3", "tooling/release/verify-runtime.py", "{source}"]
   ]
 }
