@@ -43,7 +43,9 @@ pnpm format         # Prettier with import sorting
 docker-compose -f compose/docker-compose.dev.yml up    # Dev (PostgreSQL only)
 ```
 
-Prod and test run on the homelab via **Portainer GitOps** (the `homelab-gitops` repo, `apps/argon` and `apps/argon-test`) — that is the source of truth for those stacks. This repo only builds and pushes the images (GitHub Actions → GHCR); there are no prod/test compose files here.
+Production and staging run from the sibling `homelab` repository (`services/argon*`, `roles/argon*`, `services/private-release/argon.json`). The repository-specific self-hosted runner verifies changes, builds one immutable API/frontend image set on `develop`, transfers it privately with archive hash and BuildKit provenance, and accepts it only after live smoke checks. `master` version tags or a manual production workflow promote the identical accepted Git tree without rebuilding. No GitHub artifacts/cache or GHCR handoff is required.
+
+Frontend environment settings are generated as `runtime-config.js` at container startup. Authentication authority/client/redirect remain independent between staging and production while the same bundle is promoted. Local Vite settings remain the development fallback. Production API containers set `ARGON_SKIP_MIGRATIONS=true`; the receiver checks the exact declared schema and automatic application rollback compatibility. New migrations require an explicit rehearsed operation.
 
 ## Architecture
 

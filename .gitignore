@@ -240,3 +240,7 @@ _Pvt_Extensions
 /.mfractor
 
 appsettings.Development.json
+
+# Release tooling is source, not a .NET build directory.
+!/tooling/release/
+**/__pycache__/

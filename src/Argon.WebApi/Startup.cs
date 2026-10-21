@@ -22,7 +22,7 @@ public class Startup(
     app.UseSerilogRequestLogging();
 
     // initialize and seed the database context only if not running for NSwag generation
-    if (!configuration.GetValue<bool>("RUNNING_NSWAG"))
+    if (!configuration.GetValue<bool>("RUNNING_NSWAG") && !configuration.GetValue<bool>("ARGON_SKIP_MIGRATIONS"))
     {
       dbContextInitializer.Initialize();
       dbContextInitializer.Seed();
