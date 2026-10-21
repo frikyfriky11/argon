@@ -1,0 +1,1 @@
+window.ARGON_CONFIG = {};

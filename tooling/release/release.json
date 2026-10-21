@@ -1,0 +1,19 @@
+{
+  "project": "argon",
+  "images": [
+    {
+      "service": "webapi",
+      "dockerfile": "src/Argon.WebApi/Dockerfile"
+    },
+    {
+      "service": "webgui",
+      "dockerfile": "src/Argon.WebGui/Dockerfile",
+      "build_args": {
+        "COMMIT_HASH": "{source}"
+      }
+    }
+  ],
+  "verify_commands": [
+    ["python3", "tooling/release/verify-runtime.py", "{source}"]
+  ]
+}

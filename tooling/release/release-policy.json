@@ -1,0 +1,12 @@
+{
+  "migrations": [
+    "20230708145756_Initial",
+    "20230808050336_AddIsFavouriteOnAccount",
+    "20230906201613_AddBudgetItems",
+    "20250216200014_AddCounterparties",
+    "20250626053832_AddBankStatements",
+    "20260530063135_AddUniqueIndexes",
+    "20260531071352_AddTransactionAccountingDate"
+  ],
+  "automaticRollbackCompatible": true
+}
